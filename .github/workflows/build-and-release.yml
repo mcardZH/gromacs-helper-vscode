@@ -52,13 +52,13 @@ jobs:
       
     steps:
       - name: 检出代码
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 设置Node.js环境
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -144,7 +144,7 @@ jobs:
           ls -la *.vsix
 
       - name: 上传构建产物
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: vsix-package-${{ steps.version.outputs.version }}
           path: "*.vsix"
@@ -157,10 +157,10 @@ jobs:
     
     steps:
       - name: 检出代码
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 下载构建产物
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: vsix-package-${{ needs.build.outputs.version }}
 
