@@ -1,4 +1,4 @@
-//// The module 'vscode' contains the VS Code extensibility API
+// The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { MdpLanguageSupport } from './languages/mdp';
@@ -7,6 +7,11 @@ import { GroLanguageSupport } from './languages/gro';
 import { NdxSymbolProvider } from './providers/ndxSymbolProvider';
 import { NdxHoverProvider } from './providers/ndxHoverProvider';
 import { NdxFoldingProvider } from './providers/ndxFoldingProvider';
+import { registerPdbLanguageFeatures } from './languages/pdb';
+import { PdbHoverProvider } from './providers/pdbHoverProvider';
+import { PdbSymbolProvider } from './providers/pdbSymbolProvider';
+import { PdbFoldingProvider } from './providers/pdbFoldingProvider';
+import { XvgLanguageSupport } from './languages/xvg';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -33,6 +38,18 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.languages.registerHoverProvider('gromacs_ndx_file', new NdxHoverProvider()),
 		vscode.languages.registerFoldingRangeProvider('gromacs_ndx_file', new NdxFoldingProvider())
 	);
+
+	// Initialize PDB language support
+	registerPdbLanguageFeatures(context);
+	context.subscriptions.push(
+		vscode.languages.registerDocumentSymbolProvider('gromacs_pdb_file', new PdbSymbolProvider()),
+		vscode.languages.registerHoverProvider('gromacs_pdb_file', new PdbHoverProvider()),
+		vscode.languages.registerFoldingRangeProvider('gromacs_pdb_file', new PdbFoldingProvider())
+	);
+
+	// Initialize XVG language support
+	const xvgLanguageSupport = new XvgLanguageSupport();
+	xvgLanguageSupport.activate(context);
 
 }
 

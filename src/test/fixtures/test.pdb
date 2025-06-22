@@ -1,0 +1,48 @@
+HEADER    TRANSFERASE/DNA                         20-MAY-93   1HVJ              
+TITLE     STRUCTURE OF THE LARGE FRAGMENT OF E. COLI DNA POLYMERASE I          
+TITLE    2 COMPLEXED WITH DTMP AND MGCL2                                       
+COMPND    MOL_ID: 1;                                                            
+COMPND   2 MOLECULE: DNA POLYMERASE I;                                         
+COMPND   3 CHAIN: A;                                                           
+COMPND   4 SYNONYM: POL I, KLENOW FRAGMENT;                                    
+SOURCE    MOL_ID: 1;                                                            
+SOURCE   2 ORGANISM_SCIENTIFIC: ESCHERICHIA COLI;                             
+SOURCE   3 ORGANISM_TAXID: 562;                                               
+KEYWDS    TRANSFERASE, DNA, POLYMERASE, KLENOW FRAGMENT                        
+EXPDTA    X-RAY DIFFRACTION                                                     
+AUTHOR    L.S.BEESE,T.A.STEITZ                                                 
+REVDAT   2   24-FEB-09 1HVJ    1       VERSN                                  
+JRNL        AUTH   L.S.BEESE,V.DERBYSHIRE,T.A.STEITZ                          
+JRNL        TITL   STRUCTURE OF DNA POLYMERASE I KLENOW FRAGMENT BOUND TO      
+JRNL        TITL 2 DUPLEX DNA                                                  
+REMARK   1                                                                      
+REMARK   2 RESOLUTION.    2.60 ANGSTROMS.                                     
+REMARK   3                                                                      
+REMARK   3 REFINEMENT.                                                         
+REMARK   3   PROGRAM     : X-PLOR                                             
+REMARK   3   AUTHORS     : BRUNGER                                            
+HELIX    1   1 GLY A   86  GLY A   94  1                                   9    
+HELIX    2   2 ASP A  105  ALA A  119  1                                  15    
+SHEET    1   A 5 THR A 107  ARG A 110  0                                        
+SHEET    2   A 5 ILE A 174  ARG A 177 -1  N  ILE A 174   O  ARG A 110         
+SSBOND   1 CYS A   65    CYS A   72                          1555   1555  2.03  
+CRYST1   50.240   58.150   61.610  90.00  90.00  90.00 P 21 21 21    4          
+ORIGX1      1.000000  0.000000  0.000000        0.00000                         
+ORIGX2      0.000000  1.000000  0.000000        0.00000                         
+ORIGX3      0.000000  0.000000  1.000000        0.00000                         
+SCALE1      0.019905  0.000000  0.000000        0.00000                         
+SCALE2      0.000000  0.017201  0.000000        0.00000                         
+SCALE3      0.000000  0.000000  0.016231        0.00000                         
+MODEL        1                                                                  
+ATOM      1  N   ALA A   1      20.154   1.615  12.321  1.00 11.91           N  
+ATOM      2  CA  ALA A   1      21.618   1.119  12.618  1.00 12.00           C  
+ATOM      3  C   ALA A   1      22.637   2.226  12.897  1.00 12.30           C  
+ATOM      4  O   ALA A   1      22.471   3.447  12.619  1.00 11.85           O  
+ATOM      5  CB  ALA A   1      22.147   0.233  11.490  1.00 11.85           C  
+TER       6      ALA A   1                                                      
+HETATM  501  O   HOH A  77      22.140   2.615  13.221  1.00 10.00           O  
+ENDMDL                                                                          
+CONECT    1    2    5                                                          
+CONECT    2    1    3                                                          
+MASTER      232    0    0    0    0    0    0    6  500    1    0    1          
+END                                                                             

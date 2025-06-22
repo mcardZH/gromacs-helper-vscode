@@ -1,0 +1,28 @@
+{
+    "comments": {
+        "lineComment": "REMARK"
+    },
+    "brackets": [
+        ["[", "]"],
+        ["(", ")"]
+    ],
+    "autoClosingPairs": [
+        ["[", "]"],
+        ["(", ")"],
+        ["\"", "\""],
+        ["'", "'"]
+    ],
+    "surroundingPairs": [
+        ["[", "]"],
+        ["(", ")"],
+        ["\"", "\""],
+        ["'", "'"]
+    ],
+    "folding": {
+        "markers": {
+            "start": "^MODEL\\s+",
+            "end": "^ENDMDL"
+        }
+    },
+    "wordPattern": "([A-Z]{3,6}|[A-Za-z0-9_-]+)"
+}

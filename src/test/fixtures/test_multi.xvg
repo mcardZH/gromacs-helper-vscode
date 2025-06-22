@@ -1,0 +1,31 @@
+# This file was created Thu Jun 22 15:30:00 2023
+# Created by: gmx energy
+# Host: localhost
+# Multiple energy components analysis
+#
+@ title "Energy Components Analysis"
+@ xaxis  label "Time (ps)"
+@ yaxis  label "Energy (kJ/mol)"
+@ TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 4
+@ s0 legend "Potential Energy"
+@ s1 legend "Kinetic Energy"  
+@ s2 legend "Total Energy"
+@ s3 legend "Temperature (K)"
+#     Time     Potential    Kinetic      Total       Temp
+         0.0    -123456.789  12345.678   -111111.111   298.15
+         1.0    -123454.321  12343.210   -111111.111   298.22
+         2.0    -123451.852  12341.741   -111110.111   298.45
+         3.0    -123449.741  12339.852   -111109.889   298.67
+         4.0    -123447.963  12337.963   -111110.000   298.89
+         5.0    -123446.258  12336.258   -111110.000   299.12
+         6.0    -123444.741  12334.741   -111110.000   299.34
+         7.0    -123443.147  12333.147   -111110.000   299.56
+         8.0    -123441.852  12331.852   -111110.000   299.78
+         9.0    -123440.369  12330.369   -111110.000   300.01
+        10.0    -123439.147  12329.147   -111110.000   300.23

@@ -1,0 +1,274 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "PDB",
+    "scopeName": "source.pdb",
+    "patterns": [
+        {
+            "include": "#header-section"
+        },
+        {
+            "include": "#primary-structure"
+        },
+        {
+            "include": "#heterogen-section"
+        },
+        {
+            "include": "#secondary-structure"
+        },
+        {
+            "include": "#connectivity-annotation"
+        },
+        {
+            "include": "#crystallographic"
+        },
+        {
+            "include": "#coordinate-section"
+        },
+        {
+            "include": "#connectivity-section"
+        },
+        {
+            "include": "#bookkeeping"
+        },
+        {
+            "include": "#numbers"
+        },
+        {
+            "include": "#comments"
+        }
+    ],
+    "repository": {
+        "header-section": {
+            "patterns": [
+                {
+                    "name": "keyword.control.header.pdb",
+                    "match": "^(HEADER|OBSLTE|TITLE|CAVEAT|COMPND|SOURCE|KEYWDS|EXPDTA|AUTHOR|REVDAT|SPRSDE|JRNL)\\s",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.header.pdb"
+                        }
+                    }
+                },
+                {
+                    "name": "comment.line.remark.pdb",
+                    "match": "^REMARK\\s+([0-9]+)?.*$",
+                    "captures": {
+                        "1": {
+                            "name": "constant.numeric.remark-number.pdb"
+                        }
+                    }
+                }
+            ]
+        },
+        "primary-structure": {
+            "patterns": [
+                {
+                    "name": "keyword.control.primary-structure.pdb",
+                    "match": "^(DBREF|SEQADV|SEQRES|MODRES)\\s",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.primary-structure.pdb"
+                        }
+                    }
+                }
+            ]
+        },
+        "heterogen-section": {
+            "patterns": [
+                {
+                    "name": "keyword.control.heterogen.pdb",
+                    "match": "^(HET|HETATM|HETSYN|FORMUL)\\s",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.heterogen.pdb"
+                        }
+                    }
+                }
+            ]
+        },
+        "secondary-structure": {
+            "patterns": [
+                {
+                    "name": "keyword.control.secondary-structure.pdb",
+                    "match": "^(HELIX|SHEET|TURN)\\s",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.secondary-structure.pdb"
+                        }
+                    }
+                }
+            ]
+        },
+        "connectivity-annotation": {
+            "patterns": [
+                {
+                    "name": "keyword.control.connectivity.pdb",
+                    "match": "^(SSBOND|LINK|HYDBND|SLTBRG|CISPEP)\\s",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.connectivity.pdb"
+                        }
+                    }
+                }
+            ]
+        },
+        "crystallographic": {
+            "patterns": [
+                {
+                    "name": "keyword.control.crystallographic.pdb",
+                    "match": "^(CRYST1|ORIGX[1-3]|SCALE[1-3]|MTRIX[1-3]|TVECT)\\s",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.crystallographic.pdb"
+                        }
+                    }
+                }
+            ]
+        },
+        "coordinate-section": {
+            "patterns": [
+                {
+                    "name": "keyword.control.model.pdb",
+                    "match": "^(MODEL|ENDMDL)\\s*([0-9]+)?",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.model.pdb"
+                        },
+                        "2": {
+                            "name": "constant.numeric.model-number.pdb"
+                        }
+                    }
+                },
+                {
+                    "name": "meta.atom.pdb",
+                    "match": "^(ATOM|HETATM)\\s+([0-9]+)\\s+([A-Z0-9'\\*]+)\\s*([A-Z]?)\\s*([A-Z]{3})\\s+([A-Z])\\s*([0-9]+[A-Z]?)\\s*([-+]?[0-9]*\\.?[0-9]+)\\s*([-+]?[0-9]*\\.?[0-9]+)\\s*([-+]?[0-9]*\\.?[0-9]+)\\s*([-+]?[0-9]*\\.?[0-9]+)?\\s*([-+]?[0-9]*\\.?[0-9]+)?\\s*([A-Z]{1,2})?\\s*([-+]?[0-9]*)?",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.atom.pdb"
+                        },
+                        "2": {
+                            "name": "constant.numeric.atom-serial.pdb"
+                        },
+                        "3": {
+                            "name": "entity.name.function.atom-name.pdb"
+                        },
+                        "4": {
+                            "name": "variable.other.alternate-location.pdb"
+                        },
+                        "5": {
+                            "name": "entity.name.type.residue-name.pdb"
+                        },
+                        "6": {
+                            "name": "variable.other.chain-id.pdb"
+                        },
+                        "7": {
+                            "name": "constant.numeric.residue-number.pdb"
+                        },
+                        "8": {
+                            "name": "constant.numeric.coordinate.x.pdb"
+                        },
+                        "9": {
+                            "name": "constant.numeric.coordinate.y.pdb"
+                        },
+                        "10": {
+                            "name": "constant.numeric.coordinate.z.pdb"
+                        },
+                        "11": {
+                            "name": "constant.numeric.occupancy.pdb"
+                        },
+                        "12": {
+                            "name": "constant.numeric.temperature-factor.pdb"
+                        },
+                        "13": {
+                            "name": "entity.name.type.element.pdb"
+                        },
+                        "14": {
+                            "name": "constant.numeric.charge.pdb"
+                        }
+                    }
+                },
+                {
+                    "name": "keyword.control.terminator.pdb",
+                    "match": "^(TER)\\s*([0-9]+)?\\s*([A-Z]{3})?\\s*([A-Z])?\\s*([0-9]+[A-Z]?)?",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.terminator.pdb"
+                        },
+                        "2": {
+                            "name": "constant.numeric.atom-serial.pdb"
+                        },
+                        "3": {
+                            "name": "entity.name.type.residue-name.pdb"
+                        },
+                        "4": {
+                            "name": "variable.other.chain-id.pdb"
+                        },
+                        "5": {
+                            "name": "constant.numeric.residue-number.pdb"
+                        }
+                    }
+                },
+                {
+                    "name": "keyword.control.anisotropic.pdb",
+                    "match": "^(SIGATM|ANISOU|SIGUIJ)\\s",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.anisotropic.pdb"
+                        }
+                    }
+                }
+            ]
+        },
+        "connectivity-section": {
+            "patterns": [
+                {
+                    "name": "keyword.control.connect.pdb",
+                    "match": "^(CONECT)\\s",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.connect.pdb"
+                        }
+                    }
+                }
+            ]
+        },
+        "bookkeeping": {
+            "patterns": [
+                {
+                    "name": "keyword.control.master.pdb",
+                    "match": "^(MASTER)\\s",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.master.pdb"
+                        }
+                    }
+                },
+                {
+                    "name": "keyword.control.end.pdb",
+                    "match": "^(END)\\s*$",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.end.pdb"
+                        }
+                    }
+                }
+            ]
+        },
+        "numbers": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.pdb",
+                    "match": "[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?"
+                }
+            ]
+        },
+        "comments": {
+            "patterns": [
+                {
+                    "name": "comment.line.remark.pdb",
+                    "match": "^REMARK.*$"
+                }
+            ]
+        }
+    }
+}

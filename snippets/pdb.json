@@ -1,0 +1,114 @@
+{
+    "Header Record": {
+        "prefix": "header",
+        "body": [
+            "HEADER    ${1:CLASSIFICATION}           ${2:DEPOSITION-DATE}   ${3:ID-CODE}"
+        ],
+        "description": "PDB header record"
+    },
+    "Title Record": {
+        "prefix": "title",
+        "body": [
+            "TITLE     ${1:TITLE OF THE EXPERIMENT}"
+        ],
+        "description": "PDB title record"
+    },
+    "Compound Record": {
+        "prefix": "compnd",
+        "body": [
+            "COMPND    MOL_ID: ${1:1};",
+            "COMPND   2 MOLECULE: ${2:MOLECULE NAME};",
+            "COMPND   3 CHAIN: ${3:A};",
+            "COMPND   4 SYNONYM: ${4:SYNONYM};"
+        ],
+        "description": "PDB compound record"
+    },
+    "Source Record": {
+        "prefix": "source",
+        "body": [
+            "SOURCE    MOL_ID: ${1:1};",
+            "SOURCE   2 ORGANISM_SCIENTIFIC: ${2:ORGANISM NAME};",
+            "SOURCE   3 ORGANISM_TAXID: ${3:TAXID};"
+        ],
+        "description": "PDB source record"
+    },
+    "Atom Record": {
+        "prefix": "atom",
+        "body": [
+            "ATOM  ${1:    1}  ${2:N  } ${3:ALA} ${4:A}${5:   1}    ${6:   20.154} ${7:   1.615} ${8:  12.321}  ${9:1.00} ${10:11.91}           ${11:N  }"
+        ],
+        "description": "PDB atom record"
+    },
+    "HetAtom Record": {
+        "prefix": "hetatm",
+        "body": [
+            "HETATM${1:    1}  ${2:O  } ${3:HOH} ${4:A}${5:   1}    ${6:   22.140} ${7:   2.615} ${8:  13.221}  ${9:1.00} ${10:10.00}           ${11:O  }"
+        ],
+        "description": "PDB hetatm record"
+    },
+    "Model Record": {
+        "prefix": "model",
+        "body": [
+            "MODEL        ${1:1}",
+            "${2:// ATOM records go here}",
+            "ENDMDL"
+        ],
+        "description": "PDB model record with ENDMDL"
+    },
+    "Helix Record": {
+        "prefix": "helix",
+        "body": [
+            "HELIX  ${1:  1} ${2:  1} ${3:GLY} ${4:A} ${5:  86}  ${6:GLY} ${7:A} ${8:  94}  ${9:1}                   ${10:9}"
+        ],
+        "description": "PDB helix record"
+    },
+    "Sheet Record": {
+        "prefix": "sheet",
+        "body": [
+            "SHEET  ${1:  1} ${2:A1} ${3:5} ${4:THR} ${5:A}${6:107}  ${7:ARG} ${8:A}${9:110}  ${10:0}"
+        ],
+        "description": "PDB sheet record"
+    },
+    "SSBOND Record": {
+        "prefix": "ssbond",
+        "body": [
+            "SSBOND ${1:  1} ${2:CYS} ${3:A} ${4:  65}    ${5:CYS} ${6:A} ${7:  72}                          ${8:1555}   ${9:1555}  ${10:2.03}"
+        ],
+        "description": "PDB disulfide bond record"
+    },
+    "Crystal Record": {
+        "prefix": "cryst1",
+        "body": [
+            "CRYST1${1:   50.240}${2:   58.150}${3:   61.610}${4:  90.00}${5:  90.00}${6:  90.00} ${7:P 21 21 21}${8:    4}"
+        ],
+        "description": "PDB crystal record"
+    },
+    "Connect Record": {
+        "prefix": "conect",
+        "body": [
+            "CONECT${1:    1}${2:    2}${3:    5}"
+        ],
+        "description": "PDB connectivity record"
+    },
+    "TER Record": {
+        "prefix": "ter",
+        "body": [
+            "TER   ${1:  485}      ${2:GLY} ${3:A}${4:  77}"
+        ],
+        "description": "PDB chain terminator record"
+    },
+    "END Record": {
+        "prefix": "end",
+        "body": [
+            "END"
+        ],
+        "description": "PDB end record"
+    },
+    "Remark Record": {
+        "prefix": "remark",
+        "body": [
+            "REMARK ${1:  1} ${2:REFERENCE 1}"
+        ],
+        "description": "PDB remark record"
+    }
+}

@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { MdpCompletionProvider } from '../../providers/completionProvider';
-import { MdpHoverProvider } from '../../providers/hoverProvider';
-import { MdpDiagnosticProvider } from '../../providers/diagnosticProvider';
-import { MdpFormattingProvider } from '../../providers/formattingProvider';
-import { MdpSymbolProvider } from '../../providers/symbolProvider';
+import { MdpCompletionProvider } from '../../providers/mdpCompletionProvider';
+import { MdpHoverProvider } from '../../providers/mdpHoverProvider';
+import { MdpDiagnosticProvider } from '../../providers/mdpDiagnosticProvider';
+import { MdpFormattingProvider } from '../../providers/mdpFormattingProvider';
+import { MdpSymbolProvider } from '../../providers/mdpSymbolProvider';
 
 /**
  * MDP 语言支持模块

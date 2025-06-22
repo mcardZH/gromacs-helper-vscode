@@ -1,0 +1,69 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "GROMACS XVG",
+    "scopeName": "source.xvg",
+    "patterns": [
+        {
+            "include": "#comments"
+        },
+        {
+            "include": "#metadata"
+        },
+        {
+            "include": "#numbers"
+        },
+        {
+            "include": "#legends"
+        }
+    ],
+    "repository": {
+        "comments": {
+            "patterns": [
+                {
+                    "name": "comment.line.hash.xvg",
+                    "match": "^#.*$"
+                }
+            ]
+        },
+        "metadata": {
+            "patterns": [
+                {
+                    "name": "keyword.control.xvg",
+                    "match": "^@\\s*(title|xaxis|yaxis|subtitle|legend|type|autoscale|view)\\s*",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.directive.xvg"
+                        }
+                    }
+                },
+                {
+                    "name": "string.quoted.double.xvg",
+                    "begin": "\"",
+                    "end": "\"",
+                    "patterns": [
+                        {
+                            "name": "constant.character.escape.xvg",
+                            "match": "\\\\."
+                        }
+                    ]
+                }
+            ]
+        },
+        "numbers": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.float.xvg",
+                    "match": "[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?"
+                }
+            ]
+        },
+        "legends": {
+            "patterns": [
+                {
+                    "name": "entity.name.function.xvg",
+                    "match": "^@\\s*s[0-9]+\\s+legend\\s+\".*\""
+                }
+            ]
+        }
+    }
+}

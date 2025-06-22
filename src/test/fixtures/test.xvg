@@ -1,0 +1,26 @@
+# This file was created Thu Jun 22 15:30:00 2023
+# Created by: gmx energy
+# Host: localhost
+#
+@ title "Potential Energy"
+@ xaxis  label "Time (ps)"
+@ yaxis  label "Potential (kJ/mol)"
+@ TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "Potential"
+         0.0000    -123456.789
+         1.0000    -123454.321
+         2.0000    -123451.852
+         3.0000    -123449.741
+         4.0000    -123447.963
+         5.0000    -123446.258
+         6.0000    -123444.741
+         7.0000    -123443.147
+         8.0000    -123441.852
+         9.0000    -123440.369
+        10.0000    -123439.147

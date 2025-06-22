@@ -6,184 +6,206 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/mcardzh/gromacs-helper-vscode/build-and-release.yml?branch=master&style=flat-square&label=build)](https://github.com/mcardzh/gromacs-helper-vscode/actions)
 [![License](https://img.shields.io/github/license/mcardzh/gromacs-helper-vscode.svg?style=flat-square)](https://github.com/mcardzh/gromacs-helper-vscode/blob/main/LICENSE)
 
-一个为 GROMACS 分子动力学模拟提供全面支持的 VS Code 扩展。支持 `.mdp`、`.top`、`.itp`、`.gro`、`.ndx` 等 GROMACS 文件格式，提供语法高亮、智能补全、参数提示、错误检查等功能。
+A comprehensive VS Code extension providing full support for GROMACS molecular dynamics simulation files. Supports `.mdp`, `.top`, `.itp`, `.gro`, `.ndx`, `.pdb` and other GROMACS file formats with syntax highlighting, intelligent completion, parameter hints, error checking and more.
 
-## ✨ 主要功能
+> [中文文档](README_ZH.md) | [English Documentation](README.md)
 
-### 🎨 语法高亮
-- **MDP 文件** (`.mdp`) - 分子动力学参数文件
-- **TOP 文件** (`.top`, `.itp`) - 拓扑结构文件
-- **GRO 文件** (`.gro`) - 结构坐标文件
-- **NDX 文件** (`.ndx`) - 索引组文件
+## ✨ Key Features
 
-### 💡 智能补全
-- MDP 参数自动补全，包含所有 GROMACS 2025.2 支持的参数
-- 预设模板快速插入（能量最小化、NVT、NPT、MD 等）
-- 参数值智能建议
+### 🎨 Syntax Highlighting
+- **MDP Files** (`.mdp`) - Molecular Dynamics Parameter files
+- **TOP Files** (`.top`, `.itp`) - Topology structure files
+- **GRO Files** (`.gro`, `.pdb`) - Structure coordinate files
+- **NDX Files** (`.ndx`) - Index group files
 
-### 📖 悬停提示
-- 详细的 MDP 参数说明
-- 参数类型、单位、有效值范围
-- 默认值和使用建议
+### 💡 Intelligent Completion
+- Auto-completion for MDP parameters, including all GROMACS 2025.2 supported parameters
+- Quick template insertion (energy minimization, NVT, NPT, MD, etc.)
+- Smart parameter value suggestions
 
-### 🔍 符号导航
-- 文档大纲视图
-- 快速跳转到特定参数
-- 代码折叠支持
+### 📖 Hover Documentation
+- Detailed MDP parameter descriptions
+- Parameter types, units, valid value ranges
+- Default values and usage recommendations
 
-### 📝 代码片段
-- 常用 MDP 配置模板
-- 一键生成标准模拟流程配置
+### 🔍 Symbol Navigation
+- Document outline view
+- Quick jump to specific parameters
+- Code folding support
 
-### 🎯 错误检查
-- 参数语法验证
-- 值范围检查
-- 格式错误提示
+### 📝 Code Snippets
+- Common MDP configuration templates
+- One-click generation of standard simulation workflow configurations
 
-## 🚀 支持的文件格式
+### 🎯 Error Checking
+- Parameter syntax validation
+- Value range checking
+- Format error notifications
 
-| 文件类型 | 扩展名 | 描述 | 功能支持 |
-|---------|--------|------|---------|
-| MDP | `.mdp` | 分子动力学参数文件 | 语法高亮、智能补全、悬停提示、错误检查 |
-| Topology | `.top`, `.itp` | 拓扑结构文件 | 语法高亮、符号导航、代码折叠 |
-| Structure | `.gro` | 结构坐标文件 | 语法高亮、符号导航 |
-| Index | `.ndx` | 索引组文件 | 语法高亮、符号导航、代码折叠 |
+## 🚀 Supported File Formats
 
-## 📦 安装
+| File Type | Extensions | Description | Feature Support |
+|-----------|------------|-------------|----------------|
+| MDP | `.mdp` | Molecular Dynamics Parameter files | Syntax highlighting, intelligent completion, hover hints, error checking |
+| Topology | `.top`, `.itp` | Topology structure files | Syntax highlighting, symbol navigation, code folding |
+| Structure | `.gro`, `.pdb` | Structure coordinate files | Syntax highlighting, symbol navigation |
+| Index | `.ndx` | Index group files | Syntax highlighting, symbol navigation, code folding |
+| XVG Data | `.xvg` | GROMACS plotting data files | Syntax highlighting, interactive chart preview, data analysis |
 
-1. 打开 VS Code
-2. 按 `Ctrl+Shift+X` 打开扩展面板
-3. 搜索 "GROMACS Helper"
-4. 点击安装
+## 📦 Installation
 
-或者从 [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=gromacs-helper-vscode) 直接安装。
+1. Open VS Code
+2. Press `Ctrl+Shift+X` to open the Extensions panel
+3. Search for "GROMACS Helper"
+4. Click Install
 
-## 🎮 使用方法
+Or install directly from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=gromacs-helper-vscode).
 
-### MDP 文件编辑
-1. 创建或打开 `.mdp` 文件
-2. 输入参数名，扩展会自动提供补全建议
-3. 悬停在参数上查看详细说明
-4. 使用代码片段快速插入模板
+## 🎮 Usage
 
-**示例：**
+### MDP File Editing
+1. Create or open an `.mdp` file
+2. Type parameter names and the extension will automatically provide completion suggestions
+3. Hover over parameters to see detailed descriptions
+4. Use code snippets to quickly insert templates
+
+**Example:**
 ```mdp
-; 能量最小化参数
+; Energy minimization parameters
 integrator = steep
 emtol = 1000.0
 emstep = 0.01
 nsteps = 50000
 
-; 输出控制
+; Output control
 nstxout = 0
 nstvout = 0
 nstenergy = 100
 nstlog = 100
 ```
 
-### 使用代码片段
-- 输入 `em` + Tab - 插入能量最小化模板
-- 输入 `nvt` + Tab - 插入 NVT 平衡模板  
-- 输入 `md` + Tab - 插入生产性 MD 模板
+### Using Code Snippets
+- Type `em` + Tab - Insert energy minimization template
+- Type `nvt` + Tab - Insert NVT equilibration template
+- Type `md` + Tab - Insert production MD template
 
-### TOP/ITP 文件支持
-- 自动识别分子类型、原子类型、键合参数等
-- 提供文档大纲和符号导航
-- 支持代码折叠
+### TOP/ITP File Support
+- Automatically recognize molecule types, atom types, bonding parameters, etc.
+- Provide document outline and symbol navigation
+- Support code folding
 
-### GRO 文件支持
-- 结构化显示原子坐标
-- 符号导航快速定位
-- 语法高亮区分不同字段
+### GRO File Support
+- Structured display of atomic coordinates
+- Symbol navigation for quick positioning
+- Syntax highlighting to distinguish different fields
 
-### NDX 文件支持
-- 索引组语法高亮
-- 代码折叠支持
-- 组名悬停提示
+### NDX File Support
+- Index group syntax highlighting
+- Code folding support
+- Group name hover hints
 
-## ⚙️ 配置选项
+### XVG File Preview
+- **Interactive Chart Visualization**: Click the chart icon (📊) in the title bar or right-click on an XVG file and select "Preview XVG Chart"
+- **Real-time Data Analysis**: View statistical information including data points count, value ranges, and averages
+- **Multi-series Support**: Automatically detect and display multiple data series with different colors
+- **Responsive Charts**: Zoom, pan, and hover over data points for detailed values
+- **GROMACS Metadata Support**: Automatically parse title, axis labels, and legend information from XVG files
 
-目前扩展使用默认配置，未来版本将添加更多自定义选项。
+**Supported XVG Features:**
+- Energy plots (potential, kinetic, total energy)
+- Temperature and pressure data
+- RMSD and distance measurements
+- Custom analysis output from GROMACS tools
 
-## 🔧 开发和贡献
+**Usage:**
+1. Open any `.xvg` file in VS Code
+2. Click the chart icon (📊) in the editor title bar
+3. View the interactive plot in a side panel
+4. Hover over data points to see exact values
 
-### 本地开发
+## ⚙️ Configuration Options
+
+The extension currently uses default configurations. More customization options will be added in future versions.
+
+## 🔧 Development and Contributing
+
+### Local Development
 ```bash
-# 克隆仓库
-git clone https://github.com/your-username/gromacs-helper-vscode.git
+# Clone the repository
+git clone https://github.com/mcardzh/gromacs-helper-vscode.git
 cd gromacs-helper-vscode
 
-# 安装依赖
+# Install dependencies
 npm install
 
-# 编译项目
+# Compile project
 npm run compile
 
-# 启动监听模式
+# Start watch mode
 npm run watch
 ```
 
-### 构建扩展包
+### Building Extension Package
 ```bash
 npm run package
 ```
 
-## 📋 系统要求
+## 📋 System Requirements
 
-- Visual Studio Code 版本 1.101.0 或更高
-- 无其他特殊依赖
+- Visual Studio Code version 1.101.0 or higher
+- No other special dependencies
 
-## 🐛 已知问题
+## 🐛 Known Issues
 
-- 大型 TOP 文件的解析性能有待优化
-- 复杂嵌套 #include 指令的支持有限
+- Parsing performance for large TOP files needs optimization
+- Limited support for complex nested #include directives
 
-如发现问题，请在 [GitHub Issues](https://github.com/your-username/gromacs-helper-vscode/issues) 中报告。
+If you encounter issues, please report them in [GitHub Issues](https://github.com/mcardzh/gromacs-helper-vscode/issues).
 
-## 🗂️ 更新日志
+## 🗂️ Changelog
 
-### 0.0.1 (开发中)
+### 0.0.1 (In Development)
 
-- ✅ 基础 MDP 文件语法高亮
-- ✅ MDP 参数智能补全
-- ✅ 悬停提示和参数文档
-- ✅ TOP/ITP 文件支持
-- ✅ GRO 文件语法高亮
-- ✅ NDX 文件支持
-- ✅ 代码片段和模板
-- ✅ 符号导航和文档大纲
+- ✅ Basic MDP file syntax highlighting
+- ✅ MDP parameter intelligent completion
+- ✅ Hover hints and parameter documentation
+- ✅ TOP/ITP file support
+- ✅ GRO file syntax highlighting
+- ✅ NDX file support
+- ✅ Code snippets and templates
+- ✅ Symbol navigation and document outline
 
-## 📚 相关资源
+## 📚 Related Resources
 
-- [GROMACS 官方文档](https://manual.gromacs.org/)
-- [GROMACS MDP 选项参考](https://manual.gromacs.org/current/user-guide/mdp-options.html)
-- [分子动力学模拟教程](https://tutorials.gromacs.org/)
+- [GROMACS Official Documentation](https://manual.gromacs.org/)
+- [GROMACS MDP Options Reference](https://manual.gromacs.org/current/user-guide/mdp-options.html)
+- [Molecular Dynamics Simulation Tutorials](https://tutorials.gromacs.org/)
 
-## 🤝 贡献
+## 🤝 Contributing
 
-欢迎提交问题报告、功能请求和代码贡献！
+Bug reports, feature requests, and code contributions are welcome!
 
-## 📄 许可证
+## 📄 License
 
-本项目基于 GPLv2 许可证开源
+This project is open sourced under the GPLv2 license
 
-## 👨‍💻 作者
+## 👨‍💻 Author
 
-- 项目维护者：[mcardzh](https://github.com/mcardzh)
+- Project Maintainer: [mcardzh](https://github.com/mcardzh)
 
-## 🙏 致谢
+## 🙏 Acknowledgments
 
-- 感谢 GROMACS 开发团队提供优秀的分子动力学模拟软件
-- 感谢 VS Code 团队提供强大的编辑器平台
+- Thanks to the GROMACS development team for providing excellent molecular dynamics simulation software
+- Thanks to the VS Code team for providing a powerful editor platform
 
-## 📞 支持
+## 📞 Support
 
-如果这个扩展对您有帮助，请给我们一个 ⭐️！
+If this extension helps you, please give us a ⭐️!
 
-有问题或建议？请通过以下方式联系：
+Questions or suggestions? Please contact us through:
 - [GitHub Issues](https://github.com/mcardzh/gromacs-helper-vscode/issues)
 - [Email](mailto:mcardzh@gmail.com)
 
 ---
 
-**享受您的 GROMACS 开发体验！** 🧬⚗️
+**Enjoy your GROMACS development experience!** 🧬⚗️
