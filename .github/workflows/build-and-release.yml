@@ -1,0 +1,257 @@
+name: Build and Release VS Code Extension
+
+on:
+  # 手动触发 - 支持版本号更新
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '新版本号 (例如: 0.0.3, 0.1.0, 1.0.0-beta.1)'
+        required: true
+        type: string
+      release_type:
+        description: '发布类型'
+        required: true
+        default: 'prerelease'
+        type: choice
+        options:
+          - 'release'
+          - 'prerelease'
+          - 'draft'
+      create_release:
+        description: '是否创建GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+  # 自动触发 - 推送到main分支时自动构建（不更新版本号）
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
+
+  # Pull Request触发
+  pull_request:
+    branches:
+      - main
+      - master
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      vsix-name: ${{ steps.build.outputs.vsix-name }}
+      
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 设置Node.js环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 代码检查
+        run: npm run lint
+
+      - name: 处理版本号
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # 手动触发 - 使用用户输入的版本号
+            NEW_VERSION="${{ github.event.inputs.version }}"
+            echo "更新版本号到: $NEW_VERSION"
+            npm version $NEW_VERSION --no-git-tag-version
+            
+            # 配置git用户信息
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            
+            # 提交版本更改
+            git add package.json
+            git commit -m "chore: bump version to $NEW_VERSION" || echo "No changes to commit"
+            git push origin ${{ github.ref_name }} || echo "No changes to push"
+            
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "is_manual=true" >> $GITHUB_OUTPUT
+          else
+            # 自动触发 - 不更新版本号，但增加构建号
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+            BUILD_NUMBER=${{ github.run_number }}
+            VERSION_WITH_BUILD="${CURRENT_VERSION}+build.${BUILD_NUMBER}"
+            
+            echo "当前版本: $CURRENT_VERSION"
+            echo "构建版本: $VERSION_WITH_BUILD"
+            echo "version=$VERSION_WITH_BUILD" >> $GITHUB_OUTPUT
+            echo "is_manual=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 编译项目
+        run: npm run compile
+
+      - name: 运行测试
+        run: |
+          if [ -f "package.json" ] && npm run | grep -q "test"; then
+            npm test
+          else
+            echo "跳过测试 - 未配置测试命令"
+          fi
+
+      - name: 打包扩展
+        id: build
+        run: |
+          # 安装vsce如果没有
+          if ! command -v vsce &> /dev/null; then
+            npm install -g @vscode/vsce
+          fi
+          
+          # 打包扩展
+          if [ "${{ steps.version.outputs.is_manual }}" = "true" ]; then
+            # 手动触发 - 使用package.json中的版本号
+            vsce package
+            VSIX_FILE=$(ls *.vsix | head -n 1)
+          else
+            # 自动触发 - 使用带构建号的版本
+            vsce package --out "gromacs-helper-vscode-${{ steps.version.outputs.version }}.vsix"
+            VSIX_FILE="gromacs-helper-vscode-${{ steps.version.outputs.version }}.vsix"
+          fi
+          
+          echo "生成的VSIX文件: $VSIX_FILE"
+          echo "vsix-name=$VSIX_FILE" >> $GITHUB_OUTPUT
+          
+          # 验证文件存在
+          if [ ! -f "$VSIX_FILE" ]; then
+            echo "错误: VSIX文件未生成"
+            exit 1
+          fi
+          
+          # 显示文件信息
+          ls -la *.vsix
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v3
+        with:
+          name: vsix-package-${{ steps.version.outputs.version }}
+          path: "*.vsix"
+          retention-days: 30
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true'
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 下载构建产物
+        uses: actions/download-artifact@v3
+        with:
+          name: vsix-package-${{ needs.build.outputs.version }}
+
+      - name: 生成发布说明
+        id: release_notes
+        run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          VSIX_FILE="${{ needs.build.outputs.vsix-name }}"
+          
+          cat > release_notes.md << EOF
+          # GROMACS Helper for VS Code v${VERSION}
+          
+          ## 📦 安装方式
+          
+          ### 方法一：从VSIX文件安装
+          1. 下载附件中的 \`${VSIX_FILE}\` 文件
+          2. 在VS Code中按 \`Ctrl+Shift+P\` (macOS: \`Cmd+Shift+P\`)
+          3. 输入 "Extensions: Install from VSIX..."
+          4. 选择下载的VSIX文件进行安装
+          
+          ### 方法二：命令行安装
+          \`\`\`bash
+          code --install-extension ${VSIX_FILE}
+          \`\`\`
+          
+          ## 🚀 功能特性
+          
+          - 📝 **语法高亮**: 完整支持MDP、TOP、GRO、NDX文件格式
+          - 🔍 **智能提示**: 参数自动补全和悬停帮助
+          - 📋 **代码片段**: 常用模板快速插入
+          - 🎯 **符号导航**: 快速跳转和大纲视图
+          - 📐 **代码格式化**: 自动格式化支持
+          - 🔧 **诊断功能**: 实时错误检查和建议
+          
+          ## 🔧 支持的文件类型
+          
+          - **MDP文件** (.mdp) - 分子动力学参数文件
+          - **TOP文件** (.top, .itp) - 拓扑文件
+          - **GRO文件** (.gro) - 结构坐标文件  
+          - **NDX文件** (.ndx) - 索引文件
+          
+          ## 📝 更新日志
+          
+          请查看项目的 [更新日志](https://github.com/gromacs-helper/gromacs-helper-vscode/releases) 了解详细变更。
+          
+          ---
+          
+          🐛 **问题反馈**: [GitHub Issues](https://github.com/gromacs-helper/gromacs-helper-vscode/issues)
+          📖 **使用文档**: [README](https://github.com/gromacs-helper/gromacs-helper-vscode#readme)
+          EOF
+
+      - name: 创建GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.build.outputs.version }}
+          name: "GROMACS Helper v${{ needs.build.outputs.version }}"
+          body_path: release_notes.md
+          files: "*.vsix"
+          draft: ${{ github.event.inputs.release_type == 'draft' }}
+          prerelease: ${{ github.event.inputs.release_type == 'prerelease' }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 自动构建总结
+  summary:
+    needs: build
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: 构建总结
+        run: |
+          echo "## 🎯 构建总结" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 项目 | 值 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| 触发方式 | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 分支 | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 版本 | ${{ needs.build.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| VSIX文件 | ${{ needs.build.outputs.vsix-name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 构建状态 | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "### 📋 手动构建参数" >> $GITHUB_STEP_SUMMARY
+            echo "- **版本号**: ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **发布类型**: ${{ github.event.inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **创建Release**: ${{ github.event.inputs.create_release }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### 🤖 自动构建信息" >> $GITHUB_STEP_SUMMARY
+            echo "- **构建号**: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **提交**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          fi

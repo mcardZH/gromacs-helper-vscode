@@ -1,0 +1,87 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
+      - '.github/**'
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Node.js环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 代码检查
+        run: npm run lint
+
+      - name: 编译项目
+        run: npm run compile
+
+      - name: 运行测试
+        run: |
+          if [ -f "package.json" ] && npm run | grep -q "test"; then
+            npm test
+          else
+            echo "跳过测试 - 未配置测试命令"
+          fi
+
+      - name: 构建扩展
+        run: |
+          # 安装vsce
+          npm install -g @vscode/vsce
+          
+          # 获取版本信息
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          BUILD_NUMBER=${{ github.run_number }}
+          COMMIT_SHA=${GITHUB_SHA:0:7}
+          
+          # 创建构建版本
+          BUILD_VERSION="${CURRENT_VERSION}+build.${BUILD_NUMBER}.${COMMIT_SHA}"
+          
+          echo "构建版本: $BUILD_VERSION"
+          
+          # 打包扩展
+          vsce package --out "gromacs-helper-vscode-${BUILD_VERSION}.vsix"
+          
+          echo "build_version=$BUILD_VERSION" >> $GITHUB_ENV
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v3
+        with:
+          name: ci-build-${{ env.build_version }}
+          path: "*.vsix"
+          retention-days: 7
+
+      - name: CI总结
+        run: |
+          echo "## 🔄 持续集成构建完成" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 项目 | 值 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| 分支 | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 提交 | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 构建版本 | ${{ env.build_version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 构建号 | ${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **所有检查通过，构建成功！**" >> $GITHUB_STEP_SUMMARY

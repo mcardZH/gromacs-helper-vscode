@@ -1,0 +1,66 @@
+name: PR Quality Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Node.js环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 代码检查
+        run: npm run lint
+
+      - name: 编译检查
+        run: npm run compile
+
+      - name: 运行测试
+        run: |
+          if [ -f "package.json" ] && npm run | grep -q "test"; then
+            npm test
+          else
+            echo "跳过测试 - 未配置测试命令"
+          fi
+
+      - name: 构建检查
+        run: |
+          # 安装vsce
+          npm install -g @vscode/vsce
+          
+          # 尝试打包（不输出文件）
+          vsce package --out test-build.vsix
+          
+          echo "✅ 构建检查通过"
+          rm -f test-build.vsix
+
+      - name: PR检查总结
+        run: |
+          echo "## 🔍 PR质量检查报告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 检查项 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 依赖安装 | ✅ 通过 |" >> $GITHUB_STEP_SUMMARY
+          echo "| 代码检查 | ✅ 通过 |" >> $GITHUB_STEP_SUMMARY
+          echo "| 编译检查 | ✅ 通过 |" >> $GITHUB_STEP_SUMMARY
+          echo "| 构建检查 | ✅ 通过 |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎉 **所有检查项均已通过，可以安全合并！**" >> $GITHUB_STEP_SUMMARY

@@ -3,6 +3,8 @@
 [![Version](https://img.shields.io/vscode-marketplace/v/gromacs-helper-vscode.svg?style=flat-square&label=vscode%20marketplace)](https://marketplace.visualstudio.com/items?itemName=gromacs-helper-vscode)
 [![Installs](https://img.shields.io/vscode-marketplace/i/gromacs-helper-vscode.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=gromacs-helper-vscode)
 [![Rating](https://img.shields.io/vscode-marketplace/r/gromacs-helper-vscode.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=gromacs-helper-vscode)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/gromacs-helper/gromacs-helper-vscode/build-and-release.yml?branch=main&style=flat-square&label=build)](https://github.com/gromacs-helper/gromacs-helper-vscode/actions)
+[![License](https://img.shields.io/github/license/gromacs-helper/gromacs-helper-vscode.svg?style=flat-square)](https://github.com/gromacs-helper/gromacs-helper-vscode/blob/main/LICENSE)
 
 一个为 GROMACS 分子动力学模拟提供全面支持的 VS Code 扩展。支持 `.mdp`、`.top`、`.itp`、`.gro`、`.ndx` 等 GROMACS 文件格式，提供语法高亮、智能补全、参数提示、错误检查等功能。
 
