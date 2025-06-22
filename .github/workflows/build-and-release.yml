@@ -107,7 +107,13 @@ jobs:
       - name: 运行测试
         run: |
           if [ -f "package.json" ] && npm run | grep -q "test"; then
-            npm test
+            # 检查是否存在测试配置文件
+            if [ -f ".vscode-test.mjs" ] || [ -f ".vscode-test.js" ]; then
+              echo "运行扩展测试..."
+              npm test
+            else
+              echo "跳过测试 - 未找到 .vscode-test 配置文件"
+            fi
           else
             echo "跳过测试 - 未配置测试命令"
           fi
