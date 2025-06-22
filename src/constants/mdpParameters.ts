@@ -294,7 +294,7 @@ export const MDP_PARAMETERS: MdpParameter[] = [
   },
   {
     name: 'energygrps',
-    type: 'real',
+    type: 'string',
     description: 'group(s) for which to write to write short-ranged non-bonded potential energies to the energy file (not supported on GPUs)',
     defaultValue: 's',
     category: 'output-control'
