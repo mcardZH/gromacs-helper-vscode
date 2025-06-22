@@ -1,0 +1,130 @@
+{
+  "System Group": {
+    "prefix": "system",
+    "body": [
+      "[ System ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a System group"
+  },
+  "Protein Group": {
+    "prefix": "protein",
+    "body": [
+      "[ Protein ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a Protein group"
+  },
+  "Water Group": {
+    "prefix": "water",
+    "body": [
+      "[ Water ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a Water group"
+  },
+  "Non-Water Group": {
+    "prefix": "non-water",
+    "body": [
+      "[ non-Water ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a non-Water group"
+  },
+  "Ion Group": {
+    "prefix": "ion",
+    "body": [
+      "[ Ion ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create an Ion group"
+  },
+  "Protein-H Group": {
+    "prefix": "protein-h",
+    "body": [
+      "[ Protein-H ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a Protein-H group (protein with hydrogens)"
+  },
+  "C-alpha Group": {
+    "prefix": "c-alpha",
+    "body": [
+      "[ C-alpha ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a C-alpha group"
+  },
+  "Backbone Group": {
+    "prefix": "backbone",
+    "body": [
+      "[ Backbone ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a Backbone group"
+  },
+  "MainChain Group": {
+    "prefix": "mainchain",
+    "body": [
+      "[ MainChain ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a MainChain group"
+  },
+  "MainChain+Cb Group": {
+    "prefix": "mainchain-cb",
+    "body": [
+      "[ MainChain+Cb ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a MainChain+Cb group"
+  },
+  "MainChain+H Group": {
+    "prefix": "mainchain-h",
+    "body": [
+      "[ MainChain+H ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a MainChain+H group"
+  },
+  "SideChain Group": {
+    "prefix": "sidechain",
+    "body": [
+      "[ SideChain ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a SideChain group"
+  },
+  "SideChain-H Group": {
+    "prefix": "sidechain-h",
+    "body": [
+      "[ SideChain-H ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a SideChain-H group"
+  },
+  "Prot-Masses Group": {
+    "prefix": "prot-masses",
+    "body": [
+      "[ Prot-Masses ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a Prot-Masses group"
+  },
+  "non-Protein Group": {
+    "prefix": "non-protein",
+    "body": [
+      "[ non-Protein ]",
+      "${1:atom_indices}"
+    ],
+    "description": "Create a non-Protein group"
+  },
+  "Custom Group": {
+    "prefix": "group",
+    "body": [
+      "[ ${1:group_name} ]",
+      "${2:atom_indices}"
+    ],
+    "description": "Create a custom group"
+  }
+}

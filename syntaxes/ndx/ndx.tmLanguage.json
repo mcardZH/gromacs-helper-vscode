@@ -1,0 +1,63 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GROMACS Index File",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#groups"
+    },
+    {
+      "include": "#atom-indices"
+    },
+    {
+      "include": "#numbers"
+    }
+  ],
+  "repository": {
+    "groups": {
+      "patterns": [
+        {
+          "name": "entity.name.section.ndx",
+          "match": "^\\s*\\[\\s*([^\\]]+)\\s*\\]",
+          "captures": {
+            "0": {
+              "name": "meta.section.group.ndx"
+            },
+            "1": {
+              "name": "entity.name.section.group-name.ndx"
+            }
+          }
+        }
+      ]
+    },
+    "atom-indices": {
+      "patterns": [
+        {
+          "name": "meta.atom-indices-line.ndx",
+          "match": "^\\s*(?!\\[|;)(\\d+(?:\\s+\\d+)*\\s*)$",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "name": "constant.numeric.atom-index.ndx",
+                  "match": "\\d+"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.integer.ndx",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.ndx"
+}

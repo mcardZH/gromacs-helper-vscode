@@ -1,0 +1,120 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "GROMACS GRO",
+    "scopeName": "source.gro",
+    "patterns": [
+        {
+            "include": "#comments"
+        },
+        {
+            "include": "#atom-count-line"
+        },
+        {
+            "include": "#box-vector-line"
+        },
+        {
+            "include": "#atom-line"
+        },
+        {
+            "include": "#title-line"
+        }
+    ],
+    "repository": {
+        "title-line": {
+            "name": "comment.line",
+            "match": "^.*$",
+            "captures": {
+                "0": {
+                    "name": "comment.line"
+                }
+            }
+        },
+        "atom-count-line": {
+            "name": "constant.numeric",
+            "match": "^\\s*\\d+\\s*$",
+            "captures": {
+                "0": {
+                    "name": "constant.numeric"
+                }
+            }
+        },
+        "atom-line": {
+            "name": "meta.structure",
+            "match": "^(.{5})(.{5})(.{5})(.{5})(.{8})(.{8})(.{8})(?:(.{8})(.{8})(.{8}))?",
+            "captures": {
+                "1": {
+                    "name": "constant.numeric"
+                },
+                "2": {
+                    "name": "entity.name.type"
+                },
+                "3": {
+                    "name": "variable.other"
+                },
+                "4": {
+                    "name": "constant.numeric"
+                },
+                "5": {
+                    "name": "constant.numeric"
+                },
+                "6": {
+                    "name": "constant.numeric"
+                },
+                "7": {
+                    "name": "constant.numeric"
+                },
+                "8": {
+                    "name": "constant.numeric.floating-point"
+                },
+                "9": {
+                    "name": "constant.numeric.floating-point"
+                },
+                "10": {
+                    "name": "constant.numeric.floating-point"
+                }
+            }
+        },
+        "box-vector-line": {
+            "name": "meta.definition",
+            "match": "^\\s*([+-]?\\d+\\.\\d+)\\s+([+-]?\\d+\\.\\d+)\\s+([+-]?\\d+\\.\\d+)(?:\\s+([+-]?\\d+\\.\\d+)\\s+([+-]?\\d+\\.\\d+)\\s+([+-]?\\d+\\.\\d+)\\s+([+-]?\\d+\\.\\d+)\\s+([+-]?\\d+\\.\\d+)\\s+([+-]?\\d+\\.\\d+))?\\s*$",
+            "captures": {
+                "1": {
+                    "name": "constant.numeric.floating-point"
+                },
+                "2": {
+                    "name": "constant.numeric.floating-point"
+                },
+                "3": {
+                    "name": "constant.numeric.floating-point"
+                },
+                "4": {
+                    "name": "constant.numeric.floating-point"
+                },
+                "5": {
+                    "name": "constant.numeric.floating-point"
+                },
+                "6": {
+                    "name": "constant.numeric.floating-point"
+                },
+                "7": {
+                    "name": "constant.numeric.floating-point"
+                },
+                "8": {
+                    "name": "constant.numeric.floating-point"
+                },
+                "9": {
+                    "name": "constant.numeric.floating-point"
+                }
+            }
+        },
+        "comments": {
+            "name": "comment.line",
+            "match": ";.*$",
+            "captures": {
+                "0": {
+                    "name": "comment.line"
+                }
+            }
+        }
+    }
+}

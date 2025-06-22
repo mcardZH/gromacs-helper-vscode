@@ -1,71 +1,187 @@
-# gromacs-helper-vscode README
+# GROMACS Helper for VS Code
 
-This is the README for your extension "gromacs-helper-vscode". After writing up a brief description, we recommend including the following sections.
+[![Version](https://img.shields.io/vscode-marketplace/v/gromacs-helper-vscode.svg?style=flat-square&label=vscode%20marketplace)](https://marketplace.visualstudio.com/items?itemName=gromacs-helper-vscode)
+[![Installs](https://img.shields.io/vscode-marketplace/i/gromacs-helper-vscode.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=gromacs-helper-vscode)
+[![Rating](https://img.shields.io/vscode-marketplace/r/gromacs-helper-vscode.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=gromacs-helper-vscode)
 
-## Features
+一个为 GROMACS 分子动力学模拟提供全面支持的 VS Code 扩展。支持 `.mdp`、`.top`、`.itp`、`.gro`、`.ndx` 等 GROMACS 文件格式，提供语法高亮、智能补全、参数提示、错误检查等功能。
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## ✨ 主要功能
 
-For example if there is an image subfolder under your extension project workspace:
+### 🎨 语法高亮
+- **MDP 文件** (`.mdp`) - 分子动力学参数文件
+- **TOP 文件** (`.top`, `.itp`) - 拓扑结构文件
+- **GRO 文件** (`.gro`) - 结构坐标文件
+- **NDX 文件** (`.ndx`) - 索引组文件
 
-\!\[feature X\]\(images/feature-x.png\)
+### 💡 智能补全
+- MDP 参数自动补全，包含所有 GROMACS 2025.2 支持的参数
+- 预设模板快速插入（能量最小化、NVT、NPT、MD 等）
+- 参数值智能建议
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+### 📖 悬停提示
+- 详细的 MDP 参数说明
+- 参数类型、单位、有效值范围
+- 默认值和使用建议
 
-## Requirements
+### 🔍 符号导航
+- 文档大纲视图
+- 快速跳转到特定参数
+- 代码折叠支持
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+### 📝 代码片段
+- 常用 MDP 配置模板
+- 一键生成标准模拟流程配置
 
-## Extension Settings
+### 🎯 错误检查
+- 参数语法验证
+- 值范围检查
+- 格式错误提示
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## 🚀 支持的文件格式
 
-For example:
+| 文件类型 | 扩展名 | 描述 | 功能支持 |
+|---------|--------|------|---------|
+| MDP | `.mdp` | 分子动力学参数文件 | 语法高亮、智能补全、悬停提示、错误检查 |
+| Topology | `.top`, `.itp` | 拓扑结构文件 | 语法高亮、符号导航、代码折叠 |
+| Structure | `.gro` | 结构坐标文件 | 语法高亮、符号导航 |
+| Index | `.ndx` | 索引组文件 | 语法高亮、符号导航、代码折叠 |
 
-This extension contributes the following settings:
+## 📦 安装
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+1. 打开 VS Code
+2. 按 `Ctrl+Shift+X` 打开扩展面板
+3. 搜索 "GROMACS Helper"
+4. 点击安装
 
-## Known Issues
+或者从 [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=gromacs-helper-vscode) 直接安装。
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+## 🎮 使用方法
 
-## Release Notes
+### MDP 文件编辑
+1. 创建或打开 `.mdp` 文件
+2. 输入参数名，扩展会自动提供补全建议
+3. 悬停在参数上查看详细说明
+4. 使用代码片段快速插入模板
 
-Users appreciate release notes as you update your extension.
+**示例：**
+```mdp
+; 能量最小化参数
+integrator = steep
+emtol = 1000.0
+emstep = 0.01
+nsteps = 50000
 
-### 1.0.0
+; 输出控制
+nstxout = 0
+nstvout = 0
+nstenergy = 100
+nstlog = 100
+```
 
-Initial release of ...
+### 使用代码片段
+- 输入 `em` + Tab - 插入能量最小化模板
+- 输入 `nvt` + Tab - 插入 NVT 平衡模板  
+- 输入 `md` + Tab - 插入生产性 MD 模板
 
-### 1.0.1
+### TOP/ITP 文件支持
+- 自动识别分子类型、原子类型、键合参数等
+- 提供文档大纲和符号导航
+- 支持代码折叠
 
-Fixed issue #.
+### GRO 文件支持
+- 结构化显示原子坐标
+- 符号导航快速定位
+- 语法高亮区分不同字段
 
-### 1.1.0
+### NDX 文件支持
+- 索引组语法高亮
+- 代码折叠支持
+- 组名悬停提示
 
-Added features X, Y, and Z.
+## ⚙️ 配置选项
+
+目前扩展使用默认配置，未来版本将添加更多自定义选项。
+
+## 🔧 开发和贡献
+
+### 本地开发
+```bash
+# 克隆仓库
+git clone https://github.com/your-username/gromacs-helper-vscode.git
+cd gromacs-helper-vscode
+
+# 安装依赖
+npm install
+
+# 编译项目
+npm run compile
+
+# 启动监听模式
+npm run watch
+```
+
+### 构建扩展包
+```bash
+npm run package
+```
+
+## 📋 系统要求
+
+- Visual Studio Code 版本 1.101.0 或更高
+- 无其他特殊依赖
+
+## 🐛 已知问题
+
+- 大型 TOP 文件的解析性能有待优化
+- 复杂嵌套 #include 指令的支持有限
+
+如发现问题，请在 [GitHub Issues](https://github.com/your-username/gromacs-helper-vscode/issues) 中报告。
+
+## 🗂️ 更新日志
+
+### 0.0.1 (开发中)
+
+- ✅ 基础 MDP 文件语法高亮
+- ✅ MDP 参数智能补全
+- ✅ 悬停提示和参数文档
+- ✅ TOP/ITP 文件支持
+- ✅ GRO 文件语法高亮
+- ✅ NDX 文件支持
+- ✅ 代码片段和模板
+- ✅ 符号导航和文档大纲
+
+## 📚 相关资源
+
+- [GROMACS 官方文档](https://manual.gromacs.org/)
+- [GROMACS MDP 选项参考](https://manual.gromacs.org/current/user-guide/mdp-options.html)
+- [分子动力学模拟教程](https://tutorials.gromacs.org/)
+
+## 🤝 贡献
+
+欢迎提交问题报告、功能请求和代码贡献！
+
+## 📄 许可证
+
+本项目基于 GPLv2 许可证开源
+
+## 👨‍💻 作者
+
+- 项目维护者：[mcardzh](https://github.com/mcardzh)
+
+## 🙏 致谢
+
+- 感谢 GROMACS 开发团队提供优秀的分子动力学模拟软件
+- 感谢 VS Code 团队提供强大的编辑器平台
+
+## 📞 支持
+
+如果这个扩展对您有帮助，请给我们一个 ⭐️！
+
+有问题或建议？请通过以下方式联系：
+- [GitHub Issues](https://github.com/mcardzh/gromacs-helper-vscode/issues)
+- [Email](mailto:mcardzh@gmail.com)
 
 ---
 
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+**享受您的 GROMACS 开发体验！** 🧬⚗️

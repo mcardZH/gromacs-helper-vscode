@@ -22,7 +22,7 @@
     ],
     "languages": [{
       "id": "gromacs_mdp_file",
-      "aliases": ["mdp"],
+      "aliases": ["GROMACS MDP", "mdp"],
       "extensions": [".mdp"],
       "configuration": "./syntaxes/mdp/mdp-language-configuration.json",
       "icon": {
@@ -32,11 +32,32 @@
     }, {
       "id": "gromacs_top_file",
       "aliases": ["GROMACS Topology", "top"],
-      "extensions": [".top", ".itp", ".top.*.#"],
+      "extensions": [".top", ".itp"],
+      "filenamePatterns": ["*.top.*", "*.itp.*", "#*.top.*#", "#*.itp.*#"],
       "configuration": "./syntaxes/top/top-language-configuration.json",
       "icon": {
         "light": "./imgs/top.svg",
         "dark": "./imgs/top.svg"
+      }
+    }, {
+      "id": "gromacs_gro_file",
+      "aliases": ["GROMACS Structure", "gro"],
+      "extensions": [".gro"],
+      "filenamePatterns": ["*.gro.*", "#*.gro.*#"],
+      "configuration": "./syntaxes/gro/gro-language-configuration.json",
+      "icon": {
+        "light": "./imgs/gro.svg",
+        "dark": "./imgs/gro.svg"
+      }
+    }, {
+      "id": "gromacs_ndx_file",
+      "aliases": ["GROMACS Index", "ndx"],
+      "extensions": [".ndx"],
+      "filenamePatterns": ["*.ndx.*", "#*.ndx.*#"],
+      "configuration": "./syntaxes/ndx/ndx-language-configuration.json",
+      "icon": {
+        "light": "./imgs/ndx.svg",
+        "dark": "./imgs/ndx.svg"
       }
     }],
     "grammars": [{
@@ -47,18 +68,44 @@
       "language": "gromacs_top_file",
       "scopeName": "source.top",
       "path": "./syntaxes/top/top.tmLanguage.json"
+    }, {
+      "language": "gromacs_gro_file",
+      "scopeName": "source.gro",
+      "path": "./syntaxes/gro/gro.tmLanguage.json"
+    }, {
+      "language": "gromacs_ndx_file",
+      "scopeName": "source.ndx",
+      "path": "./syntaxes/ndx/ndx.tmLanguage.json"
     }],
     "themes": [
       {
         "label": "GROMACS TOP Column Colors",
         "uiTheme": "vs-dark",
         "path": "./themes/gromacs-top-colors.json"
+      },
+      {
+        "label": "GROMACS GRO Colors",
+        "uiTheme": "vs-dark",
+        "path": "./themes/gromacs-gro-colors.json"
+      },
+      {
+        "label": "GROMACS NDX Colors",
+        "uiTheme": "vs-dark",
+        "path": "./themes/gromacs-ndx-colors.json"
       }
     ],
     "snippets": [
       {
         "language": "gromacs_mdp_file",
         "path": "./snippets/mdp.json"
+      },
+      {
+        "language": "gromacs_gro_file",
+        "path": "./snippets/gro.json"
+      },
+      {
+        "language": "gromacs_ndx_file",
+        "path": "./snippets/ndx.json"
       }
     ]
   },
