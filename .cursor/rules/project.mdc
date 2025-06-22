@@ -1,0 +1,255 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# GROMACS VSCode 扩展开发 Cursor Rules
+
+## 项目概述
+这是一个为 GROMACS 分子动力学模拟软件提供 VSCode 支持的扩展项目。支持的文件格式包括：.mdp（参数文件）、.gro（结构文件）、.top（拓扑文件）、.pdb（蛋白质数据库文件）等。
+
+## 开发原则
+
+### 1. 代码组织与架构
+- **模块化设计**：按文件类型和功能模块组织代码
+- **目录结构**：
+  ```
+  src/
+  ├── extension.ts              # 扩展入口文件
+  ├── languages/               # 语言支持模块
+  │   ├── mdp/                # MDP 文件支持
+  │   ├── gro/                # GRO 文件支持  
+  │   ├── top/                # TOP 文件支持
+  │   └── pdb/                # PDB 文件支持
+  ├── providers/              # 语言服务提供者
+  │   ├── completionProvider.ts
+  │   ├── hoverProvider.ts
+  │   ├── diagnosticProvider.ts
+  │   └── formattingProvider.ts
+  ├── utils/                  # 工具函数
+  └── constants/              # 常量定义
+  syntaxes/                   # 语法定义文件
+  ├── mdp/
+  ├── gro/
+  ├── top/
+  └── pdb/
+  ```
+
+### 2. 语法高亮开发规范
+
+#### TextMate 语法文件规范
+- **文件命名**：使用 `{language}.tmLanguage.json` 格式
+- **作用域命名**：遵循 TextMate 约定
+  - 根作用域：`source.{language}` (如 `source.mdp`)
+  - 关键字：`keyword.control.{language}`
+  - 注释：`comment.line.{language}`
+  - 字符串：`string.quoted.{language}`
+  - 数值：`constant.numeric.{language}`
+  - 变量：`variable.parameter.{language}`
+
+#### 语法规则开发
+- **模式优先级**：按重要性和特殊性排序，最具体的规则放在前面
+- **正则表达式**：使用 Oniguruma 语法，必须转义特殊字符
+- **作用域粒度**：提供足够细粒度的作用域便于主题定制
+- **注入语法**：对于嵌入语言使用 `injectionSelector`
+- **测试覆盖**：每个语法规则都应该有对应的测试用例
+
+#### 示例模式：
+```json
+{
+  "match": "^\\s*(\\b(?:integrator|dt|nsteps)\\b)\\s*(=)\\s*(.+)$",
+  "captures": {
+    "1": { "name": "keyword.control.parameter.mdp" },
+    "2": { "name": "keyword.operator.assignment.mdp" },
+    "3": { "patterns": [{ "include": "#parameter-values" }] }
+  }
+}
+```
+
+### 3. 语言配置规范
+
+#### 语言配置文件 (`{language}-language-configuration.json`)
+- **注释配置**：定义行注释和块注释字符
+- **括号匹配**：配置括号、引号的自动匹配
+- **代码折叠**：定义折叠标记和规则
+- **自动缩进**：配置缩进规则和模式
+- **单词分隔符**：定义单词边界字符
+
+#### 示例配置：
+```json
+{
+  "comments": {
+    "lineComment": ";",
+    "blockComment": ["/*", "*/"]
+  },
+  "brackets": [
+    ["[", "]"],
+    ["(", ")"],
+    ["{", "}"]
+  ],
+  "autoClosingPairs": [
+    {"open": "[", "close": "]"},
+    {"open": "(", "close": ")"},
+    {"open": "\"", "close": "\""}
+  ],
+  "surroundingPairs": [
+    ["[", "]"],
+    ["(", ")"],
+    ["\"", "\""]
+  ],
+  "folding": {
+    "markers": {
+      "start": "^\\s*;.*region",
+      "end": "^\\s*;.*endregion"
+    }
+  }
+}
+```
+
+### 4. 程序化语言功能开发
+
+#### 语言服务器开发
+- **架构选择**：优先使用 LSP (Language Server Protocol)
+- **功能实现**：
+  - 代码补全 (CompletionProvider)
+  - 悬停信息 (HoverProvider)
+  - 诊断信息 (DiagnosticProvider)
+  - 代码格式化 (DocumentFormattingProvider)
+  - 跳转定义 (DefinitionProvider)
+  - 查找引用 (ReferenceProvider)
+
+#### 补全功能开发
+- **上下文感知**：根据当前位置提供相关补全
+- **文档集成**：为补全项提供详细文档
+- **代码片段**：提供常用模板的 snippet
+- **参数验证**：实时验证参数值的有效性
+
+#### 示例补全提供者：
+```typescript
+export class MdpCompletionProvider implements vscode.CompletionItemProvider {
+  provideCompletionItems(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    token: vscode.CancellationToken,
+    context: vscode.CompletionContext
+  ): vscode.ProviderResult<vscode.CompletionItem[]> {
+    // 实现补全逻辑
+  }
+}
+```
+
+### 5. 代码质量标准
+
+#### TypeScript 开发规范
+- **类型安全**：所有函数和变量必须有明确的类型注解
+- **错误处理**：使用 Result 模式或 try-catch 处理错误
+- **异步操作**：优先使用 async/await，避免回调地狱
+- **内存管理**：正确处理事件监听器的注册和注销
+
+#### 测试要求
+- **单元测试**：每个功能模块都要有对应的单元测试
+- **集成测试**：测试扩展在 VSCode 中的实际行为
+- **语法测试**：验证语法高亮规则的正确性
+- **覆盖率**：代码测试覆盖率不低于 80%
+
+#### 代码风格
+- **ESLint**：使用 ESLint 进行代码风格检查
+- **Prettier**：使用 Prettier 进行代码格式化
+- **命名规范**：
+  - 类名：PascalCase
+  - 函数/变量：camelCase
+  - 常量：UPPER_SNAKE_CASE
+  - 文件名：kebab-case
+
+### 6. GROMACS 特定规范
+
+#### 文件格式支持
+- **MDP 文件**：参数文件，支持所有 GROMACS 参数的语法高亮和补全
+- **GRO 文件**：结构文件，支持原子坐标的语法高亮
+- **TOP 文件**：拓扑文件，支持分子定义和力场参数
+- **PDB 文件**：蛋白质数据库格式，支持原子记录和元数据
+
+#### 参数验证
+- **数值范围**：验证参数值是否在有效范围内
+- **单位检查**：验证物理量单位的正确性
+- **依赖关系**：检查参数之间的依赖和冲突
+- **版本兼容**：支持不同 GROMACS 版本的参数差异
+
+#### 文档集成
+- **官方文档**：集成 GROMACS 官方文档链接
+- **示例代码**：提供常用配置的模板
+- **最佳实践**：内置模拟设置的最佳实践建议
+
+### 7. 性能优化
+
+#### 语法分析性能
+- **增量解析**：只重新解析修改的部分
+- **缓存机制**：缓存解析结果避免重复计算
+- **异步处理**：语法高亮和诊断使用异步操作
+- **内存优化**：及时释放不再需要的对象
+
+#### 用户体验优化
+- **响应速度**：补全和诊断响应时间 < 100ms
+- **渐进式加载**：大文件分批加载和处理
+- **错误恢复**：语法错误不影响其他功能
+- **降级处理**：复杂功能失败时提供基础功能
+
+### 8. 发布和维护
+
+#### 版本管理
+- **语义化版本**：遵循 SemVer 规范
+- **变更日志**：详细记录每个版本的变更
+- **向后兼容**：新版本保持向后兼容性
+- **弃用策略**：提前标记即将废弃的功能
+
+#### 文档维护
+- **README**：提供清晰的安装和使用说明
+- **API 文档**：使用 JSDoc 生成 API 文档
+- **示例项目**：提供完整的使用示例
+- **故障排除**：常见问题的解决方案
+
+#### 社区支持
+- **问题跟踪**：及时回应 GitHub Issues
+- **功能请求**：评估和实现用户建议的功能
+- **贡献指南**：为贡献者提供清晰的指南
+- **行为准则**：建立友好的社区环境
+
+### 9. 安全和隐私
+
+#### 数据处理
+- **本地处理**：所有文件处理在本地进行
+- **隐私保护**：不收集或传输用户的代码内容
+- **权限最小化**：只请求必要的 VSCode API 权限
+- **依赖安全**：定期检查和更新依赖包
+
+### 10. 部署和配置
+
+#### 扩展配置
+- **用户设置**：提供可配置的扩展选项
+- **工作区配置**：支持项目级别的配置
+- **配置验证**：验证用户配置的有效性
+- **默认值**：为所有配置项提供合理的默认值
+
+## 开发工作流
+
+1. **功能开发**：先写测试，再实现功能 (TDD)
+2. **代码审查**：所有代码变更都需要审查
+3. **持续集成**：自动运行测试和代码质量检查
+4. **渐进式发布**：使用预发布版本进行用户测试
+5. **性能监控**：监控扩展的性能和使用情况
+
+## 工具和依赖
+
+### 开发工具
+- **TypeScript**：主要开发语言
+- **VSCode Extension API**：核心框架
+- **Mocha/Jest**：测试框架
+- **ESLint + Prettier**：代码质量工具
+
+### 推荐库
+- **vscode-languageserver**：LSP 实现
+- **vscode-textmate**：TextMate 语法解析
+- **yaml**：YAML 配置文件处理
+- **ajv**：JSON Schema 验证
+
+遵循这些规范将确保 GROMACS VSCode 扩展的代码质量、用户体验和长期可维护性。 

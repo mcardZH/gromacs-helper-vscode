@@ -1,0 +1,68 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "mdp",
+	"patterns": [
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#parameter-line"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [{
+				"name": "comment.line.semicolon.mdp",
+				"match": ";.*$"
+			}]
+		},
+		"parameter-line": {
+			"patterns": [{
+				"match": "^\\s*(\\b(?:DispCorr|QMMM-grps|acc-grps|accelerate|adress|annealing-npoints|annealing-temp|annealing-time|annealing|awh-nbias|awh-nsamples-update|awh-nstout|awh-nstsample|awh-potential|awh-seed|awh-share-multisim|awh1-dim1-coord-index|awh1-dim1-coord-provider|awh1-dim1-cover-diameter|awh1-dim1-diffusion|awh1-dim1-end|awh1-dim1-force-constant|awh1-dim1-start|awh1-equilibrate-histogram|awh1-error-init|awh1-growth|awh1-ndim|awh1-share-group|awh1-target-beta-scaling|awh1-target-cutoff|awh1-target|awh1-user-data|awh|bd-fric|bonded-lambdas|bulk-offsetA|bulk-offsetB|calc-lambda-neighbors|comm-grps|comm-mode|compressed-x-grps|compressed-x-precision|compressibility|constraint-algorithm|constraints|continuation.from-previous-md |continuation|cos-acceleration|coul-lambdas|coulomb-modifier|coulombtype|coupl-steps|couple-intramol|couple-lambda0|couple-lambda1|couple-moltype|cutoff-scheme|cyl0-down|cyl0-r|cyl0-up|cyl1-down|cyl1-r|cyl1-up|default.parameters |define|deform|delta-lambda|density-guided-simulation-active|density-guided-simulation-adaptive-force-scaling-time-constant|density-guided-simulation-adaptive-force-scaling|density-guided-simulation-atom-spreading-weight|density-guided-simulation-force-constant|density-guided-simulation-gaussian-transform-spreading-range-in-multiples-of-width|density-guided-simulation-gaussian-transform-spreading-width|density-guided-simulation-group|density-guided-simulation-normalize-densities|density-guided-simulation-nst|density-guided-simulation-reference-density-filename|density-guided-simulation-shift-vector|density-guided-simulation-similarity-measure|density-guided-simulation-transformation-matrix|density_guided.vanilla |dh-hist-size|dh-hist-spacing|dhdl-derivatives|dhdl-print-energy|disre-fc|disre-mixed|disre-tau|disre-weighting|disre|dt|electric-field-x|electric-field-y|electric-field-z|emstep|emtol|energygrp-excl|energygrp-table|energygrps|epsilon-r|epsilon-rf|epsilon-surface|ewald-geometry|ewald-rtol-lj|ewald-rtol|expanded|fcstep|fep-lambdas|force_field.amber |force_field.charmm |force_field.charmm-monolayer |fourier-nx|fourier-ny|fourier-nz|fourierspacing|free-energy|freezedim|freezegrps|gen-seed|gen-temp|gen-vel|implicit-solvent|include|init-lambda-state|init-lambda-weights|init-lambda|init-step|init-wl-delta|integrator|iontype0-in-A|iontype0-in-B|iontype0-name|iontypes|ld-seed|lincs-iter|lincs-order|lincs-warnangle|lj-pme-comb-rule|lmc-forced-nstart|lmc-gibbsdelta|lmc-mc-move|lmc-repeats|lmc-seed|lmc-stats|lmc-weights-equil|mass-lambdas|massw-split0|massw-split1|mc-temperature|mininum-var-min|morse|mts-level2-factor|mts-level2-forces|mts-levels|mts|nbfgscorr|nh-chain-length|niter|nst-transition-matrix|nstcalcenergy|nstcgsteep|nstcomm|nstdhdl|nstdisreout|nstenergy|nsteps|nstexpanded|nstfout|nstlist|nstlog|nstorireout|nstpcouple|nsttcouple|nstvout|nstxout-compressed|nstxout|nwall|orire-fc|orire-fitgrp|orire-tau|orire|output.minimal |pbc|pcoupl|pcoupltype|periodic-molecules|pixel-size-in-nm|pme-order|pressure.atmospheric |pressure.membrane |print-nose-hoover-chain-variables|pull-constr-tol|pull-coord1-dim|pull-coord1-dx|pull-coord1-expression|pull-coord1-geometry|pull-coord1-groups|pull-coord1-init|pull-coord1-k|pull-coord1-kB|pull-coord1-origin|pull-coord1-potential-provider|pull-coord1-rate|pull-coord1-start|pull-coord1-type|pull-coord1-vec|pull-cylinder-r|pull-fout-average|pull-group1-name|pull-group1-pbcatom|pull-group1-weights|pull-ncoords|pull-ngroups|pull-nstfout|pull-nstxout|pull-pbc-ref-prev-step-com|pull-print-com|pull-print-components|pull-print-ref-value|pull-xout-average|pull|qmmm-cp2k-active|qmmm-cp2k-qmcharge|qmmm-cp2k-qmfilenames|qmmm-cp2k-qmgroup|qmmm-cp2k-qmmethod|qmmm-cp2k-qmmultiplicity|rcoulomb-switch|rcoulomb|ref-p|ref-t|refcoord-scaling|reference-density-filename|restraint-lambdas|rlist|rot-eps0|rot-fit-method0|rot-group0|rot-k0|rot-massw0|rot-min-gauss0|rot-ngroups|rot-nstrout|rot-nstsout|rot-pivot0|rot-potfit-nsteps0|rot-potfit-step0|rot-rate0|rot-slab-dist0|rot-type0|rot-vec0|rotation|rtpi|rvdw-switch|rvdw|sc-alpha|sc-coul|sc-function|sc-gapsys-scale-linpoint-lj|sc-gapsys-scale-linpoint-q|sc-gapsys-sigma-lj|sc-power|sc-r-power|sc-sigma|separate-dhdl-file|shake-tol|sim-temp-high|sim-temp-low|simulated-tempering-scaling|simulated-tempering|simulation-part|solvent-group|split-group0|split-group1|swap-frequency|swapcoords|symmetrized-transition-matrix|table-extension|table|tau-p|tau-t|tc-grps|tcoupl|temperature-lambdas|temperature.300K-protein-separate |threshold|tinit|type.energy-minimisation |type.molecular-dynamics |user1-grps|user2-grps|vdw-lambdas|vdw-modifier|vdwtype|verlet-buffer-tolerance|wall-atomtype|wall-density|wall-ewald-zfac|wall-r-linpot|wall-type|wl-oneovert|wl-ratio|wl-scale|DispCorr|QMMM_grps|acc_grps|accelerate|adress|annealing_npoints|annealing_temp|annealing_time|annealing|awh_nbias|awh_nsamples_update|awh_nstout|awh_nstsample|awh_potential|awh_seed|awh_share_multisim|awh1_dim1_coord_index|awh1_dim1_coord_provider|awh1_dim1_cover_diameter|awh1_dim1_diffusion|awh1_dim1_end|awh1_dim1_force_constant|awh1_dim1_start|awh1_equilibrate_histogram|awh1_error_init|awh1_growth|awh1_ndim|awh1_share_group|awh1_target_beta_scaling|awh1_target_cutoff|awh1_target|awh1_user_data|awh|bd_fric|bonded_lambdas|bulk_offsetA|bulk_offsetB|calc_lambda_neighbors|comm_grps|comm_mode|compressed_x_grps|compressed_x_precision|compressibility|constraint_algorithm|constraints|continuation.from_previous_md |continuation|cos_acceleration|coul_lambdas|coulomb_modifier|coulombtype|coupl_steps|couple_intramol|couple_lambda0|couple_lambda1|couple_moltype|cutoff_scheme|cyl0_down|cyl0_r|cyl0_up|cyl1_down|cyl1_r|cyl1_up|default.parameters |define|deform|delta_lambda|density_guided_simulation_active|density_guided_simulation_adaptive_force_scaling_time_constant|density_guided_simulation_adaptive_force_scaling|density_guided_simulation_atom_spreading_weight|density_guided_simulation_force_constant|density_guided_simulation_gaussian_transform_spreading_range_in_multiples_of_width|density_guided_simulation_gaussian_transform_spreading_width|density_guided_simulation_group|density_guided_simulation_normalize_densities|density_guided_simulation_nst|density_guided_simulation_reference_density_filename|density_guided_simulation_shift_vector|density_guided_simulation_similarity_measure|density_guided_simulation_transformation_matrix|density_guided.vanilla |dh_hist_size|dh_hist_spacing|dhdl_derivatives|dhdl_print_energy|disre_fc|disre_mixed|disre_tau|disre_weighting|disre|dt|electric_field_x|electric_field_y|electric_field_z|emstep|emtol|energygrp_excl|energygrp_table|energygrps|epsilon_r|epsilon_rf|epsilon_surface|ewald_geometry|ewald_rtol_lj|ewald_rtol|expanded|fcstep|fep_lambdas|force_field.amber |force_field.charmm |force_field.charmm_monolayer |fourier_nx|fourier_ny|fourier_nz|fourierspacing|free_energy|freezedim|freezegrps|gen_seed|gen_temp|gen_vel|implicit_solvent|include|init_lambda_state|init_lambda_weights|init_lambda|init_step|init_wl_delta|integrator|iontype0_in_A|iontype0_in_B|iontype0_name|iontypes|ld_seed|lincs_iter|lincs_order|lincs_warnangle|lj_pme_comb_rule|lmc_forced_nstart|lmc_gibbsdelta|lmc_mc_move|lmc_repeats|lmc_seed|lmc_stats|lmc_weights_equil|mass_lambdas|massw_split0|massw_split1|mc_temperature|mininum_var_min|morse|mts_level2_factor|mts_level2_forces|mts_levels|mts|nbfgscorr|nh_chain_length|niter|nst_transition_matrix|nstcalcenergy|nstcgsteep|nstcomm|nstdhdl|nstdisreout|nstenergy|nsteps|nstexpanded|nstfout|nstlist|nstlog|nstorireout|nstpcouple|nsttcouple|nstvout|nstxout_compressed|nstxout|nwall|orire_fc|orire_fitgrp|orire_tau|orire|output.minimal |pbc|pcoupl|pcoupltype|periodic_molecules|pixel_size_in_nm|pme_order|pressure.atmospheric |pressure.membrane |print_nose_hoover_chain_variables|pull_constr_tol|pull_coord1_dim|pull_coord1_dx|pull_coord1_expression|pull_coord1_geometry|pull_coord1_groups|pull_coord1_init|pull_coord1_k|pull_coord1_kB|pull_coord1_origin|pull_coord1_potential_provider|pull_coord1_rate|pull_coord1_start|pull_coord1_type|pull_coord1_vec|pull_cylinder_r|pull_fout_average|pull_group1_name|pull_group1_pbcatom|pull_group1_weights|pull_ncoords|pull_ngroups|pull_nstfout|pull_nstxout|pull_pbc_ref_prev_step_com|pull_print_com|pull_print_components|pull_print_ref_value|pull_xout_average|pull|qmmm_cp2k_active|qmmm_cp2k_qmcharge|qmmm_cp2k_qmfilenames|qmmm_cp2k_qmgroup|qmmm_cp2k_qmmethod|qmmm_cp2k_qmmultiplicity|rcoulomb_switch|rcoulomb|ref_p|ref_t|refcoord_scaling|reference_density_filename|restraint_lambdas|rlist|rot_eps0|rot_fit_method0|rot_group0|rot_k0|rot_massw0|rot_min_gauss0|rot_ngroups|rot_nstrout|rot_nstsout|rot_pivot0|rot_potfit_nsteps0|rot_potfit_step0|rot_rate0|rot_slab_dist0|rot_type0|rot_vec0|rotation|rtpi|rvdw_switch|rvdw|sc_alpha|sc_coul|sc_function|sc_gapsys_scale_linpoint_lj|sc_gapsys_scale_linpoint_q|sc_gapsys_sigma_lj|sc_power|sc_r_power|sc_sigma|separate_dhdl_file|shake_tol|sim_temp_high|sim_temp_low|simulated_tempering_scaling|simulated_tempering|simulation_part|solvent_group|split_group0|split_group1|swap_frequency|swapcoords|symmetrized_transition_matrix|table_extension|table|tau_p|tau_t|tc_grps|tcoupl|temperature_lambdas|temperature.300K_protein_separate |threshold|tinit|type.energy_minimisation |type.molecular_dynamics |user1_grps|user2_grps|vdw_lambdas|vdw_modifier|vdwtype|verlet_buffer_tolerance|wall_atomtype|wall_density|wall_ewald_zfac|wall_r_linpot|wall_type|wl_oneovert|wl_ratio|wl_scale)\\b)\\s*(=)\\s*([^;\\s][^;]*)\\s*(;.*)?$",
+				"captures": {
+					"1": {
+						"name": "keyword.purple.mdp"
+					},
+					"2": {
+						"name": "keyword.operator.assignment.mdp"
+					},
+					"3": {
+						"patterns": [
+							{
+								"include": "#parameter-values"
+							}
+						]
+					},
+					"4": {
+						"name": "comment.line.semicolon.mdp"
+					}
+				}
+			}]
+		},
+		"parameter-values": {
+			"patterns": [
+				{
+					"name": "constant.numeric.integer.mdp",
+					"match": "\\b\\d+\\b"
+				},
+				{
+					"name": "constant.numeric.float.mdp",
+					"match": "\\b\\d*\\.\\d+([eE][+-]?\\d+)?\\b"
+				},
+				{
+					"name": "constant.numeric.scientific.mdp",
+					"match": "\\b\\d+[eE][+-]?\\d+\\b"
+				},
+				{
+					"name": "constant.language.boolean.mdp",
+					"match": "\\b(yes|no|true|false|on|off)\\b"
+				},
+				{
+					"name": "string.unquoted.mdp",
+					"match": "\\S+"
+				}
+			]
+		}
+	},
+	"scopeName": "source.mdp"
+}

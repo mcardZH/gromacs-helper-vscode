@@ -1,0 +1,49 @@
+=== GROMACS MDP 参数解析结果摘要 ===
+总参数数量: 297
+
+按类别分布:
+  AWH自适应偏置 / AWH Adaptive Biasing: 27
+  键参数 / Bonds: 8
+  集体变量 / Collective Variables: 3
+  质心牵引 / COM Pulling: 30
+  计算电生理学 / Computational Electrophysiology: 21
+  密度引导模拟 / Density-guided Simulations: 14
+  电场 / Electric Fields: 3
+  静电相互作用 / Electrostatics: 6
+  能量组排除 / Energy Group Exclusions: 1
+  能量最小化 / Energy Minimization: 4
+  强制旋转 / Enforced Rotation: 17
+  Ewald求和 / Ewald: 10
+  扩展系综计算 / Expanded Ensemble Calculations: 23
+  自由能计算 / Free Energy Calculations: 31
+  朗之万动力学 / Langevin Dynamics: 2
+  邻居搜索 / Neighbor Searching: 7
+  NMR精修 / NMR Refinement: 11
+  非平衡MD / Non-equilibrium MD: 7
+  输出控制 / Output Control: 10
+  预处理 / Preprocessing: 2
+  压力耦合 / Pressure Coupling: 7
+  QM/MM: 1
+  QM/MM CP2K接口 / QM/MM CP2K Interface: 6
+  运行控制 / Run Control: 14
+  壳层分子动力学 / Shell Molecular Dynamics: 2
+  模拟退火 / Simulated Annealing: 4
+  表格 / Tables: 2
+  温度耦合 / Temperature Coupling: 9
+  测试粒子插入 / Test Particle Insertion: 1
+  范德华相互作用 / Van der Waals: 5
+  速度生成 / Velocity Generation: 3
+  壁面 / Walls: 6
+
+按类型分布:
+  boolean: 18
+  enum: 69
+  integer: 75
+  real: 71
+  string: 64
+
+属性统计:
+  有默认值: 202
+  有枚举值: 69
+  有单位: 103
+  有范围: 13

@@ -1,0 +1,90 @@
+{
+  "name": "gromacs-helper-vscode",
+  "displayName": "Gromacs Helper VSCode",
+  "description": "Full support for gmx",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages",
+    "Snippets"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gromacs-helper-vscode.helloWorld",
+        "title": "Hello World"
+      }
+    ],
+    "languages": [{
+      "id": "gromacs_mdp_file",
+      "aliases": ["mdp"],
+      "extensions": [".mdp"],
+      "configuration": "./syntaxes/mdp/mdp-language-configuration.json",
+      "icon": {
+        "light": "./imgs/mdp.svg",
+        "dark": "./imgs/mdp.svg"
+      }
+    }, {
+      "id": "gromacs_top_file",
+      "aliases": ["GROMACS Topology", "top"],
+      "extensions": [".top", ".itp", ".top.*.#"],
+      "configuration": "./syntaxes/top/top-language-configuration.json",
+      "icon": {
+        "light": "./imgs/top.svg",
+        "dark": "./imgs/top.svg"
+      }
+    }],
+    "grammars": [{
+      "language": "gromacs_mdp_file",
+      "scopeName": "source.mdp",
+      "path": "./syntaxes/mdp/mdp.tmLanguage.json"
+    }, {
+      "language": "gromacs_top_file",
+      "scopeName": "source.top",
+      "path": "./syntaxes/top/top.tmLanguage.json"
+    }],
+    "themes": [
+      {
+        "label": "GROMACS TOP Column Colors",
+        "uiTheme": "vs-dark",
+        "path": "./themes/gromacs-top-colors.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "gromacs_mdp_file",
+        "path": "./snippets/mdp.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.101.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^7.7.1",
+    "@typescript-eslint/parser": "^7.7.1",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5",
+    "ts-loader": "^9.5.1",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4",
+    "@vscode/test-cli": "^0.0.8",
+    "@vscode/test-electron": "^2.3.9"
+  }
+}

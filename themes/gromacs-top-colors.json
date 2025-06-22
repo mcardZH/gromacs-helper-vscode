@@ -1,0 +1,143 @@
+{
+  "name": "GROMACS TOP Column Colors",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#1e1e1e",
+    "editor.foreground": "#d4d4d4"
+  },
+  "tokenColors": [
+    {
+      "name": "Comment",
+      "scope": [
+        "comment",
+        "punctuation.definition.comment"
+      ],
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#6A9955"
+      }
+    },
+    {
+      "name": "Column Headers in Comments",
+      "scope": "keyword.other.column-header.top",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#4EC9B0"
+      }
+    },
+    {
+      "name": "Section Names",
+      "scope": "entity.name.section.top",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#C586C0"
+      }
+    },
+    {
+      "name": "Atom Indices (ai, aj, ak, al)",
+      "scope": [
+        "variable.parameter.atom-index.ai.top",
+        "variable.parameter.atom-index.aj.top", 
+        "variable.parameter.atom-index.ak.top",
+        "variable.parameter.atom-index.al.top",
+        "variable.parameter.atom-number.top"
+      ],
+      "settings": {
+        "foreground": "#9CDCFE"
+      }
+    },
+    {
+      "name": "Function Types",
+      "scope": "constant.numeric.function-type.top",
+      "settings": {
+        "foreground": "#DCDCAA"
+      }
+    },
+    {
+      "name": "Bond Parameters",
+      "scope": [
+        "constant.numeric.bond-length.top",
+        "constant.numeric.force-constant.top"
+      ],
+      "settings": {
+        "foreground": "#B5CEA8"
+      }
+    },
+    {
+      "name": "Angle Parameters",
+      "scope": [
+        "constant.numeric.angle-value.top",
+        "constant.numeric.phase-angle.top"
+      ],
+      "settings": {
+        "foreground": "#CE9178"
+      }
+    },
+    {
+      "name": "Multiplicity",
+      "scope": "constant.numeric.multiplicity.top",
+      "settings": {
+        "foreground": "#D7BA7D"
+      }
+    },
+    {
+      "name": "Atom Types",
+      "scope": "entity.name.type.atom-type.top",
+      "settings": {
+        "foreground": "#4FC1FF"
+      }
+    },
+    {
+      "name": "Residue Names and Numbers",
+      "scope": [
+        "entity.name.tag.residue-name.top",
+        "constant.numeric.residue-number.top"
+      ],
+      "settings": {
+        "foreground": "#FFD700"
+      }
+    },
+    {
+      "name": "Atom Names",
+      "scope": "entity.name.tag.atom-name.top",
+      "settings": {
+        "foreground": "#FF6B6B"
+      }
+    },
+    {
+      "name": "Charges",
+      "scope": "constant.numeric.charge.top",
+      "settings": {
+        "foreground": "#FF8C42"
+      }
+    },
+    {
+      "name": "Mass",
+      "scope": "constant.numeric.mass.top",
+      "settings": {
+        "foreground": "#98D8C8"
+      }
+    },
+    {
+      "name": "Charge Groups",
+      "scope": "constant.numeric.charge-group.top",
+      "settings": {
+        "foreground": "#A8E6CF"
+      }
+    },
+    {
+      "name": "Molecule Names",
+      "scope": "entity.name.type.molecule-name.top",
+      "settings": {
+        "foreground": "#FFB3BA"
+      }
+    },
+    {
+      "name": "Molecule Counts",
+      "scope": "constant.numeric.molecule-count.top",
+      "settings": {
+        "foreground": "#BAFFC9"
+      }
+    }
+  ]
+}
