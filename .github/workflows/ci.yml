@@ -67,7 +67,7 @@ jobs:
           echo "build_version=$BUILD_VERSION" >> $GITHUB_ENV
 
       - name: 上传构建产物
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ci-build-${{ env.build_version }}
           path: "*.vsix"
