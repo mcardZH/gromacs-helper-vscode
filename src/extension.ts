@@ -12,6 +12,7 @@ import { PdbHoverProvider } from './providers/pdbHoverProvider';
 import { PdbSymbolProvider } from './providers/pdbSymbolProvider';
 import { PdbFoldingProvider } from './providers/pdbFoldingProvider';
 import { XvgLanguageSupport } from './languages/xvg';
+import { SnippetViewProvider } from './providers/snippetTreeProvider';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -50,6 +51,12 @@ export function activate(context: vscode.ExtensionContext) {
 	// Initialize XVG language support
 	const xvgLanguageSupport = new XvgLanguageSupport();
 	xvgLanguageSupport.activate(context);
+
+	// Initialize Snippet Tree View
+	const snippetManager = mdpLanguageSupport.getSnippetManager();
+	if (snippetManager) {
+		new SnippetViewProvider(context, snippetManager);
+	}
 
 }
 

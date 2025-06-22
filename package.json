@@ -2,7 +2,7 @@
   "name": "gromacs-helper-vscode",
   "displayName": "GROMACS Helper for VS Code",
   "description": "Complete language support for GROMACS molecular dynamics simulation files including MDP, TOP, GRO, NDX, and PDB formats",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "mcardzh",
   "author": {
     "name": "mcardzh"
@@ -215,8 +215,44 @@
         "title": "Preview XVG Chart",
         "icon": "$(graph)",
         "when": "resourceExtname == .xvg"
+      },
+      {
+        "command": "gromacs-helper.manageSnippets",
+        "title": "Manage MDP Snippets",
+        "icon": "$(symbol-snippet)",
+        "category": "GROMACS Helper"
+      },
+      {
+        "command": "gromacs-helper.refreshSnippets",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "gromacs-helper.insertSnippetFromTree",
+        "title": "Insert Snippet",
+        "icon": "$(add)"
+      },
+      {
+        "command": "gromacs-helper.editSnippetFromTree",
+        "title": "Edit Snippet",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "gromacs-helper.deleteSnippetFromTree",
+        "title": "Delete Snippet",
+        "icon": "$(trash)"
       }
     ],
+    "views": {
+      "explorer": [
+        {
+          "id": "gromacsSnippets",
+          "name": "MDP Snippets",
+          "icon": "$(symbol-snippet)",
+          "when": "true"
+        }
+      ]
+    },
     "menus": {
       "explorer/context": [
         {
@@ -230,6 +266,48 @@
           "command": "gromacs-helper.previewXvg",
           "when": "resourceExtname == .xvg",
           "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "gromacs-helper.manageSnippets",
+          "when": "editorLangId == gromacs_mdp_file",
+          "group": "gromacs-helper"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "gromacs-helper.manageSnippets",
+          "when": "true"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "gromacs-helper.manageSnippets",
+          "when": "view == gromacsSnippets",
+          "group": "navigation"
+        },
+        {
+          "command": "gromacs-helper.refreshSnippets",
+          "when": "view == gromacsSnippets",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "gromacs-helper.insertSnippetFromTree",
+          "when": "view == gromacsSnippets && viewItem == snippet",
+          "group": "inline"
+        },
+        {
+          "command": "gromacs-helper.editSnippetFromTree",
+          "when": "view == gromacsSnippets && viewItem == snippet",
+          "group": "edit"
+        },
+        {
+          "command": "gromacs-helper.deleteSnippetFromTree",
+          "when": "view == gromacsSnippets && viewItem == snippet",
+          "group": "edit"
         }
       ]
     }

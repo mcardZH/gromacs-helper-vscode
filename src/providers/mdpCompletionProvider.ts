@@ -1,7 +1,13 @@
 import * as vscode from 'vscode';
 import { MDP_PARAMETERS, getMdpParameter, MdpParameter } from '../constants/mdpParameters';
+import { SnippetManager } from '../snippetManager';
 
 export class MdpCompletionProvider implements vscode.CompletionItemProvider {
+  private snippetManager?: SnippetManager;
+
+  setSnippetManager(snippetManager: SnippetManager): void {
+    this.snippetManager = snippetManager;
+  }
   
   public provideCompletionItems(
     document: vscode.TextDocument,
@@ -27,7 +33,9 @@ export class MdpCompletionProvider implements vscode.CompletionItemProvider {
     // 检查是否在输入参数名
     const parameterNameMatch = textBeforeCursor.match(/^\s*([a-zA-Z][a-zA-Z0-9_-]*)$/);
     if (parameterNameMatch || textBeforeCursor.trim() === '' || /^\s*$/.test(textBeforeCursor)) {
-      return this.provideParameterNameCompletions();
+      const parameterCompletions = this.provideParameterNameCompletions();
+      const snippetCompletions = this.snippetManager ? this.snippetManager.getCompletionItems() : [];
+      return [...snippetCompletions, ...parameterCompletions];
     }
     
     return [];

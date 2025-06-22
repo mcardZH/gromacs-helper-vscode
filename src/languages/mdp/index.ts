@@ -4,6 +4,7 @@ import { MdpHoverProvider } from '../../providers/mdpHoverProvider';
 import { MdpDiagnosticProvider } from '../../providers/mdpDiagnosticProvider';
 import { MdpFormattingProvider } from '../../providers/mdpFormattingProvider';
 import { MdpSymbolProvider } from '../../providers/mdpSymbolProvider';
+import { SnippetManager } from '../../snippetManager';
 
 /**
  * MDP 语言支持模块
@@ -11,6 +12,7 @@ import { MdpSymbolProvider } from '../../providers/mdpSymbolProvider';
  */
 export class MdpLanguageSupport {
   private diagnosticProvider: MdpDiagnosticProvider;
+  private snippetManager?: SnippetManager;
   private disposables: vscode.Disposable[] = [];
   
   constructor() {
@@ -21,16 +23,22 @@ export class MdpLanguageSupport {
    * 激活 MDP 语言支持
    */
   public activate(context: vscode.ExtensionContext): void {
+    // 初始化片段管理器
+    this.snippetManager = new SnippetManager(context);
+    
     const mdpSelector: vscode.DocumentSelector = { language: 'gromacs_mdp_file' };
     
     // 注册补全提供者
-    const completionProvider = vscode.languages.registerCompletionItemProvider(
+    const completionProvider = new MdpCompletionProvider();
+    completionProvider.setSnippetManager(this.snippetManager);
+    
+    const completionRegistration = vscode.languages.registerCompletionItemProvider(
       mdpSelector,
-      new MdpCompletionProvider(),
+      completionProvider,
       '=', // 触发字符
       ' '  // 空格也可以触发补全
     );
-    this.disposables.push(completionProvider);
+    this.disposables.push(completionRegistration);
     
     // 注册悬停提示提供者
     const hoverProvider = vscode.languages.registerHoverProvider(
@@ -83,6 +91,14 @@ export class MdpLanguageSupport {
         this.diagnosticProvider.provideDiagnostics(document);
       }
     });
+
+    // 注册片段管理命令
+    const snippetManagerCommand = vscode.commands.registerCommand('gromacs-helper.manageSnippets', () => {
+      if (this.snippetManager) {
+        this.snippetManager.showSnippetManager();
+      }
+    });
+    this.disposables.push(snippetManagerCommand);
     
     // 添加所有 disposables 到扩展上下文
     context.subscriptions.push(...this.disposables);
@@ -126,5 +142,12 @@ export class MdpLanguageSupport {
   public dispose(): void {
     this.disposables.forEach(disposable => disposable.dispose());
     this.diagnosticProvider.dispose();
+  }
+
+  /**
+   * 获取片段管理器实例
+   */
+  public getSnippetManager(): SnippetManager | undefined {
+    return this.snippetManager;
   }
 }
