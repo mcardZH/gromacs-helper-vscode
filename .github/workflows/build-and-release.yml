@@ -70,6 +70,8 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       vsix-name: ${{ steps.build.outputs.vsix-name }}
+      should_release: ${{ steps.version.outputs.should_release }}
+      version_changed: ${{ steps.version.outputs.version_changed }}
       
     steps:
       - name: 检出代码
@@ -110,16 +112,42 @@ jobs:
             
             echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
             echo "is_manual=true" >> $GITHUB_OUTPUT
+            echo "should_release=true" >> $GITHUB_OUTPUT
           else
-            # 自动触发 - 不更新版本号，但增加构建号
+            # 自动触发 - 检查版本号变化
             CURRENT_VERSION=$(node -p "require('./package.json').version")
-            BUILD_NUMBER=${{ github.run_number }}
-            VERSION_WITH_BUILD="${CURRENT_VERSION}+build.${BUILD_NUMBER}"
+            
+            # 获取上一次的版本号
+            PREVIOUS_VERSION=""
+            if [ "${{ github.event_name }}" = "push" ]; then
+              # 尝试从上一个提交获取版本号
+              git fetch origin ${{ github.ref_name }}
+              if git show HEAD~1:package.json > /dev/null 2>&1; then
+                PREVIOUS_VERSION=$(git show HEAD~1:package.json | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version" 2>/dev/null || echo "")
+              fi
+            fi
             
             echo "当前版本: $CURRENT_VERSION"
-            echo "构建版本: $VERSION_WITH_BUILD"
-            echo "version=$VERSION_WITH_BUILD" >> $GITHUB_OUTPUT
-            echo "is_manual=false" >> $GITHUB_OUTPUT
+            echo "上一个版本: $PREVIOUS_VERSION"
+            
+            # 检查版本是否变化
+            if [ -n "$PREVIOUS_VERSION" ] && [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+              echo "✅ 检测到版本号变化: $PREVIOUS_VERSION → $CURRENT_VERSION"
+              echo "将执行完整的发布流程..."
+              echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+              echo "is_manual=false" >> $GITHUB_OUTPUT
+              echo "should_release=true" >> $GITHUB_OUTPUT
+              echo "version_changed=true" >> $GITHUB_OUTPUT
+            else
+              echo "ℹ️  版本号未变化，执行普通构建..."
+              BUILD_NUMBER=${{ github.run_number }}
+              VERSION_WITH_BUILD="${CURRENT_VERSION}+build.${BUILD_NUMBER}"
+              echo "构建版本: $VERSION_WITH_BUILD"
+              echo "version=$VERSION_WITH_BUILD" >> $GITHUB_OUTPUT
+              echo "is_manual=false" >> $GITHUB_OUTPUT
+              echo "should_release=false" >> $GITHUB_OUTPUT
+              echo "version_changed=false" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: 编译项目
@@ -179,12 +207,12 @@ jobs:
           fi
           
           # 打包扩展
-          if [ "${{ steps.version.outputs.is_manual }}" = "true" ]; then
-            # 手动触发 - 使用package.json中的版本号
+          if [ "${{ steps.version.outputs.should_release }}" = "true" ]; then
+            # 需要发布 - 使用package.json中的版本号
             vsce package
             VSIX_FILE=$(ls *.vsix | head -n 1)
           else
-            # 自动触发 - 使用带构建号的版本
+            # 普通构建 - 使用带构建号的版本
             vsce package --out "gromacs-helper-vscode-${{ steps.version.outputs.version }}.vsix"
             VSIX_FILE="gromacs-helper-vscode-${{ steps.version.outputs.version }}.vsix"
           fi
@@ -211,7 +239,7 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true'
+    if: needs.build.outputs.should_release == 'true'
     
     steps:
       - name: 检出代码
@@ -267,13 +295,13 @@ jobs:
           sed -i "s/\${VSIX_FILE}/$VSIX_FILE/g" release_notes_template.md
           
           # 处理发布说明内容
-          if [ -n "${{ github.event.inputs.custom_release_notes }}" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.custom_release_notes }}" ]; then
             echo "使用自定义发布说明..."
             echo "${{ github.event.inputs.custom_release_notes }}" > custom_notes.md
             echo "" >> custom_notes.md
             cat release_notes_template.md >> custom_notes.md
             cp custom_notes.md release_notes.md
-          elif [ -f "CHANGELOG.md" ] && [ "${{ github.event.inputs.auto_changelog }}" = "true" ]; then
+          elif [ -f "CHANGELOG.md" ] && ([ "${{ github.event_name }}" != "workflow_dispatch" ] || [ "${{ github.event.inputs.auto_changelog }}" = "true" ]); then
             echo "从 CHANGELOG.md 提取发布说明..."
             
             # 尝试提取当前版本的变更日志
@@ -321,6 +349,11 @@ jobs:
           📖 **使用文档**: [README](https://github.com/gromacs-helper/gromacs-helper-vscode#readme)
           EOF
           
+          # 为自动发布添加特殊标记
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            sed -i '1s/^/🤖 **自动发布** - 检测到版本号变化自动触发\n\n/' release_notes.md
+          fi
+          
           echo "生成的发布说明："
           echo "=========================="
           cat release_notes.md
@@ -341,8 +374,8 @@ jobs:
           name: "GROMACS Helper v${{ needs.build.outputs.version }}"
           body_path: release_notes.md
           files: "*.vsix"
-          draft: ${{ github.event.inputs.release_type == 'draft' }}
-          prerelease: ${{ github.event.inputs.release_type == 'prerelease' }}
+          draft: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_type == 'draft' }}
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_type == 'prerelease' || github.event_name != 'workflow_dispatch' }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -351,7 +384,7 @@ jobs:
   marketplace:
     needs: [build, release]
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish_marketplace == 'true' && github.event.inputs.release_type == 'release'
+    if: needs.build.outputs.should_release == 'true' && (github.event_name != 'workflow_dispatch' || (github.event.inputs.publish_marketplace == 'true' && github.event.inputs.release_type == 'release'))
     
     steps:
       - name: 检出代码
@@ -444,6 +477,8 @@ jobs:
           echo "| 构建状态 | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Release状态 | ${{ needs.release.result || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Marketplace状态 | ${{ needs.marketplace.result || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 版本变化 | ${{ needs.build.outputs.version_changed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 执行发布 | ${{ needs.build.outputs.should_release || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -462,4 +497,9 @@ jobs:
             echo "### 🤖 自动构建信息" >> $GITHUB_STEP_SUMMARY
             echo "- **构建号**: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
             echo "- **提交**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ needs.build.outputs.version_changed }}" = "true" ]; then
+              echo "- **版本变化**: ✅ 检测到版本号变化，自动执行发布流程" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **版本变化**: ❌ 未检测到版本号变化，仅执行构建" >> $GITHUB_STEP_SUMMARY
+            fi
           fi
