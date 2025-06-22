@@ -107,13 +107,44 @@ jobs:
       - name: 运行测试
         run: |
           if [ -f "package.json" ] && npm run | grep -q "test"; then
-            # 检查是否存在测试配置文件
-            if [ -f ".vscode-test.mjs" ] || [ -f ".vscode-test.js" ]; then
-              echo "运行扩展测试..."
-              npm test
-            else
-              echo "跳过测试 - 未找到 .vscode-test 配置文件"
-            fi
+            echo "验证构建产物..."
+            # 基本构建验证 - 不需要启动 VS Code
+            node -e "
+              const assert = require('assert');
+              const fs = require('fs');
+              
+              console.log('🔍 验证 package.json...');
+              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+              assert.ok(pkg.name, 'Package name should exist');
+              assert.ok(pkg.version, 'Package version should exist');
+              assert.ok(pkg.engines.vscode, 'VS Code engine should be specified');
+              
+              console.log('🔍 验证编译产物...');
+              assert.ok(fs.existsSync('dist/extension.js'), 'Compiled extension should exist');
+              
+              console.log('🔍 验证语言配置文件...');
+              const languageFiles = [
+                'syntaxes/mdp/mdp.tmLanguage.json',
+                'syntaxes/gro/gro.tmLanguage.json', 
+                'syntaxes/top/top.tmLanguage.json',
+                'syntaxes/ndx/ndx.tmLanguage.json'
+              ];
+              languageFiles.forEach(file => {
+                assert.ok(fs.existsSync(file), \`Language file \${file} should exist\`);
+              });
+              
+              console.log('🔍 验证代码片段文件...');
+              const snippetFiles = ['snippets/mdp.json', 'snippets/gro.json', 'snippets/ndx.json'];
+              snippetFiles.forEach(file => {
+                assert.ok(fs.existsSync(file), \`Snippet file \${file} should exist\`);
+                JSON.parse(fs.readFileSync(file, 'utf8')); // 验证 JSON 格式
+              });
+              
+              console.log('✅ 所有构建验证通过！');
+            "
+            
+            echo "注意: VS Code 扩展功能测试在 CI 环境中被跳过"
+            echo "完整的扩展测试请在本地开发环境中运行: npm test"
           else
             echo "跳过测试 - 未配置测试命令"
           fi

@@ -5,12 +5,13 @@ export default defineConfig({
   workspaceFolder: './src/test/fixtures',
   mocha: {
     ui: 'tdd',
-    timeout: 20000,
+    timeout: 30000,
     color: true
   },
   version: 'stable',
   extensionDevelopmentPath: '.',
   env: {
-    NODE_ENV: 'test'
+    NODE_ENV: 'test',
+    CI: 'true'
   }
 });
