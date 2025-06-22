@@ -341,12 +341,12 @@ jobs:
           
           ## 📝 完整更新日志
           
-          请查看项目的 [更新日志](https://github.com/gromacs-helper/gromacs-helper-vscode/blob/main/CHANGELOG.md) 了解详细变更。
+          请查看项目的 [更新日志](https://github.com/mcardzh/gromacs-helper-vscode/blob/main/CHANGELOG.md) 了解详细变更。
           
           ---
           
-          🐛 **问题反馈**: [GitHub Issues](https://github.com/gromacs-helper/gromacs-helper-vscode/issues)
-          📖 **使用文档**: [README](https://github.com/gromacs-helper/gromacs-helper-vscode#readme)
+          🐛 **问题反馈**: [GitHub Issues](https://github.com/mcardzh/gromacs-helper-vscode/issues)
+          📖 **使用文档**: [README](https://github.com/mcardzh/gromacs-helper-vscode#readme)
           EOF
           
           # 为自动发布添加特殊标记

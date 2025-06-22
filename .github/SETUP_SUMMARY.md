@@ -143,13 +143,13 @@ git push origin main
 ## 📚 监控和调试
 
 ### 查看构建状态
-- GitHub Actions: https://github.com/[username]/gromacs-helper-vscode/actions
-- Releases: https://github.com/[username]/gromacs-helper-vscode/releases
+- GitHub Actions: https://github.com/mcardzh/gromacs-helper-vscode/actions
+- Releases: https://github.com/mcardzh/gromacs-helper-vscode/releases
 
 ### 构建徽章
 已添加到 README.md:
 ```markdown
-[![Build Status](https://img.shields.io/github/actions/workflow/status/gromacs-helper/gromacs-helper-vscode/build-and-release.yml?branch=main&style=flat-square&label=build)](https://github.com/gromacs-helper/gromacs-helper-vscode/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/mcardzh/gromacs-helper-vscode/build-and-release.yml?branch=main&style=flat-square&label=build)](https://github.com/mcardzh/gromacs-helper-vscode/actions)
 ```
 
 ### 调试技巧

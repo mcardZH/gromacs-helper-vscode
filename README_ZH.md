@@ -151,7 +151,7 @@ nstlog = 100
 ### 本地开发
 ```bash
 # 克隆仓库
-git clone https://github.com/your-username/gromacs-helper-vscode.git
+git clone https://github.com/mcardzh/gromacs-helper-vscode.git
 cd gromacs-helper-vscode
 
 # 安装依赖

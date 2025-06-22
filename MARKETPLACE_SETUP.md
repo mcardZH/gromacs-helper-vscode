@@ -57,12 +57,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/gromacs-helper-vscode.git"
+    "url": "https://github.com/mcardzh/gromacs-helper-vscode.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/gromacs-helper-vscode/issues"
+    "url": "https://github.com/mcardzh/gromacs-helper-vscode/issues"
   },
-  "homepage": "https://github.com/your-username/gromacs-helper-vscode#readme"
+  "homepage": "https://github.com/mcardzh/gromacs-helper-vscode#readme"
 }
 ```
 

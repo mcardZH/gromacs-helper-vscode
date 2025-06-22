@@ -77,7 +77,7 @@ case $RELEASE_TYPE in
         echo "🏗️ 仅构建模式 - 将触发GitHub Actions自动构建"
         git push origin $CURRENT_BRANCH
         echo "✅ 代码已推送，GitHub Actions将自动构建"
-        echo "📊 查看构建状态: https://github.com/gromacs-helper/gromacs-helper-vscode/actions"
+        echo "📊 查看构建状态: https://github.com/mcardzh/gromacs-helper-vscode/actions"
         exit 0
         ;;
     *)
@@ -159,11 +159,11 @@ if command -v gh &> /dev/null; then
         -f create_release="true"
     
     echo "✅ GitHub Actions工作流已触发"
-    echo "📊 查看进度: https://github.com/gromacs-helper/gromacs-helper-vscode/actions"
+    echo "📊 查看进度: https://github.com/mcardzh/gromacs-helper-vscode/actions"
 else
     echo "⚠️  未安装GitHub CLI (gh)"
     echo "📋 请手动触发GitHub Actions:"
-    echo "  1. 访问: https://github.com/gromacs-helper/gromacs-helper-vscode/actions"
+    echo "  1. 访问: https://github.com/mcardzh/gromacs-helper-vscode/actions"
     echo "  2. 选择 'Build and Release VS Code Extension' 工作流"
     echo "  3. 点击 'Run workflow'"
     echo "  4. 填写参数:"
@@ -180,8 +180,8 @@ echo "  类型: $RELEASE_TYPE_NAME"
 echo "  分支: $CURRENT_BRANCH"
 echo ""
 echo "📊 监控发布进度:"
-echo "  GitHub Actions: https://github.com/gromacs-helper/gromacs-helper-vscode/actions"
-echo "  Releases: https://github.com/gromacs-helper/gromacs-helper-vscode/releases"
+echo "  GitHub Actions: https://github.com/mcardzh/gromacs-helper-vscode/actions"
+echo "  Releases: https://github.com/mcardzh/gromacs-helper-vscode/releases"
 echo ""
 echo "📱 发布完成后，可以通过以下方式安装:"
 echo "  1. 从GitHub Releases下载VSIX文件"
