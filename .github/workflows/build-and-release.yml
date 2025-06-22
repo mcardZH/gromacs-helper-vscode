@@ -39,6 +39,13 @@ on:
       - main
       - master
 
+# 添加权限配置，确保可以创建 Release 和写入内容
+permissions:
+  contents: write
+  pull-requests: read
+  issues: read
+  packages: write
+
 env:
   NODE_VERSION: '18'
 
@@ -250,7 +257,7 @@ jobs:
           EOF
 
       - name: 创建GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.build.outputs.version }}
           name: "GROMACS Helper v${{ needs.build.outputs.version }}"
@@ -259,8 +266,8 @@ jobs:
           draft: ${{ github.event.inputs.release_type == 'draft' }}
           prerelease: ${{ github.event.inputs.release_type == 'prerelease' }}
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_unmatched_files: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   # 自动构建总结
   summary:
