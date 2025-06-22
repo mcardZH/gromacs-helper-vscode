@@ -29,6 +29,16 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      - name: 缓存依赖
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: 安装依赖
         run: npm ci
 
@@ -39,12 +49,17 @@ jobs:
         run: npm run compile
 
       - name: 运行测试
+        timeout-minutes: 10
         run: |
-          if [ -f "package.json" ] && npm run | grep -q "test"; then
-            npm test
-          else
-            echo "跳过测试 - 未配置测试命令"
-          fi
+          # 安装 xvfb 用于虚拟显示器
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          
+          # 设置显示环境变量
+          export DISPLAY=:99
+          
+          # 启动虚拟显示器并运行测试
+          xvfb-run -a --server-args="-screen 0 1024x768x24 -ac" npm run test:ci
 
       - name: 构建扩展
         run: |
@@ -74,6 +89,7 @@ jobs:
           retention-days: 7
 
       - name: CI总结
+        if: always()
         run: |
           echo "## 🔄 持续集成构建完成" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -84,4 +100,10 @@ jobs:
           echo "| 构建版本 | ${{ env.build_version }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 构建号 | ${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **所有检查通过，构建成功！**" >> $GITHUB_STEP_SUMMARY
+          
+          # 检查测试是否成功
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ **所有检查通过，构建成功！**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **构建失败，请检查日志**" >> $GITHUB_STEP_SUMMARY
+          fi

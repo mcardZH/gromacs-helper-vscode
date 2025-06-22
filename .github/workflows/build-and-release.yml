@@ -22,6 +22,20 @@ on:
         required: true
         default: true
         type: boolean
+      custom_release_notes:
+        description: '自定义发布说明 (可选，留空则自动从CHANGELOG.md读取)'
+        required: false
+        type: string
+      auto_changelog:
+        description: '自动生成变更日志'
+        required: true
+        default: true
+        type: boolean
+      publish_marketplace:
+        description: '发布到VS Code Marketplace'
+        required: true
+        default: false
+        type: boolean
 
   # 自动触发 - 推送到main分支时自动构建（不更新版本号）
   push:
@@ -214,21 +228,22 @@ jobs:
           VERSION="${{ needs.build.outputs.version }}"
           VSIX_FILE="${{ needs.build.outputs.vsix-name }}"
           
-          cat > release_notes.md << EOF
+          # 生成基础发布说明模板
+          cat > release_notes_template.md << 'EOF'
           # GROMACS Helper for VS Code v${VERSION}
           
           ## 📦 安装方式
           
           ### 方法一：从VSIX文件安装
-          1. 下载附件中的 \`${VSIX_FILE}\` 文件
-          2. 在VS Code中按 \`Ctrl+Shift+P\` (macOS: \`Cmd+Shift+P\`)
+          1. 下载附件中的 `${VSIX_FILE}` 文件
+          2. 在VS Code中按 `Ctrl+Shift+P` (macOS: `Cmd+Shift+P`)
           3. 输入 "Extensions: Install from VSIX..."
           4. 选择下载的VSIX文件进行安装
           
           ### 方法二：命令行安装
-          \`\`\`bash
+          ```bash
           code --install-extension ${VSIX_FILE}
-          \`\`\`
+          ```
           
           ## 🚀 功能特性
           
@@ -245,16 +260,79 @@ jobs:
           - **TOP文件** (.top, .itp) - 拓扑文件
           - **GRO文件** (.gro) - 结构坐标文件  
           - **NDX文件** (.ndx) - 索引文件
+          EOF
           
-          ## 📝 更新日志
+          # 替换模板中的变量
+          sed -i "s/\${VERSION}/$VERSION/g" release_notes_template.md
+          sed -i "s/\${VSIX_FILE}/$VSIX_FILE/g" release_notes_template.md
           
-          请查看项目的 [更新日志](https://github.com/gromacs-helper/gromacs-helper-vscode/releases) 了解详细变更。
+          # 处理发布说明内容
+          if [ -n "${{ github.event.inputs.custom_release_notes }}" ]; then
+            echo "使用自定义发布说明..."
+            echo "${{ github.event.inputs.custom_release_notes }}" > custom_notes.md
+            echo "" >> custom_notes.md
+            cat release_notes_template.md >> custom_notes.md
+            cp custom_notes.md release_notes.md
+          elif [ -f "CHANGELOG.md" ] && [ "${{ github.event.inputs.auto_changelog }}" = "true" ]; then
+            echo "从 CHANGELOG.md 提取发布说明..."
+            
+            # 尝试提取当前版本的变更日志
+            VERSION_CLEAN=$(echo "$VERSION" | sed 's/^v//')
+            
+            # 查找版本标题的多种格式
+            CHANGELOG_CONTENT=""
+            if grep -q "## \[${VERSION_CLEAN}\]" CHANGELOG.md; then
+              # 格式: ## [0.0.3] - 2024-01-01
+              CHANGELOG_CONTENT=$(awk "/## \[${VERSION_CLEAN}\]/,/## \[/{if(/## \[${VERSION_CLEAN}\]/) print; else if(/## \[/) exit; else print}" CHANGELOG.md | head -n -1)
+            elif grep -q "## ${VERSION_CLEAN}" CHANGELOG.md; then
+              # 格式: ## 0.0.3
+              CHANGELOG_CONTENT=$(awk "/## ${VERSION_CLEAN}/,/## /{if(/## ${VERSION_CLEAN}/) print; else if(/## /) exit; else print}" CHANGELOG.md | head -n -1)
+            elif grep -q "# v${VERSION_CLEAN}" CHANGELOG.md; then
+              # 格式: # v0.0.3
+              CHANGELOG_CONTENT=$(awk "/# v${VERSION_CLEAN}/,/# v/{if(/# v${VERSION_CLEAN}/) print; else if(/# v/) exit; else print}" CHANGELOG.md | head -n -1)
+            fi
+            
+            if [ -n "$CHANGELOG_CONTENT" ]; then
+              echo "找到版本 $VERSION_CLEAN 的变更日志"
+              echo "## 📝 本版本更新" > version_changes.md
+              echo "" >> version_changes.md
+              echo "$CHANGELOG_CONTENT" | tail -n +2 >> version_changes.md
+              echo "" >> version_changes.md
+              cat version_changes.md release_notes_template.md > release_notes.md
+            else
+              echo "未找到版本 $VERSION_CLEAN 的变更日志，使用默认模板"
+              cp release_notes_template.md release_notes.md
+            fi
+          else
+            echo "使用默认发布说明模板..."
+            cp release_notes_template.md release_notes.md
+          fi
+          
+          # 添加结尾信息
+          cat >> release_notes.md << 'EOF'
+          
+          ## 📝 完整更新日志
+          
+          请查看项目的 [更新日志](https://github.com/gromacs-helper/gromacs-helper-vscode/blob/main/CHANGELOG.md) 了解详细变更。
           
           ---
           
           🐛 **问题反馈**: [GitHub Issues](https://github.com/gromacs-helper/gromacs-helper-vscode/issues)
           📖 **使用文档**: [README](https://github.com/gromacs-helper/gromacs-helper-vscode#readme)
           EOF
+          
+          echo "生成的发布说明："
+          echo "=========================="
+          cat release_notes.md
+          echo "=========================="
+
+      - name: 预览发布说明
+        run: |
+          echo "## 📋 发布说明预览" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```markdown' >> $GITHUB_STEP_SUMMARY
+          cat release_notes.md >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: 创建GitHub Release
         uses: softprops/action-gh-release@v2
@@ -269,9 +347,86 @@ jobs:
           fail_on_unmatched_files: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
+  # 发布到VS Code Marketplace
+  marketplace:
+    needs: [build, release]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish_marketplace == 'true' && github.event.inputs.release_type == 'release'
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Node.js环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 下载构建产物
+        uses: actions/download-artifact@v4
+        with:
+          name: vsix-package-${{ needs.build.outputs.version }}
+
+      - name: 验证Marketplace Token
+        run: |
+          if [ -z "${{ secrets.VSCE_PAT }}" ]; then
+            echo "❌ 错误: 未配置 VSCE_PAT secret"
+            echo "请在 GitHub 仓库设置中添加 VS Code Marketplace Personal Access Token"
+            echo "设置路径: Settings -> Secrets and variables -> Actions -> Repository secrets"
+            echo "Secret 名称: VSCE_PAT"
+            exit 1
+          else
+            echo "✅ VSCE_PAT secret 已配置"
+          fi
+
+      - name: 发布到Marketplace
+        run: |
+          # 安装vsce
+          npm install -g @vscode/vsce
+          
+          echo "🚀 开始发布到 VS Code Marketplace..."
+          echo "版本: ${{ needs.build.outputs.version }}"
+          echo "VSIX文件: ${{ needs.build.outputs.vsix-name }}"
+          
+          # 使用VSIX文件发布到marketplace
+          vsce publish --packagePath "${{ needs.build.outputs.vsix-name }}" --pat "${{ secrets.VSCE_PAT }}"
+          
+          echo "✅ 成功发布到 VS Code Marketplace!"
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: 发布成功通知
+        run: |
+          echo "## 🎉 VS Code Marketplace 发布成功" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 发布信息" >> $GITHUB_STEP_SUMMARY
+          echo "- **版本**: ${{ needs.build.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **VSIX文件**: ${{ needs.build.outputs.vsix-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **发布时间**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 相关链接" >> $GITHUB_STEP_SUMMARY
+          echo "- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=$(node -p 'require(\"./package.json\").publisher').$(node -p 'require(\"./package.json\").name'))" >> $GITHUB_STEP_SUMMARY
+          echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/v${{ needs.build.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📥 用户安装方式" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# 通过 VS Code 扩展市场安装" >> $GITHUB_STEP_SUMMARY
+          echo "# 1. 打开 VS Code" >> $GITHUB_STEP_SUMMARY
+          echo "# 2. 按 Ctrl+Shift+X (macOS: Cmd+Shift+X)" >> $GITHUB_STEP_SUMMARY
+          echo "# 3. 搜索 \"GROMACS Helper\"" >> $GITHUB_STEP_SUMMARY
+          echo "# 4. 点击安装" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# 或通过命令行安装" >> $GITHUB_STEP_SUMMARY
+          echo "code --install-extension $(node -p 'require(\"./package.json\").publisher').$(node -p 'require(\"./package.json\").name')" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
   # 自动构建总结
   summary:
-    needs: build
+    needs: [build, release, marketplace]
     runs-on: ubuntu-latest
     if: always()
     
@@ -287,6 +442,8 @@ jobs:
           echo "| 版本 | ${{ needs.build.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
           echo "| VSIX文件 | ${{ needs.build.outputs.vsix-name }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 构建状态 | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Release状态 | ${{ needs.release.result || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Marketplace状态 | ${{ needs.marketplace.result || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -294,6 +451,13 @@ jobs:
             echo "- **版本号**: ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
             echo "- **发布类型**: ${{ github.event.inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
             echo "- **创建Release**: ${{ github.event.inputs.create_release }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **自动变更日志**: ${{ github.event.inputs.auto_changelog }}" >> $GITHUB_STEP_SUMMARY
+            if [ -n "${{ github.event.inputs.custom_release_notes }}" ]; then
+              echo "- **自定义发布说明**: 是" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **自定义发布说明**: 否" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "- **发布到Marketplace**: ${{ github.event.inputs.publish_marketplace }}" >> $GITHUB_STEP_SUMMARY
           else
             echo "### 🤖 自动构建信息" >> $GITHUB_STEP_SUMMARY
             echo "- **构建号**: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
