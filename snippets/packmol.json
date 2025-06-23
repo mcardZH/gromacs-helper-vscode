@@ -1,0 +1,181 @@
+{
+  "Basic Packmol Structure": {
+    "prefix": "packmol-basic",
+    "body": [
+      "# ${1:Basic Packmol input file}",
+      "",
+      "tolerance ${2:2.0}",
+      "seed ${3:12345}",
+      "output ${4:system.pdb}",
+      "",
+      "structure ${5:molecule.pdb}",
+      "  number ${6:100}",
+      "  inside ${7:sphere 0. 0. 0. 20.}",
+      "end structure",
+      "$0"
+    ],
+    "description": "Basic Packmol input file template"
+  },
+  "Structure Block": {
+    "prefix": "structure",
+    "body": [
+      "structure ${1:filename.pdb}",
+      "  number ${2:100}",
+      "  ${3:inside sphere 0. 0. 0. 20.}",
+      "end structure",
+      "$0"
+    ],
+    "description": "Packmol structure block"
+  },
+  "Sphere Constraint": {
+    "prefix": "sphere",
+    "body": [
+      "inside sphere ${1:x} ${2:y} ${3:z} ${4:radius}"
+    ],
+    "description": "Sphere constraint"
+  },
+  "Box Constraint": {
+    "prefix": "box",
+    "body": [
+      "inside box ${1:xmin} ${2:ymin} ${3:zmin} ${4:xmax} ${5:ymax} ${6:zmax}"
+    ],
+    "description": "Box constraint"
+  },
+  "Cube Constraint": {
+    "prefix": "cube",
+    "body": [
+      "inside cube ${1:xmin} ${2:ymin} ${3:zmin} ${4:size}"
+    ],
+    "description": "Cube constraint"
+  },
+  "Outside Sphere": {
+    "prefix": "outside-sphere",
+    "body": [
+      "outside sphere ${1:x} ${2:y} ${3:z} ${4:radius}"
+    ],
+    "description": "Outside sphere constraint"
+  },
+  "Plane Constraint": {
+    "prefix": "plane",
+    "body": [
+      "${1|above,below|} plane ${2:a} ${3:b} ${4:c} ${5:d}"
+    ],
+    "description": "Plane constraint"
+  },
+  "Fixed Position": {
+    "prefix": "fixed",
+    "body": [
+      "fixed ${1:x} ${2:y} ${3:z} ${4:alpha} ${5:beta} ${6:gamma}"
+    ],
+    "description": "Fixed position and orientation"
+  },
+  "Center Molecule": {
+    "prefix": "center",
+    "body": [
+      "center"
+    ],
+    "description": "Center the molecule"
+  },
+  "Constrain Rotation": {
+    "prefix": "constrain_rotation",
+    "body": [
+      "constrain_rotation ${1|x,y,z|} ${2:value}"
+    ],
+    "description": "Constrain rotation around axis"
+  },
+  "Minimum Distance": {
+    "prefix": "mindistance",
+    "body": [
+      "mindistance ${1:distance}"
+    ],
+    "description": "Minimum distance between molecules"
+  },
+  "Radius Scale": {
+    "prefix": "radius",
+    "body": [
+      "radius ${1:scale_factor}"
+    ],
+    "description": "Scale atomic radii"
+  },
+  "Water Box Setup": {
+    "prefix": "water-box",
+    "body": [
+      "# ${1:Water box setup}",
+      "",
+      "tolerance ${2:2.0}",
+      "seed ${3:12345}",
+      "output ${4:water_box.pdb}",
+      "",
+      "structure ${5:water.pdb}",
+      "  number ${6:1000}",
+      "  inside box ${7:0.} ${8:0.} ${9:0.} ${10:30.} ${11:30.} ${12:30.}",
+      "end structure",
+      "$0"
+    ],
+    "description": "Water box setup template"
+  },
+  "Membrane System": {
+    "prefix": "membrane-system",
+    "body": [
+      "# ${1:Membrane system setup}",
+      "",
+      "tolerance ${2:2.0}",
+      "seed ${3:12345}",
+      "output ${4:membrane.pdb}",
+      "",
+      "# Lower leaflet",
+      "structure ${5:lipid_lower.pdb}",
+      "  number ${6:128}",
+      "  inside box ${7:0.} ${8:0.} ${9:0.} ${10:64.} ${11:64.} ${12:10.}",
+      "end structure",
+      "",
+      "# Upper leaflet",
+      "structure ${13:lipid_upper.pdb}",
+      "  number ${14:128}",
+      "  inside box ${15:0.} ${16:0.} ${17:20.} ${18:64.} ${19:64.} ${20:30.}",
+      "end structure",
+      "",
+      "# Water",
+      "structure ${21:water.pdb}",
+      "  number ${22:2000}",
+      "  inside box ${23:0.} ${24:0.} ${25:30.} ${26:64.} ${27:64.} ${28:80.}",
+      "end structure",
+      "$0"
+    ],
+    "description": "Membrane system template"
+  },
+  "Protein in Water": {
+    "prefix": "protein-water",
+    "body": [
+      "# ${1:Protein in water setup}",
+      "",
+      "tolerance ${2:2.0}",
+      "seed ${3:12345}",
+      "output ${4:protein_water.pdb}",
+      "",
+      "# Protein",
+      "structure ${5:protein.pdb}",
+      "  number ${6:1}",
+      "  center",
+      "  fixed ${7:0.} ${8:0.} ${9:0.} ${10:0.} ${11:0.} ${12:0.}",
+      "end structure",
+      "",
+      "# Water",
+      "structure ${13:water.pdb}",
+      "  number ${14:3000}",
+      "  inside sphere ${15:0.} ${16:0.} ${17:0.} ${18:30.}",
+      "  outside sphere ${19:0.} ${20:0.} ${21:0.} ${22:15.}",
+      "end structure",
+      "",
+      "# Ions",
+      "structure ${23:na.pdb}",
+      "  number ${24:10}",
+      "  inside sphere ${25:0.} ${26:0.} ${27:0.} ${28:30.}",
+      "  outside sphere ${29:0.} ${30:0.} ${31:0.} ${32:15.}",
+      "  mindistance ${33:5.0}",
+      "end structure",
+      "$0"
+    ],
+    "description": "Protein in water template"
+  }
+}

@@ -1,8 +1,49 @@
 import * as vscode from 'vscode';
+import { PdbSemanticTokensProvider } from '../../providers/pdbSemanticTokensProvider';
+import { PdbDiagnosticProvider } from '../../providers/pdbDiagnosticProvider';
+import { SEMANTIC_TOKENS_LEGEND } from '../../providers/baseSemanticTokensProvider';
 
 export function registerPdbLanguageFeatures(context: vscode.ExtensionContext) {
-    // PDB语言功能将在这里注册
-    console.log('PDB language features registered');
+    // Register semantic tokens provider for PDB files
+    const pdbSemanticTokensProvider = new PdbSemanticTokensProvider();
+    const pdbSemanticDisposable = vscode.languages.registerDocumentSemanticTokensProvider(
+        { language: 'gromacs_pdb_file' },
+        pdbSemanticTokensProvider,
+        SEMANTIC_TOKENS_LEGEND
+    );
+    
+    // Register diagnostic provider for PDB files
+    const pdbDiagnosticProvider = new PdbDiagnosticProvider();
+    
+    // 监听文档变化以提供诊断
+    const diagnosticDisposable = vscode.workspace.onDidChangeTextDocument((e) => {
+        if (e.document.languageId === 'gromacs_pdb_file') {
+            pdbDiagnosticProvider.provideDiagnostics(e.document);
+        }
+    });
+    
+    // 监听文档打开事件
+    const openDisposable = vscode.workspace.onDidOpenTextDocument((document) => {
+        if (document.languageId === 'gromacs_pdb_file') {
+            pdbDiagnosticProvider.provideDiagnostics(document);
+        }
+    });
+    
+    // 对当前已打开的PDB文件立即提供诊断
+    vscode.workspace.textDocuments.forEach(document => {
+        if (document.languageId === 'gromacs_pdb_file') {
+            pdbDiagnosticProvider.provideDiagnostics(document);
+        }
+    });
+    
+    context.subscriptions.push(
+        pdbSemanticDisposable,
+        diagnosticDisposable,
+        openDisposable,
+        pdbDiagnosticProvider
+    );
+    
+    console.log('PDB language features registered with diagnostics');
 }
 
 // PDB记录类型定义

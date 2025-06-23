@@ -172,7 +172,7 @@ export const MDP_PARAMETERS: MdpParameter[] = [
   },
   {
     name: 'emstep',
-    type: 'integer',
+    type: 'real',
     description: 'initial step-size',
     defaultValue: '0.01',
     unit: 'nm',

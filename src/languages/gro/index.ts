@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { GroHoverProvider } from '../../providers/groHoverProvider';
 import { GroSymbolProvider } from '../../providers/groSymbolProvider';
+import { GroSemanticTokensProvider } from '../../providers/groSemanticTokensProvider';
+import { SEMANTIC_TOKENS_LEGEND } from '../../providers/baseSemanticTokensProvider';
 
 export class GroLanguageSupport {
   
@@ -19,7 +21,15 @@ export class GroLanguageSupport {
       groSymbolProvider
     );
     
-    context.subscriptions.push(groHoverDisposable, groSymbolDisposable);
+    // Register semantic tokens provider for GRO files
+    const groSemanticTokensProvider = new GroSemanticTokensProvider();
+    const groSemanticDisposable = vscode.languages.registerDocumentSemanticTokensProvider(
+      { language: 'gromacs_gro_file' },
+      groSemanticTokensProvider,
+      SEMANTIC_TOKENS_LEGEND
+    );
+    
+    context.subscriptions.push(groHoverDisposable, groSymbolDisposable, groSemanticDisposable);
     
     console.log('GRO language support activated');
   }

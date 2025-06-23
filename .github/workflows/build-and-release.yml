@@ -300,14 +300,20 @@ jobs:
           # GROMACS Helper for VS Code v${VERSION}
           
           ## 📦 安装方式
+
+          ### 方式一：通过VS Code扩展市场安装
+          1. 打开 VS Code
+          2. 按 `Ctrl+Shift+X` (macOS: `Cmd+Shift+X`)
+          3. 搜索 "GROMACS Helper for VS Code"（[市场链接](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode)）
+          4. 点击安装按钮
           
-          ### 方法一：从VSIX文件安装
+          ### 方法二：从VSIX文件安装
           1. 下载附件中的 `${VSIX_FILE}` 文件
           2. 在VS Code中按 `Ctrl+Shift+P` (macOS: `Cmd+Shift+P`)
           3. 输入 "Extensions: Install from VSIX..."
           4. 选择下载的VSIX文件进行安装
           
-          ### 方法二：命令行安装
+          ### 方法三：命令行安装
           ```bash
           code --install-extension ${VSIX_FILE}
           ```

@@ -34,12 +34,316 @@
   "categories": [
     "Other",
     "Programming Languages",
-    "Snippets"
+    "Snippets",
+    "Themes"
   ],
   "icon": "imgs/icon.png",
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "semanticTokenTypes": [
+      {
+        "id": "residue_acidic",
+        "superType": "type",
+        "description": "Acidic amino acid residues"
+      },
+      {
+        "id": "residue_basic",
+        "superType": "type",
+        "description": "Basic amino acid residues"
+      },
+      {
+        "id": "residue_polar",
+        "superType": "type",
+        "description": "Polar amino acid residues"
+      },
+      {
+        "id": "residue_nonpolar",
+        "superType": "type",
+        "description": "Nonpolar amino acid residues"
+      },
+      {
+        "id": "residue_aromatic",
+        "superType": "type",
+        "description": "Aromatic amino acid residues"
+      },
+      {
+        "id": "residue_special",
+        "superType": "type",
+        "description": "Special amino acid residues"
+      },
+      {
+        "id": "residue_nucleotide",
+        "superType": "type",
+        "description": "Nucleotide bases"
+      },
+      {
+        "id": "residue_ion",
+        "superType": "type",
+        "description": "Ion molecules"
+      },
+      {
+        "id": "residue_water",
+        "superType": "type",
+        "description": "Water molecules"
+      },
+      {
+        "id": "residue_other",
+        "superType": "type",
+        "description": "Other or unknown residues"
+      },
+      {
+        "id": "atom_name",
+        "superType": "property",
+        "description": "Atom names"
+      },
+      {
+        "id": "atom_index",
+        "superType": "number",
+        "description": "Atom indices"
+      },
+      {
+        "id": "coordinate",
+        "superType": "number",
+        "description": "Coordinate values"
+      },
+      {
+        "id": "chain_id",
+        "superType": "property",
+        "description": "Chain identifiers"
+      },
+      {
+        "id": "mdp_param_run_control",
+        "superType": "property",
+        "description": "MDP run control parameters"
+      },
+      {
+        "id": "mdp_param_output_control",
+        "superType": "property",
+        "description": "MDP output control parameters"
+      },
+      {
+        "id": "mdp_param_neighbor_searching",
+        "superType": "property",
+        "description": "MDP neighbor searching parameters"
+      },
+      {
+        "id": "mdp_param_electrostatics",
+        "superType": "property",
+        "description": "MDP electrostatics parameters"
+      },
+      {
+        "id": "mdp_param_van_der_waals",
+        "superType": "property",
+        "description": "MDP van der Waals parameters"
+      },
+      {
+        "id": "mdp_param_temperature_coupling",
+        "superType": "property",
+        "description": "MDP temperature coupling parameters"
+      },
+      {
+        "id": "mdp_param_pressure_coupling",
+        "superType": "property",
+        "description": "MDP pressure coupling parameters"
+      },
+      {
+        "id": "mdp_param_velocity_generation",
+        "superType": "property",
+        "description": "MDP velocity generation parameters"
+      },
+      {
+        "id": "mdp_param_bonds",
+        "superType": "property",
+        "description": "MDP bonds parameters"
+      },
+      {
+        "id": "mdp_param_energy_minimization",
+        "superType": "property",
+        "description": "MDP energy minimization parameters"
+      },
+      {
+        "id": "mdp_param_free_energy",
+        "superType": "property",
+        "description": "MDP free energy parameters"
+      },
+      {
+        "id": "mdp_param_nonbonded",
+        "superType": "property",
+        "description": "MDP nonbonded parameters"
+      },
+      {
+        "id": "mdp_param_ewald",
+        "superType": "property",
+        "description": "MDP Ewald parameters"
+      },
+      {
+        "id": "mdp_param_preprocessing",
+        "superType": "property",
+        "description": "MDP preprocessing parameters"
+      },
+      {
+        "id": "mdp_param_other",
+        "superType": "property",
+        "description": "MDP other parameters"
+      },
+      {
+        "id": "mdp_value",
+        "superType": "string",
+        "description": "MDP parameter values"
+      },
+      {
+        "id": "packmol_keyword",
+        "superType": "keyword",
+        "description": "Packmol keywords"
+      },
+      {
+        "id": "packmol_command",
+        "superType": "property",
+        "description": "Packmol commands"
+      },
+      {
+        "id": "packmol_constraint",
+        "superType": "property",
+        "description": "Packmol constraint commands"
+      },
+      {
+        "id": "packmol_geometry",
+        "superType": "property",
+        "description": "Packmol geometry commands"
+      },
+      {
+        "id": "packmol_number",
+        "superType": "number",
+        "description": "Packmol numeric values"
+      },
+      {
+        "id": "packmol_filename",
+        "superType": "string",
+        "description": "Packmol file names"
+      },
+      {
+        "id": "packmol_comment",
+        "superType": "comment",
+        "description": "Packmol comments"
+      }
+    ],
+    "semanticTokenModifiers": [
+      {
+        "id": "highlighted",
+        "description": "Highlighted tokens"
+      },
+      {
+        "id": "deprecated",
+        "description": "Deprecated tokens"
+      },
+      {
+        "id": "bold",
+        "description": "Bold text"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "gromacs_gro_file",
+        "scopes": {
+          "residue_acidic": ["entity.name.type.residue.acidic.gro"],
+          "residue_basic": ["entity.name.type.residue.basic.gro"],
+          "residue_polar": ["entity.name.type.residue.polar.gro"],
+          "residue_nonpolar": ["entity.name.type.residue.nonpolar.gro"],
+          "residue_aromatic": ["entity.name.type.residue.aromatic.gro"],
+          "residue_special": ["entity.name.type.residue.special.gro"],
+          "residue_nucleotide": ["entity.name.type.residue.nucleotide.gro"],
+          "residue_ion": ["entity.name.type.residue.ion.gro"],
+          "residue_water": ["entity.name.type.residue.water.gro"],
+          "residue_other": ["entity.name.type.residue.other.gro"],
+          "atom_name": ["entity.name.function.atom.gro"],
+          "atom_index": ["constant.numeric.atom-index.gro"],
+          "coordinate": ["constant.numeric.coordinate.gro"],
+          "chain_id": ["entity.name.tag.chain.gro"]
+        }
+      },
+      {
+        "language": "gromacs_pdb_file",
+        "scopes": {
+          "residue_acidic": ["entity.name.type.residue.acidic.pdb"],
+          "residue_basic": ["entity.name.type.residue.basic.pdb"],
+          "residue_polar": ["entity.name.type.residue.polar.pdb"],
+          "residue_nonpolar": ["entity.name.type.residue.nonpolar.pdb"],
+          "residue_aromatic": ["entity.name.type.residue.aromatic.pdb"],
+          "residue_special": ["entity.name.type.residue.special.pdb"],
+          "residue_nucleotide": ["entity.name.type.residue.nucleotide.pdb"],
+          "residue_ion": ["entity.name.type.residue.ion.pdb"],
+          "residue_water": ["entity.name.type.residue.water.pdb"],
+          "residue_other": ["entity.name.type.residue.other.pdb"],
+          "atom_name": ["entity.name.function.atom.pdb"],
+          "atom_index": ["constant.numeric.atom-index.pdb"],
+          "coordinate": ["constant.numeric.coordinate.pdb"],
+          "chain_id": ["entity.name.tag.chain.pdb"]
+        }
+      },
+      {
+        "language": "gromacs_mdp_file",
+        "scopes": {
+          "mdp_param_run_control": ["keyword.control.run.mdp"],
+          "mdp_param_output_control": ["keyword.control.output.mdp"],
+          "mdp_param_neighbor_searching": ["keyword.control.neighbor.mdp"],
+          "mdp_param_electrostatics": ["keyword.control.electrostatics.mdp"],
+          "mdp_param_van_der_waals": ["keyword.control.vdw.mdp"],
+          "mdp_param_temperature_coupling": ["keyword.control.temperature.mdp"],
+          "mdp_param_pressure_coupling": ["keyword.control.pressure.mdp"],
+          "mdp_param_velocity_generation": ["keyword.control.velocity.mdp"],
+          "mdp_param_bonds": ["keyword.control.bonds.mdp"],
+          "mdp_param_energy_minimization": ["keyword.control.minimization.mdp"],
+          "mdp_param_free_energy": ["keyword.control.freeenergy.mdp"],
+          "mdp_param_nonbonded": ["keyword.control.nonbonded.mdp"],
+          "mdp_param_ewald": ["keyword.control.ewald.mdp"],
+          "mdp_param_preprocessing": ["keyword.control.preprocessing.mdp"],
+          "mdp_param_other": ["keyword.control.other.mdp"],
+          "mdp_value": ["string.unquoted.value.mdp"]
+        }
+      },
+      {
+        "language": "gromacs_ndx_file",
+        "scopes": {
+          "atom_index": ["constant.numeric.atom-index.ndx"]
+        }
+      },
+      {
+        "language": "gromacs_top_file",
+        "scopes": {
+          "residue_acidic": ["entity.name.type.residue.acidic.top"],
+          "residue_basic": ["entity.name.type.residue.basic.top"],
+          "residue_polar": ["entity.name.type.residue.polar.top"],
+          "residue_nonpolar": ["entity.name.type.residue.nonpolar.top"],
+          "residue_aromatic": ["entity.name.type.residue.aromatic.top"],
+          "residue_special": ["entity.name.type.residue.special.top"],
+          "residue_nucleotide": ["entity.name.type.residue.nucleotide.top"],
+          "residue_ion": ["entity.name.type.residue.ion.top"],
+          "residue_water": ["entity.name.type.residue.water.top"],
+          "residue_other": ["entity.name.type.residue.other.top"]
+        }
+      },
+      {
+        "language": "gromacs_xvg_file",
+        "scopes": {
+          "comment": ["comment.line.xvg"],
+          "number": ["constant.numeric.xvg"],
+          "keyword": ["keyword.control.xvg"]
+        }
+      },
+      {
+        "language": "packmol",
+        "scopes": {
+          "packmol_keyword": ["keyword.control.packmol"],
+          "packmol_command": ["entity.name.function.command.packmol"],
+          "packmol_constraint": ["entity.name.function.constraint.packmol"],
+          "packmol_geometry": ["entity.name.function.geometry.packmol"],
+          "packmol_number": ["constant.numeric.packmol"],
+          "packmol_filename": ["string.quoted.double.filename.packmol"],
+          "packmol_comment": ["comment.line.hash.packmol"]
+        }
+      }
+    ],
     "languages": [
       {
         "id": "gromacs_mdp_file",
@@ -153,6 +457,28 @@
           "light": "./imgs/xvg.svg",
           "dark": "./imgs/xvg.svg"
         }
+      },
+      {
+        "id": "packmol",
+        "aliases": [
+          "Packmol Input",
+          "packmol"
+        ],
+        "extensions": [
+          ".inp",
+          ".packmol"
+        ],
+        "filenamePatterns": [
+          "*.inp.*",
+          "*.packmol.*",
+          "#*.inp.*#",
+          "#*.packmol.*#"
+        ],
+        "configuration": "./syntaxes/packmol/packmol-language-configuration.json",
+        "icon": {
+          "light": "./imgs/packmol.svg",
+          "dark": "./imgs/packmol.svg"
+        }
       }
     ],
     "grammars": [
@@ -185,8 +511,224 @@
         "language": "gromacs_xvg_file",
         "scopeName": "source.xvg",
         "path": "./syntaxes/xvg/xvg.tmLanguage.json"
+      },
+      {
+        "language": "packmol",
+        "scopeName": "source.packmol",
+        "path": "./syntaxes/packmol/packmol.tmLanguage.json"
       }
     ],
+    "configuration": {
+      "type": "object",
+      "title": "GROMACS Helper",
+      "properties": {
+        "gromacsHelper.semanticHighlighting.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable semantic highlighting for residues in GROMACS files"
+        },
+        "gromacsHelper.colors.residue_acidic": {
+          "type": "string",
+          "default": "#FF6B6B",
+          "description": "Color for acidic residues (ASP, GLU)"
+        },
+        "gromacsHelper.colors.residue_basic": {
+          "type": "string",
+          "default": "#4ECDC4",
+          "description": "Color for basic residues (LYS, ARG, HIS)"
+        },
+        "gromacsHelper.colors.residue_polar": {
+          "type": "string",
+          "default": "#45B7D1",
+          "description": "Color for polar residues (SER, THR, CYS, ASN, GLN)"
+        },
+        "gromacsHelper.colors.residue_nonpolar": {
+          "type": "string",
+          "default": "#96CEB4",
+          "description": "Color for nonpolar residues (ALA, VAL, LEU, ILE, MET)"
+        },
+        "gromacsHelper.colors.residue_aromatic": {
+          "type": "string",
+          "default": "#FFEAA7",
+          "description": "Color for aromatic residues (PHE, TYR, TRP)"
+        },
+        "gromacsHelper.colors.residue_special": {
+          "type": "string",
+          "default": "#DDA0DD",
+          "description": "Color for special residues (PRO, GLY)"
+        },
+        "gromacsHelper.colors.residue_nucleotide": {
+          "type": "string",
+          "default": "#74B9FF",
+          "description": "Color for nucleotide bases"
+        },
+        "gromacsHelper.colors.residue_ion": {
+          "type": "string",
+          "default": "#FD79A8",
+          "description": "Color for ions (NA, CL, K, MG, CA, ZN)"
+        },
+        "gromacsHelper.colors.residue_water": {
+          "type": "string",
+          "default": "#00CEC9",
+          "description": "Color for water molecules (SOL, WAT, HOH)"
+        },
+        "gromacsHelper.colors.residue_other": {
+          "type": "string",
+          "default": "#B2BEC3",
+          "description": "Color for unknown or other residues"
+        },
+        "gromacsHelper.colors.atom_name": {
+          "type": "string",
+          "default": "#A29BFE",
+          "description": "Color for atom names"
+        },
+        "gromacsHelper.colors.atom_index": {
+          "type": "string",
+          "default": "#6C5CE7",
+          "description": "Color for atom indices"
+        },
+        "gromacsHelper.colors.coordinate": {
+          "type": "string",
+          "default": "#00B894",
+          "description": "Color for coordinate values"
+        },
+        "gromacsHelper.colors.chain_id": {
+          "type": "string",
+          "default": "#E17055",
+          "description": "Color for chain identifiers"
+        },
+        "gromacsHelper.colors.mdp_param_run_control": {
+          "type": "string",
+          "default": "#E74C3C",
+          "description": "Color for MDP run control parameters"
+        },
+        "gromacsHelper.colors.mdp_param_output_control": {
+          "type": "string",
+          "default": "#3498DB",
+          "description": "Color for MDP output control parameters"
+        },
+        "gromacsHelper.colors.mdp_param_neighbor_searching": {
+          "type": "string",
+          "default": "#2ECC71",
+          "description": "Color for MDP neighbor searching parameters"
+        },
+        "gromacsHelper.colors.mdp_param_electrostatics": {
+          "type": "string",
+          "default": "#F39C12",
+          "description": "Color for MDP electrostatics parameters"
+        },
+        "gromacsHelper.colors.mdp_param_van_der_waals": {
+          "type": "string",
+          "default": "#9B59B6",
+          "description": "Color for MDP van der Waals parameters"
+        },
+        "gromacsHelper.colors.mdp_param_temperature_coupling": {
+          "type": "string",
+          "default": "#E67E22",
+          "description": "Color for MDP temperature coupling parameters"
+        },
+        "gromacsHelper.colors.mdp_param_pressure_coupling": {
+          "type": "string",
+          "default": "#1ABC9C",
+          "description": "Color for MDP pressure coupling parameters"
+        },
+        "gromacsHelper.colors.mdp_param_velocity_generation": {
+          "type": "string",
+          "default": "#34495E",
+          "description": "Color for MDP velocity generation parameters"
+        },
+        "gromacsHelper.colors.mdp_param_bonds": {
+          "type": "string",
+          "default": "#16A085",
+          "description": "Color for MDP bonds parameters"
+        },
+        "gromacsHelper.colors.mdp_param_energy_minimization": {
+          "type": "string",
+          "default": "#8E44AD",
+          "description": "Color for MDP energy minimization parameters"
+        },
+        "gromacsHelper.colors.mdp_param_free_energy": {
+          "type": "string",
+          "default": "#C0392B",
+          "description": "Color for MDP free energy parameters"
+        },
+        "gromacsHelper.colors.mdp_param_nonbonded": {
+          "type": "string",
+          "default": "#D35400",
+          "description": "Color for MDP nonbonded parameters"
+        },
+        "gromacsHelper.colors.mdp_param_ewald": {
+          "type": "string",
+          "default": "#27AE60",
+          "description": "Color for MDP Ewald parameters"
+        },
+        "gromacsHelper.colors.mdp_param_preprocessing": {
+          "type": "string",
+          "default": "#2980B9",
+          "description": "Color for MDP preprocessing parameters"
+        },
+        "gromacsHelper.colors.mdp_param_other": {
+          "type": "string",
+          "default": "#7F8C8D",
+          "description": "Color for other MDP parameters"
+        },
+        "gromacsHelper.colors.mdp_value": {
+          "type": "string",
+          "default": "#A8D8B9",
+          "description": "Color for MDP parameter values"
+        },
+        "gromacsHelper.colors.comment": {
+          "type": "string",
+          "default": "#5CB85C",
+          "description": "Color for comments"
+        },
+        "gromacsHelper.colors.number": {
+          "type": "string",
+          "default": "#00CEC9",
+          "description": "Color for numbers"
+        },
+        "gromacsHelper.colors.keyword": {
+          "type": "string",
+          "default": "#FD79A8",
+          "description": "Color for keywords"
+        },
+        "gromacsHelper.colors.packmol_keyword": {
+          "type": "string",
+          "default": "#E74C3C",
+          "description": "Color for Packmol keywords"
+        },
+        "gromacsHelper.colors.packmol_command": {
+          "type": "string",
+          "default": "#3498DB",
+          "description": "Color for Packmol commands"
+        },
+        "gromacsHelper.colors.packmol_constraint": {
+          "type": "string",
+          "default": "#2ECC71",
+          "description": "Color for Packmol constraint commands"
+        },
+        "gromacsHelper.colors.packmol_geometry": {
+          "type": "string",
+          "default": "#F39C12",
+          "description": "Color for Packmol geometry commands"
+        },
+        "gromacsHelper.colors.packmol_number": {
+          "type": "string",
+          "default": "#9B59B6",
+          "description": "Color for Packmol numeric values"
+        },
+        "gromacsHelper.colors.packmol_filename": {
+          "type": "string",
+          "default": "#16A085",
+          "description": "Color for Packmol file names"
+        },
+        "gromacsHelper.colors.packmol_comment": {
+          "type": "string",
+          "default": "#95A5A6",
+          "description": "Color for Packmol comments"
+        }
+      }
+    },
     "snippets": [
       {
         "language": "gromacs_mdp_file",
@@ -207,6 +749,10 @@
       {
         "language": "gromacs_xvg_file",
         "path": "./snippets/xvg.json"
+      },
+      {
+        "language": "packmol",
+        "path": "./snippets/packmol.json"
       }
     ],
     "commands": [
@@ -241,6 +787,30 @@
         "command": "gromacs-helper.deleteSnippetFromTree",
         "title": "Delete Snippet",
         "icon": "$(trash)"
+      },
+      {
+        "command": "gromacs-helper.configureResidueColors",
+        "title": "Configure Residue Colors",
+        "icon": "$(color-mode)",
+        "category": "GROMACS Helper"
+      },
+      {
+        "command": "gromacs-helper.resetResidueColors",
+        "title": "Reset Residue Colors to Default",
+        "icon": "$(refresh)",
+        "category": "GROMACS Helper"
+      },
+      {
+        "command": "gromacs-helper.openUnitConverter",
+        "title": "Open Unit Converter",
+        "icon": "$(calculator)",
+        "category": "GROMACS Helper"
+      },
+      {
+        "command": "gromacs-helper.toggleSemanticHighlighting",
+        "title": "Toggle Semantic Highlighting",
+        "icon": "$(eye)",
+        "category": "GROMACS Helper"
       }
     ],
     "views": {
@@ -278,6 +848,22 @@
       "commandPalette": [
         {
           "command": "gromacs-helper.manageSnippets",
+          "when": "true"
+        },
+        {
+          "command": "gromacs-helper.configureResidueColors",
+          "when": "true"
+        },
+        {
+          "command": "gromacs-helper.resetResidueColors",
+          "when": "true"
+        },
+        {
+          "command": "gromacs-helper.toggleSemanticHighlighting",
+          "when": "true"
+        },
+        {
+          "command": "gromacs-helper.openUnitConverter",
           "when": "true"
         }
       ],

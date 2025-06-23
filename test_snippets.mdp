@@ -1,8 +1,0 @@
-; Test MDP file for custom snippets
-; Try typing a custom snippet prefix followed by Tab
-
-integrator = md
-nsteps = 1000000
-dt = 0.002
-
-; Add your custom snippets here

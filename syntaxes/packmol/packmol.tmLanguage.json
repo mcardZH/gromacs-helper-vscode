@@ -1,0 +1,127 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Packmol",
+  "scopeName": "source.packmol",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#commands"
+    },
+    {
+      "include": "#constraints"
+    },
+    {
+      "include": "#geometry"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#filenames"
+    },
+    {
+      "include": "#structure_block"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.hash.packmol",
+          "match": "#.*$"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.packmol",
+          "match": "\\b(tolerance|seed|output|filetype|nloop|maxtry|writeout|writebad|check|sidemax|randominitialpoint|avoid_overlap|discale)\\b"
+        }
+      ]
+    },
+    "commands": {
+      "patterns": [
+        {
+          "name": "entity.name.function.command.packmol",
+          "match": "\\b(structure|end|number|center|fixed|centerofmass|changechains|resnumbers|chain|segid)\\b"
+        }
+      ]
+    },
+    "constraints": {
+      "patterns": [
+        {
+          "name": "entity.name.function.constraint.packmol",
+          "match": "\\b(constrain_rotation|atoms|radius|fscale|short_radius|short_radius_scale|over|below|outside|inside)\\b"
+        }
+      ]
+    },
+    "geometry": {
+      "patterns": [
+        {
+          "name": "entity.name.function.geometry.packmol",
+          "match": "\\b(sphere|box|cube|plane|cylinder|ellipsoid)\\b"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.packmol",
+          "match": "-?\\d+\\.?\\d*([eE][+-]?\\d+)?"
+        }
+      ]
+    },
+    "filenames": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.filename.packmol",
+          "match": "\\b\\w+\\.(pdb|xyz|mol2|tinker)\\b"
+        }
+      ]
+    },
+    "structure_block": {
+      "name": "meta.structure.packmol",
+      "begin": "\\b(structure)\\s+(\\S+)\\b",
+      "end": "\\b(end)\\s+(structure)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.structure.begin.packmol"
+        },
+        "2": {
+          "name": "string.quoted.double.filename.packmol"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.structure.end.packmol"
+        },
+        "2": {
+          "name": "keyword.control.structure.end.packmol"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#comments"
+        },
+        {
+          "include": "#commands"
+        },
+        {
+          "include": "#constraints"
+        },
+        {
+          "include": "#geometry"
+        },
+        {
+          "include": "#numbers"
+        }
+      ]
+    }
+  }
+}

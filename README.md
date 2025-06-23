@@ -64,7 +64,7 @@ A comprehensive VS Code extension providing full support for GROMACS molecular d
 3. Search for "GROMACS Helper"
 4. Click Install
 
-Or install directly from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=gromacs-helper-vscode).
+Or install directly from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode).
 
 ## 🎮 Usage
 

@@ -44,7 +44,7 @@ export class MdpHoverProvider implements vscode.HoverProvider {
     markdown.isTrusted = true;
     
     // 参数名称和描述
-    markdown.appendMarkdown(`### ${parameter.name}\n\n`);
+    markdown.appendMarkdown(`### ${parameter.name} [${parameter.category}]\n\n`);
     markdown.appendMarkdown(`${parameter.description}\n\n`);
     
     // 参数详细信息表格

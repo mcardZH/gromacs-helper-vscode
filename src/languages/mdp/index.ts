@@ -4,6 +4,9 @@ import { MdpHoverProvider } from '../../providers/mdpHoverProvider';
 import { MdpDiagnosticProvider } from '../../providers/mdpDiagnosticProvider';
 import { MdpFormattingProvider } from '../../providers/mdpFormattingProvider';
 import { MdpSymbolProvider } from '../../providers/mdpSymbolProvider';
+import { MdpCodeActionProvider } from '../../providers/mdpCodeActionProvider';
+import { MdpSemanticTokensProvider } from '../../providers/mdpSemanticTokensProvider';
+import { SEMANTIC_TOKENS_LEGEND } from '../../providers/baseSemanticTokensProvider';
 import { SnippetManager } from '../../snippetManager';
 
 /**
@@ -66,6 +69,26 @@ export class MdpLanguageSupport {
       new MdpSymbolProvider()
     );
     this.disposables.push(symbolProvider);
+    
+    // 注册代码动作提供者（用于快速修复）
+    const codeActionProvider = vscode.languages.registerCodeActionsProvider(
+      mdpSelector,
+      new MdpCodeActionProvider(),
+      {
+        providedCodeActionKinds: [
+          vscode.CodeActionKind.QuickFix
+        ]
+      }
+    );
+    this.disposables.push(codeActionProvider);
+    
+    // 注册语义令牌提供者
+    const semanticTokensProvider = vscode.languages.registerDocumentSemanticTokensProvider(
+      mdpSelector,
+      new MdpSemanticTokensProvider(),
+      SEMANTIC_TOKENS_LEGEND
+    );
+    this.disposables.push(semanticTokensProvider);
     
     // 注册文档变化监听器（用于诊断）
     const documentChangeListener = vscode.workspace.onDidChangeTextDocument(

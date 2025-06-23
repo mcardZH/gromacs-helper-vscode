@@ -1,0 +1,103 @@
+{
+    "name": "GROMACS Residue Colors",
+    "type": "dark",
+    "semanticHighlighting": true,
+    "semanticTokenColors": {
+        "residue_acidic": "#FF6B6B",
+        "residue_basic": "#4ECDC4",
+        "residue_polar": "#45B7D1",
+        "residue_nonpolar": "#96CEB4",
+        "residue_aromatic": "#FFEAA7",
+        "residue_special": "#DDA0DD",
+        "residue_nucleotide": "#74B9FF",
+        "residue_ion": "#FD79A8",
+        "residue_water": "#00CEC9",
+        "residue_other": "#B2BEC3",
+        "atom_name": "#A29BFE",
+        "atom_index": "#6C5CE7",
+        "coordinate": "#00B894",
+        "chain_id": "#E17055",
+        
+        "mdp_param_run_control": "#E74C3C",
+        "mdp_param_run_control.bold": {
+            "foreground": "#E74C3C",
+            "fontStyle": "bold"
+        },
+        "mdp_param_output_control": "#3498DB",
+        "mdp_param_output_control.bold": {
+            "foreground": "#3498DB",
+            "fontStyle": "bold"
+        },
+        "mdp_param_neighbor_searching": "#2ECC71",
+        "mdp_param_neighbor_searching.bold": {
+            "foreground": "#2ECC71",
+            "fontStyle": "bold"
+        },
+        "mdp_param_electrostatics": "#F39C12",
+        "mdp_param_electrostatics.bold": {
+            "foreground": "#F39C12",
+            "fontStyle": "bold"
+        },
+        "mdp_param_van_der_waals": "#9B59B6",
+        "mdp_param_van_der_waals.bold": {
+            "foreground": "#9B59B6",
+            "fontStyle": "bold"
+        },
+        "mdp_param_temperature_coupling": "#E67E22",
+        "mdp_param_temperature_coupling.bold": {
+            "foreground": "#E67E22",
+            "fontStyle": "bold"
+        },
+        "mdp_param_pressure_coupling": "#1ABC9C",
+        "mdp_param_pressure_coupling.bold": {
+            "foreground": "#1ABC9C",
+            "fontStyle": "bold"
+        },
+        "mdp_param_velocity_generation": "#34495E",
+        "mdp_param_velocity_generation.bold": {
+            "foreground": "#34495E",
+            "fontStyle": "bold"
+        },
+        "mdp_param_bonds": "#16A085",
+        "mdp_param_bonds.bold": {
+            "foreground": "#16A085",
+            "fontStyle": "bold"
+        },
+        "mdp_param_energy_minimization": "#8E44AD",
+        "mdp_param_energy_minimization.bold": {
+            "foreground": "#8E44AD",
+            "fontStyle": "bold"
+        },
+        "mdp_param_free_energy": "#C0392B",
+        "mdp_param_free_energy.bold": {
+            "foreground": "#C0392B",
+            "fontStyle": "bold"
+        },
+        "mdp_param_nonbonded": "#D35400",
+        "mdp_param_nonbonded.bold": {
+            "foreground": "#D35400",
+            "fontStyle": "bold"
+        },
+        "mdp_param_ewald": "#27AE60",
+        "mdp_param_ewald.bold": {
+            "foreground": "#27AE60",
+            "fontStyle": "bold"
+        },
+        "mdp_param_preprocessing": "#2980B9",
+        "mdp_param_preprocessing.bold": {
+            "foreground": "#2980B9",
+            "fontStyle": "bold"
+        },
+        "mdp_param_other": "#7F8C8D",
+        "mdp_param_other.bold": {
+            "foreground": "#7F8C8D",
+            "fontStyle": "bold"
+        },
+        
+        "mdp_value": "#A8D8B9",
+        
+        "comment": "#5CB85C",
+        "number": "#00CEC9",
+        "keyword": "#FD79A8"
+    }
+}

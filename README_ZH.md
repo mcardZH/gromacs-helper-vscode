@@ -62,7 +62,7 @@
 3. 搜索 "GROMACS Helper"
 4. 点击安装
 
-或者从 [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=gromacs-helper-vscode) 直接安装。
+或者从 [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode) 直接安装。
 
 ## 🎮 使用方法
 
