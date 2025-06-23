@@ -1,0 +1,11 @@
+# Packmol input for water-methanol mixture
+tolerance 2.0
+output mixture.pdb
+
+# Water molecules - try typing "structure " and see file completions
+structure water.pdb
+  number 500
+  inside sphere 0.0 0.0 0.0 15.0
+end structure
+
+# Methanol molecules - the completion should suggest existing files

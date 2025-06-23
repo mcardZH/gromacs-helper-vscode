@@ -529,72 +529,170 @@
         "gromacsHelper.colors.residue_acidic": {
           "type": "string",
           "default": "#FF6B6B",
-          "description": "Color for acidic residues (ASP, GLU)"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for acidic residues (ASP, GLU) - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.residue_acidic_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make acidic residues bold"
         },
         "gromacsHelper.colors.residue_basic": {
           "type": "string",
           "default": "#4ECDC4",
-          "description": "Color for basic residues (LYS, ARG, HIS)"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for basic residues (LYS, ARG, HIS) - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.residue_basic_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make basic residues bold"
         },
         "gromacsHelper.colors.residue_polar": {
           "type": "string",
           "default": "#45B7D1",
-          "description": "Color for polar residues (SER, THR, CYS, ASN, GLN)"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for polar residues (SER, THR, CYS, ASN, GLN) - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.residue_polar_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make polar residues bold"
         },
         "gromacsHelper.colors.residue_nonpolar": {
           "type": "string",
           "default": "#96CEB4",
-          "description": "Color for nonpolar residues (ALA, VAL, LEU, ILE, MET)"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for nonpolar residues (ALA, VAL, LEU, ILE, MET) - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.residue_nonpolar_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make nonpolar residues bold"
         },
         "gromacsHelper.colors.residue_aromatic": {
           "type": "string",
           "default": "#FFEAA7",
-          "description": "Color for aromatic residues (PHE, TYR, TRP)"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for aromatic residues (PHE, TYR, TRP) - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.residue_aromatic_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make aromatic residues bold"
         },
         "gromacsHelper.colors.residue_special": {
           "type": "string",
           "default": "#DDA0DD",
-          "description": "Color for special residues (PRO, GLY)"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for special residues (PRO, GLY) - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.residue_special_bold": {
+          "type": "boolean",
+          "default": true,
+          "description": "Make special residues bold"
         },
         "gromacsHelper.colors.residue_nucleotide": {
           "type": "string",
           "default": "#74B9FF",
-          "description": "Color for nucleotide bases"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for nucleotide bases - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.residue_nucleotide_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make nucleotide bases bold"
         },
         "gromacsHelper.colors.residue_ion": {
           "type": "string",
           "default": "#FD79A8",
-          "description": "Color for ions (NA, CL, K, MG, CA, ZN)"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for ions (NA, CL, K, MG, CA, ZN) - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.residue_ion_bold": {
+          "type": "boolean",
+          "default": true,
+          "description": "Make ions bold"
         },
         "gromacsHelper.colors.residue_water": {
           "type": "string",
           "default": "#00CEC9",
-          "description": "Color for water molecules (SOL, WAT, HOH)"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for water molecules (SOL, WAT, HOH) - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.residue_water_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make water molecules bold"
         },
         "gromacsHelper.colors.residue_other": {
           "type": "string",
           "default": "#B2BEC3",
-          "description": "Color for unknown or other residues"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for unknown or other residues - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.residue_other_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make other residues bold"
         },
         "gromacsHelper.colors.atom_name": {
           "type": "string",
           "default": "#A29BFE",
-          "description": "Color for atom names"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for atom names - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.atom_name_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make atom names bold"
         },
         "gromacsHelper.colors.atom_index": {
           "type": "string",
           "default": "#6C5CE7",
-          "description": "Color for atom indices"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for atom indices - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.atom_index_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make atom indices bold"
         },
         "gromacsHelper.colors.coordinate": {
           "type": "string",
           "default": "#00B894",
-          "description": "Color for coordinate values"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for coordinate values - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.coordinate_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make coordinate values bold"
         },
         "gromacsHelper.colors.chain_id": {
           "type": "string",
           "default": "#E17055",
-          "description": "Color for chain identifiers"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for chain identifiers - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.chain_id_bold": {
+          "type": "boolean",
+          "default": true,
+          "description": "Make chain identifiers bold"
         },
         "gromacsHelper.colors.mdp_param_run_control": {
           "type": "string",
@@ -694,37 +792,86 @@
         "gromacsHelper.colors.packmol_keyword": {
           "type": "string",
           "default": "#E74C3C",
-          "description": "Color for Packmol keywords"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for Packmol keywords - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.packmol_keyword_bold": {
+          "type": "boolean",
+          "default": true,
+          "description": "Make Packmol keywords bold"
         },
         "gromacsHelper.colors.packmol_command": {
           "type": "string",
           "default": "#3498DB",
-          "description": "Color for Packmol commands"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for Packmol commands - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.packmol_command_bold": {
+          "type": "boolean",
+          "default": true,
+          "description": "Make Packmol commands bold"
         },
         "gromacsHelper.colors.packmol_constraint": {
           "type": "string",
           "default": "#2ECC71",
-          "description": "Color for Packmol constraint commands"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for Packmol constraint commands - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.packmol_constraint_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make Packmol constraint commands bold"
         },
         "gromacsHelper.colors.packmol_geometry": {
           "type": "string",
           "default": "#F39C12",
-          "description": "Color for Packmol geometry commands"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for Packmol geometry commands - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.packmol_geometry_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make Packmol geometry commands bold"
         },
         "gromacsHelper.colors.packmol_number": {
           "type": "string",
           "default": "#9B59B6",
-          "description": "Color for Packmol numeric values"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for Packmol numeric values - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.packmol_number_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make Packmol numeric values bold"
         },
         "gromacsHelper.colors.packmol_filename": {
           "type": "string",
           "default": "#16A085",
-          "description": "Color for Packmol file names"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for Packmol file names - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.packmol_filename_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make Packmol file names bold"
         },
         "gromacsHelper.colors.packmol_comment": {
           "type": "string",
           "default": "#95A5A6",
-          "description": "Color for Packmol comments"
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Color for Packmol comments - must be a valid hex color code"
+        },
+        "gromacsHelper.colors.packmol_comment_bold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Make Packmol comments bold"
         }
       }
     },
@@ -794,6 +941,12 @@
         "category": "GROMACS Helper"
       },
       {
+        "command": "gromacs-helper.configureAdvancedColors",
+        "title": "Configure Colors & Bold Settings",
+        "icon": "$(paintcan)",
+        "category": "GROMACS Helper"
+      },
+      {
         "command": "gromacs-helper.resetResidueColors",
         "title": "Reset Residue Colors to Default",
         "icon": "$(refresh)",
@@ -851,6 +1004,10 @@
         },
         {
           "command": "gromacs-helper.configureResidueColors",
+          "when": "true"
+        },
+        {
+          "command": "gromacs-helper.configureAdvancedColors",
           "when": "true"
         },
         {

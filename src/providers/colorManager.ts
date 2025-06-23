@@ -54,6 +54,35 @@ export class ColorManager {
         packmol_comment: "#636E72"
     };
 
+    private readonly defaultBoldSettings = {
+        // Residue bold settings
+        residue_acidic_bold: false,
+        residue_basic_bold: false,
+        residue_polar_bold: false,
+        residue_nonpolar_bold: false,
+        residue_aromatic_bold: false,
+        residue_special_bold: true,
+        residue_nucleotide_bold: false,
+        residue_ion_bold: true,
+        residue_water_bold: false,
+        residue_other_bold: false,
+        
+        // Atom and coordinate bold settings
+        atom_name_bold: false,
+        atom_index_bold: false,
+        coordinate_bold: false,
+        chain_id_bold: true,
+        
+        // Packmol bold settings
+        packmol_keyword_bold: true,
+        packmol_command_bold: true,
+        packmol_constraint_bold: false,
+        packmol_geometry_bold: false,
+        packmol_number_bold: false,
+        packmol_filename_bold: false,
+        packmol_comment_bold: false
+    };
+
     private constructor() {}
 
     public static getInstance(): ColorManager {
@@ -77,59 +106,59 @@ export class ColorManager {
                 // Residue colors for GRO files
                 {
                     "scope": "entity.name.type.residue.acidic.gro",
-                    "settings": { "foreground": this.getColor('residue_acidic') }
+                    "settings": this.createStyleSettings('residue_acidic', 'residue_acidic_bold')
                 },
                 {
                     "scope": "entity.name.type.residue.basic.gro",
-                    "settings": { "foreground": this.getColor('residue_basic') }
+                    "settings": this.createStyleSettings('residue_basic', 'residue_basic_bold')
                 },
                 {
                     "scope": "entity.name.type.residue.polar.gro",
-                    "settings": { "foreground": this.getColor('residue_polar') }
+                    "settings": this.createStyleSettings('residue_polar', 'residue_polar_bold')
                 },
                 {
                     "scope": "entity.name.type.residue.nonpolar.gro",
-                    "settings": { "foreground": this.getColor('residue_nonpolar') }
+                    "settings": this.createStyleSettings('residue_nonpolar', 'residue_nonpolar_bold')
                 },
                 {
                     "scope": "entity.name.type.residue.aromatic.gro",
-                    "settings": { "foreground": this.getColor('residue_aromatic') }
+                    "settings": this.createStyleSettings('residue_aromatic', 'residue_aromatic_bold')
                 },
                 {
                     "scope": "entity.name.type.residue.special.gro",
-                    "settings": { "foreground": this.getColor('residue_special') }
+                    "settings": this.createStyleSettings('residue_special', 'residue_special_bold')
                 },
                 {
                     "scope": "entity.name.type.residue.nucleotide.gro",
-                    "settings": { "foreground": this.getColor('residue_nucleotide') }
+                    "settings": this.createStyleSettings('residue_nucleotide', 'residue_nucleotide_bold')
                 },
                 {
                     "scope": "entity.name.type.residue.ion.gro",
-                    "settings": { "foreground": this.getColor('residue_ion') }
+                    "settings": this.createStyleSettings('residue_ion', 'residue_ion_bold')
                 },
                 {
                     "scope": "entity.name.type.residue.water.gro",
-                    "settings": { "foreground": this.getColor('residue_water') }
+                    "settings": this.createStyleSettings('residue_water', 'residue_water_bold')
                 },
                 {
                     "scope": "entity.name.type.residue.other.gro",
-                    "settings": { "foreground": this.getColor('residue_other') }
+                    "settings": this.createStyleSettings('residue_other', 'residue_other_bold')
                 },
                 {
                     "scope": "entity.name.function.atom.gro",
-                    "settings": { "foreground": this.getColor('atom_name') }
+                    "settings": this.createStyleSettings('atom_name', 'atom_name_bold')
                 },
                 {
                     "scope": "constant.numeric.atom-index.gro",
-                    "settings": { "foreground": this.getColor('atom_index') }
+                    "settings": this.createStyleSettings('atom_index', 'atom_index_bold')
                 },
                 {
                     "scope": "constant.numeric.coordinate.gro",
-                    "settings": { "foreground": this.getColor('coordinate') }
+                    "settings": this.createStyleSettings('coordinate', 'coordinate_bold')
                 },
                 {
                     "scope": "entity.name.tag.chain.gro",
-                    "settings": { "foreground": this.getColor('chain_id') }
+                    "settings": this.createStyleSettings('chain_id', 'chain_id_bold')
                 },
                 
                 // PDB file colors - 为每种残基类型创建单独的规则
@@ -321,31 +350,31 @@ export class ColorManager {
                 // Packmol file colors
                 {
                     "scope": "keyword.control.packmol",
-                    "settings": { "foreground": this.getColor('packmol_keyword') }
+                    "settings": this.createStyleSettings('packmol_keyword', 'packmol_keyword_bold')
                 },
                 {
                     "scope": "entity.name.function.command.packmol",
-                    "settings": { "foreground": this.getColor('packmol_command') }
+                    "settings": this.createStyleSettings('packmol_command', 'packmol_command_bold')
                 },
                 {
                     "scope": "entity.name.function.constraint.packmol",
-                    "settings": { "foreground": this.getColor('packmol_constraint') }
+                    "settings": this.createStyleSettings('packmol_constraint', 'packmol_constraint_bold')
                 },
                 {
                     "scope": "entity.name.function.geometry.packmol",
-                    "settings": { "foreground": this.getColor('packmol_geometry') }
+                    "settings": this.createStyleSettings('packmol_geometry', 'packmol_geometry_bold')
                 },
                 {
                     "scope": "constant.numeric.packmol",
-                    "settings": { "foreground": this.getColor('packmol_number') }
+                    "settings": this.createStyleSettings('packmol_number', 'packmol_number_bold')
                 },
                 {
                     "scope": "string.quoted.double.filename.packmol",
-                    "settings": { "foreground": this.getColor('packmol_filename') }
+                    "settings": this.createStyleSettings('packmol_filename', 'packmol_filename_bold')
                 },
                 {
                     "scope": "comment.line.hash.packmol",
-                    "settings": { "foreground": this.getColor('packmol_comment') }
+                    "settings": this.createStyleSettings('packmol_comment', 'packmol_comment_bold')
                 }
             ]
         };
@@ -369,13 +398,57 @@ export class ColorManager {
      */
     private getColor(colorName: keyof typeof this.defaultColors): string {
         const config = vscode.workspace.getConfiguration('gromacsHelper.colors');
-        return config.get(colorName) || this.defaultColors[colorName];
+        const userColor = config.get<string>(colorName);
+        
+        // 验证用户提供的颜色是否为有效的HEX格式
+        if (userColor && typeof userColor === 'string' && this.isValidHexColor(userColor)) {
+            return userColor;
+        }
+        
+        return this.defaultColors[colorName];
+    }
+
+    /**
+     * 获取加粗设置
+     */
+    private getBoldSetting(boldKey: keyof typeof this.defaultBoldSettings): boolean {
+        const config = vscode.workspace.getConfiguration('gromacsHelper.colors');
+        const userBold = config.get<boolean>(boldKey);
+        return userBold !== undefined && userBold !== null ? userBold : this.defaultBoldSettings[boldKey];
+    }
+
+    /**
+     * 验证HEX颜色格式
+     */
+    private isValidHexColor(color: string): boolean {
+        const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+        return hexColorRegex.test(color);
+    }
+
+    /**
+     * 创建样式设置对象，包含颜色和字体粗细
+     */
+    private createStyleSettings(colorName: keyof typeof this.defaultColors, boldKey?: keyof typeof this.defaultBoldSettings): any {
+        const settings: any = {
+            foreground: this.getColor(colorName)
+        };
+        
+        if (boldKey && this.getBoldSetting(boldKey)) {
+            settings.fontStyle = "bold";
+        }
+        
+        return settings;
     }
 
     /**
      * 设置特定颜色
      */
     public async setColor(colorName: keyof typeof this.defaultColors, color: string): Promise<void> {
+        // 验证颜色格式
+        if (!this.isValidHexColor(color)) {
+            throw new Error(`Invalid hex color format: ${color}. Please use format #RRGGBB or #RGB`);
+        }
+        
         const config = vscode.workspace.getConfiguration();
         await config.update(
             `gromacsHelper.colors.${colorName}`,
@@ -388,19 +461,72 @@ export class ColorManager {
     }
 
     /**
+     * 设置特定颜色的加粗选项
+     */
+    public async setBoldSetting(boldKey: keyof typeof this.defaultBoldSettings, bold: boolean): Promise<void> {
+        const config = vscode.workspace.getConfiguration();
+        await config.update(
+            `gromacsHelper.colors.${boldKey}`,
+            bold,
+            vscode.ConfigurationTarget.Global
+        );
+        
+        // 重新应用颜色
+        await this.applyLanguageSpecificColors();
+    }
+
+    /**
+     * 同时设置颜色和加粗选项
+     */
+    public async setColorAndBold(
+        colorName: keyof typeof this.defaultColors, 
+        color: string, 
+        boldKey: keyof typeof this.defaultBoldSettings, 
+        bold: boolean
+    ): Promise<void> {
+        // 验证颜色格式
+        if (!this.isValidHexColor(color)) {
+            throw new Error(`Invalid hex color format: ${color}. Please use format #RRGGBB or #RGB`);
+        }
+        
+        const config = vscode.workspace.getConfiguration();
+        
+        // 同时更新颜色和加粗设置
+        await Promise.all([
+            config.update(`gromacsHelper.colors.${colorName}`, color, vscode.ConfigurationTarget.Global),
+            config.update(`gromacsHelper.colors.${boldKey}`, bold, vscode.ConfigurationTarget.Global)
+        ]);
+        
+        // 重新应用颜色
+        await this.applyLanguageSpecificColors();
+    }
+
+    /**
      * 重置所有颜色到默认值
      */
     public async resetColorsToDefault(): Promise<void> {
         const config = vscode.workspace.getConfiguration();
         
         // 清除所有自定义颜色配置
-        for (const colorName of Object.keys(this.defaultColors)) {
-            await config.update(
+        const colorPromises = Object.keys(this.defaultColors).map(colorName =>
+            config.update(
                 `gromacsHelper.colors.${colorName}`,
                 undefined,
                 vscode.ConfigurationTarget.Global
-            );
-        }
+            )
+        );
+
+        // 清除所有自定义加粗配置
+        const boldPromises = Object.keys(this.defaultBoldSettings).map(boldKey =>
+            config.update(
+                `gromacsHelper.colors.${boldKey}`,
+                undefined,
+                vscode.ConfigurationTarget.Global
+            )
+        );
+        
+        // 等待所有配置清除完成
+        await Promise.all([...colorPromises, ...boldPromises]);
         
         // 重新应用默认颜色
         await this.applyLanguageSpecificColors();
@@ -411,5 +537,48 @@ export class ColorManager {
      */
     public getDefaultColors(): typeof this.defaultColors {
         return { ...this.defaultColors };
+    }
+
+    /**
+     * 获取所有默认加粗设置
+     */
+    public getDefaultBoldSettings(): typeof this.defaultBoldSettings {
+        return { ...this.defaultBoldSettings };
+    }
+
+    /**
+     * 验证并获取当前所有颜色配置
+     */
+    public getCurrentColorSettings(): { 
+        colors: { [K in keyof typeof ColorManager.prototype.defaultColors]: string }; 
+        boldSettings: { [K in keyof typeof ColorManager.prototype.defaultBoldSettings]: boolean }; 
+        invalid: string[] 
+    } {
+        const currentColors = { ...this.defaultColors };
+        const currentBoldSettings = { ...this.defaultBoldSettings };
+        const invalidColors: string[] = [];
+
+        // 检查所有颜色配置
+        Object.keys(this.defaultColors).forEach(colorName => {
+            const key = colorName as keyof typeof this.defaultColors;
+            const color = this.getColor(key);
+            if (!this.isValidHexColor(color)) {
+                invalidColors.push(colorName);
+            } else {
+                currentColors[key] = color;
+            }
+        });
+
+        // 检查所有加粗配置
+        Object.keys(this.defaultBoldSettings).forEach(boldKey => {
+            const key = boldKey as keyof typeof this.defaultBoldSettings;
+            currentBoldSettings[key] = this.getBoldSetting(key);
+        });
+
+        return {
+            colors: currentColors,
+            boldSettings: currentBoldSettings,
+            invalid: invalidColors
+        };
     }
 }
