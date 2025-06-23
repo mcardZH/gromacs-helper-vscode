@@ -5,8 +5,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: '新版本号 (例如: 0.0.3, 0.1.0, 1.0.0-beta.1)'
-        required: true
+        description: '版本号 (例如: 0.0.3, 0.1.0, 1.0.0-beta.1) - 可选，留空则使用当前版本号'
+        required: false
         type: string
       release_type:
         description: '发布类型'
@@ -17,6 +17,11 @@ on:
           - 'release'
           - 'prerelease'
           - 'draft'
+      update_version:
+        description: '是否更新版本号 (如果指定了新版本号)'
+        required: true
+        default: false
+        type: boolean
       create_release:
         description: '是否创建GitHub Release'
         required: true
@@ -32,7 +37,7 @@ on:
         default: true
         type: boolean
       publish_marketplace:
-        description: '发布到VS Code Marketplace'
+        description: '发布到VS Code Marketplace (仅在release类型时生效)'
         required: true
         default: false
         type: boolean
@@ -71,7 +76,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       vsix-name: ${{ steps.build.outputs.vsix-name }}
       should_release: ${{ steps.version.outputs.should_release }}
-      version_changed: ${{ steps.version.outputs.version_changed }}
+      version_updated: ${{ steps.version.outputs.version_updated }}
       
     steps:
       - name: 检出代码
@@ -96,21 +101,40 @@ jobs:
         id: version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # 手动触发 - 使用用户输入的版本号
-            NEW_VERSION="${{ github.event.inputs.version }}"
-            echo "更新版本号到: $NEW_VERSION"
-            npm version $NEW_VERSION --no-git-tag-version
+            # 手动触发
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+            echo "当前package.json版本号: $CURRENT_VERSION"
             
-            # 配置git用户信息
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
+            if [ -n "${{ github.event.inputs.version }}" ] && [ "${{ github.event.inputs.update_version }}" = "true" ]; then
+              # 用户提供了新版本号且选择更新
+              NEW_VERSION="${{ github.event.inputs.version }}"
+              echo "更新版本号到: $NEW_VERSION"
+              npm version $NEW_VERSION --no-git-tag-version
+              
+              # 配置git用户信息
+              git config --local user.email "action@github.com"
+              git config --local user.name "GitHub Action"
+              
+              # 提交版本更改
+              git add package.json
+              git commit -m "chore: bump version to $NEW_VERSION" || echo "No changes to commit"
+              git push origin ${{ github.ref_name }} || echo "No changes to push"
+              
+              echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+              echo "version_updated=true" >> $GITHUB_OUTPUT
+            elif [ -n "${{ github.event.inputs.version }}" ]; then
+              # 用户提供了版本号但不更新package.json (仅用于发布)
+              RELEASE_VERSION="${{ github.event.inputs.version }}"
+              echo "使用指定版本号进行发布 (不更新package.json): $RELEASE_VERSION"
+              echo "version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
+              echo "version_updated=false" >> $GITHUB_OUTPUT
+            else
+              # 使用当前版本号
+              echo "使用当前版本号进行发布: $CURRENT_VERSION"
+              echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+              echo "version_updated=false" >> $GITHUB_OUTPUT
+            fi
             
-            # 提交版本更改
-            git add package.json
-            git commit -m "chore: bump version to $NEW_VERSION" || echo "No changes to commit"
-            git push origin ${{ github.ref_name }} || echo "No changes to push"
-            
-            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
             echo "is_manual=true" >> $GITHUB_OUTPUT
             echo "should_release=true" >> $GITHUB_OUTPUT
           else
@@ -138,6 +162,7 @@ jobs:
               echo "is_manual=false" >> $GITHUB_OUTPUT
               echo "should_release=true" >> $GITHUB_OUTPUT
               echo "version_changed=true" >> $GITHUB_OUTPUT
+              echo "version_updated=false" >> $GITHUB_OUTPUT
             else
               echo "ℹ️  版本号未变化，执行普通构建..."
               BUILD_NUMBER=${{ github.run_number }}
@@ -147,6 +172,7 @@ jobs:
               echo "is_manual=false" >> $GITHUB_OUTPUT
               echo "should_release=false" >> $GITHUB_OUTPUT
               echo "version_changed=false" >> $GITHUB_OUTPUT
+              echo "version_updated=false" >> $GITHUB_OUTPUT
             fi
           fi
 
@@ -206,11 +232,24 @@ jobs:
             npm install -g @vscode/vsce
           fi
           
+          # 获取要使用的版本号
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          TARGET_VERSION="${{ steps.version.outputs.version }}"
+          
+          echo "Package.json版本: $PACKAGE_VERSION"
+          echo "目标发布版本: $TARGET_VERSION"
+          
           # 打包扩展
           if [ "${{ steps.version.outputs.should_release }}" = "true" ]; then
-            # 需要发布 - 使用package.json中的版本号
-            vsce package
-            VSIX_FILE=$(ls *.vsix | head -n 1)
+            if [ "$PACKAGE_VERSION" = "$TARGET_VERSION" ]; then
+              # 版本号一致，直接使用package.json版本
+              vsce package
+              VSIX_FILE=$(ls *.vsix | head -n 1)
+            else
+              # 版本号不一致，使用指定版本号打包
+              vsce package --out "gromacs-helper-vscode-${TARGET_VERSION}.vsix"
+              VSIX_FILE="gromacs-helper-vscode-${TARGET_VERSION}.vsix"
+            fi
           else
             # 普通构建 - 使用带构建号的版本
             vsce package --out "gromacs-helper-vscode-${{ steps.version.outputs.version }}.vsix"
@@ -275,7 +314,7 @@ jobs:
           
           ## 🚀 功能特性
           
-          - 📝 **语法高亮**: 完整支持MDP、TOP、GRO、NDX文件格式
+          - 📝 **语法高亮**: 完整支持MDP、TOP、GRO、NDX、PDB、XVG文件格式
           - 🔍 **智能提示**: 参数自动补全和悬停帮助
           - 📋 **代码片段**: 常用模板快速插入
           - 🎯 **符号导航**: 快速跳转和大纲视图
@@ -286,7 +325,8 @@ jobs:
           
           - **MDP文件** (.mdp) - 分子动力学参数文件
           - **TOP文件** (.top, .itp) - 拓扑文件
-          - **GRO文件** (.gro) - 结构坐标文件  
+          - **GRO、PDB文件** (.gro, .pdb) - 结构坐标文件  
+          - **XVG文件** (.xvg) - 数据图标文件  
           - **NDX文件** (.ndx) - 索引文件
           EOF
           
@@ -306,29 +346,72 @@ jobs:
             
             # 尝试提取当前版本的变更日志
             VERSION_CLEAN=$(echo "$VERSION" | sed 's/^v//')
+            echo "正在查找版本: $VERSION_CLEAN"
             
-            # 查找版本标题的多种格式
+            # 显示CHANGELOG.md中存在的版本号，用于调试
+            echo "CHANGELOG.md中的版本号:"
+            grep -E "^## \[" CHANGELOG.md | head -5 || echo "未找到版本号格式"
+            
+            # 查找版本标题的多种格式，使用更精确的匹配
             CHANGELOG_CONTENT=""
-            if grep -q "## \[${VERSION_CLEAN}\]" CHANGELOG.md; then
+            
+            # 检查不同的版本号格式
+            if grep -q "^## \[${VERSION_CLEAN}\]" CHANGELOG.md; then
+              echo "找到格式: ## [${VERSION_CLEAN}]"
               # 格式: ## [0.0.3] - 2024-01-01
-              CHANGELOG_CONTENT=$(awk "/## \[${VERSION_CLEAN}\]/,/## \[/{if(/## \[${VERSION_CLEAN}\]/) print; else if(/## \[/) exit; else print}" CHANGELOG.md | head -n -1)
-            elif grep -q "## ${VERSION_CLEAN}" CHANGELOG.md; then
+              CHANGELOG_CONTENT=$(awk "
+                /^## \[${VERSION_CLEAN}\]/ { found=1; print; next }
+                found && /^## \[/ { exit }
+                found { print }
+              " CHANGELOG.md)
+            elif grep -q "^## ${VERSION_CLEAN}" CHANGELOG.md; then
+              echo "找到格式: ## ${VERSION_CLEAN}"
               # 格式: ## 0.0.3
-              CHANGELOG_CONTENT=$(awk "/## ${VERSION_CLEAN}/,/## /{if(/## ${VERSION_CLEAN}/) print; else if(/## /) exit; else print}" CHANGELOG.md | head -n -1)
-            elif grep -q "# v${VERSION_CLEAN}" CHANGELOG.md; then
+              CHANGELOG_CONTENT=$(awk "
+                /^## ${VERSION_CLEAN}/ { found=1; print; next }
+                found && /^## / { exit }
+                found { print }
+              " CHANGELOG.md)
+            elif grep -q "^# v${VERSION_CLEAN}" CHANGELOG.md; then
+              echo "找到格式: # v${VERSION_CLEAN}"
               # 格式: # v0.0.3
-              CHANGELOG_CONTENT=$(awk "/# v${VERSION_CLEAN}/,/# v/{if(/# v${VERSION_CLEAN}/) print; else if(/# v/) exit; else print}" CHANGELOG.md | head -n -1)
+              CHANGELOG_CONTENT=$(awk "
+                /^# v${VERSION_CLEAN}/ { found=1; print; next }
+                found && /^# v/ { exit }
+                found { print }
+              " CHANGELOG.md)
+            elif grep -q "^### ${VERSION_CLEAN}" CHANGELOG.md; then
+              echo "找到格式: ### ${VERSION_CLEAN}"
+              # 格式: ### 0.0.3
+              CHANGELOG_CONTENT=$(awk "
+                /^### ${VERSION_CLEAN}/ { found=1; print; next }
+                found && /^### / { exit }
+                found { print }
+              " CHANGELOG.md)
             fi
             
+            # 清理内容，移除空行开头和结尾
             if [ -n "$CHANGELOG_CONTENT" ]; then
-              echo "找到版本 $VERSION_CLEAN 的变更日志"
+              echo "成功提取到 $VERSION_CLEAN 的变更日志内容:"
+              echo "---内容预览---"
+              echo "$CHANGELOG_CONTENT" | head -10
+              echo "---预览结束---"
+              
+              # 保存变更日志内容
               echo "## 📝 本版本更新" > version_changes.md
               echo "" >> version_changes.md
-              echo "$CHANGELOG_CONTENT" | tail -n +2 >> version_changes.md
+              # 跳过标题行，直接输出内容
+              echo "$CHANGELOG_CONTENT" | tail -n +2 | sed '/^$/d' >> version_changes.md
               echo "" >> version_changes.md
               cat version_changes.md release_notes_template.md > release_notes.md
             else
-              echo "未找到版本 $VERSION_CLEAN 的变更日志，使用默认模板"
+              echo "⚠️ 未找到版本 $VERSION_CLEAN 的变更日志"
+              echo "尝试的匹配模式:"
+              echo "  - ## [$VERSION_CLEAN]"
+              echo "  - ## $VERSION_CLEAN"
+              echo "  - # v$VERSION_CLEAN"
+              echo "  - ### $VERSION_CLEAN"
+              echo "使用默认模板"
               cp release_notes_template.md release_notes.md
             fi
           else
@@ -377,7 +460,8 @@ jobs:
           draft: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_type == 'draft' }}
           prerelease: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_type == 'prerelease' || github.event_name != 'workflow_dispatch' }}
           generate_release_notes: true
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
+          make_latest: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_type == 'release' || github.event_name != 'workflow_dispatch' }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
   # 发布到VS Code Marketplace
@@ -477,13 +561,14 @@ jobs:
           echo "| 构建状态 | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Release状态 | ${{ needs.release.result || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Marketplace状态 | ${{ needs.marketplace.result || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 版本变化 | ${{ needs.build.outputs.version_changed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 版本变化 | ${{ needs.build.outputs.version_updated || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 执行发布 | ${{ needs.build.outputs.should_release || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "### 📋 手动构建参数" >> $GITHUB_STEP_SUMMARY
-            echo "- **版本号**: ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **版本号**: ${{ github.event.inputs.version || '未指定 (使用当前版本)' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **更新版本**: ${{ github.event.inputs.update_version }}" >> $GITHUB_STEP_SUMMARY
             echo "- **发布类型**: ${{ github.event.inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
             echo "- **创建Release**: ${{ github.event.inputs.create_release }}" >> $GITHUB_STEP_SUMMARY
             echo "- **自动变更日志**: ${{ github.event.inputs.auto_changelog }}" >> $GITHUB_STEP_SUMMARY

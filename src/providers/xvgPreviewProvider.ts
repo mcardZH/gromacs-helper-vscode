@@ -438,6 +438,14 @@ export class XvgPreviewProvider {
             '#E67E22', '#1ABC9C', '#34495E', '#E91E63', '#FF5722'
         ];
         
+        // 获取点大小，支持0值
+        function getPointSize() {
+            const pointSizeElement = document.getElementById('pointSize');
+            if (!pointSizeElement) return 3;
+            const value = parseInt(pointSizeElement.value);
+            return isNaN(value) ? 3 : value;
+        }
+        
         // 生成图表数据
         function generateChartData() {
             return data.series.map((series, index) => ({
@@ -448,8 +456,8 @@ export class XvgPreviewProvider {
                 borderWidth: 2,
                 fill: false,
                 tension: 0.1,
-                pointRadius: parseInt(document.getElementById('pointSize').value) || 3,
-                pointHoverRadius: (parseInt(document.getElementById('pointSize').value) || 3) + 2,
+                pointRadius: getPointSize(),
+                pointHoverRadius: getPointSize() + 2,
                 hidden: false
             }));
         }
@@ -533,7 +541,7 @@ export class XvgPreviewProvider {
                     },
                     elements: {
                         point: {
-                            hoverRadius: 8
+                            hoverRadius: Math.max(getPointSize() + 3, 5)
                         }
                     }
                 }

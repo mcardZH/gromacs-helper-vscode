@@ -2,7 +2,7 @@
   "name": "gromacs-helper-vscode",
   "displayName": "GROMACS Helper for VS Code",
   "description": "Complete language support for GROMACS molecular dynamics simulation files including MDP, TOP, GRO, NDX, and PDB formats",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "mcardzh",
   "author": {
     "name": "mcardzh"
