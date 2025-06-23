@@ -11,6 +11,7 @@ import { PdbSymbolProvider } from './providers/pdbSymbolProvider';
 import { PdbFoldingProvider } from './providers/pdbFoldingProvider';
 import { XvgLanguageSupport } from './languages/xvg';
 import { registerPackmolLanguageSupport } from './languages/packmol';
+import { PackmolPreviewPanel } from './providers/packmolPreviewPanel';
 import { SnippetViewProvider } from './providers/snippetTreeProvider';
 import { ResidueHighlightingManager } from './providers/residueHighlightingManager';
 import { UnitConverterPanel } from './providers/unitConverter';
@@ -55,6 +56,20 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Initialize Packmol language support
 	registerPackmolLanguageSupport(context);
+
+	// Register Packmol preview command
+	const packmolPreviewCommand = vscode.commands.registerCommand('gromacs-helper.previewPackmol', async (uri?: vscode.Uri) => {
+		let targetUri = uri;
+		if (!targetUri && vscode.window.activeTextEditor) {
+			targetUri = vscode.window.activeTextEditor.document.uri;
+		}
+		
+		if (targetUri) {
+			await PackmolPreviewPanel.createOrShow(context.extensionUri, targetUri);
+		} else {
+			vscode.window.showErrorMessage('No Packmol file selected for preview');
+		}
+	});
 
 	// Initialize Snippet Tree View
 	const snippetManager = mdpLanguageSupport.getSnippetManager();
@@ -128,11 +143,30 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	);
 
+	// Register Packmol preview command
+	const previewPackmolCommand = vscode.commands.registerCommand(
+		'gromacs-helper.previewPackmol',
+		async (uri?: vscode.Uri) => {
+			// 如果没有提供 URI，尝试获取当前活动的编辑器
+			if (!uri && vscode.window.activeTextEditor) {
+				uri = vscode.window.activeTextEditor.document.uri;
+			}
+			
+			if (uri) {
+				await PackmolPreviewPanel.createOrShow(context.extensionUri, uri);
+			} else {
+				vscode.window.showErrorMessage('No Packmol file selected');
+			}
+		}
+	);
+
 	context.subscriptions.push(
 		configureResidueColorsCommand,
 		resetResidueColorsCommand,
 		toggleSemanticHighlightingCommand,
-		openUnitConverterCommand
+		openUnitConverterCommand,
+		previewPackmolCommand,
+		packmolPreviewCommand
 	);
 
 }

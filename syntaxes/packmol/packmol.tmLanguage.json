@@ -41,7 +41,7 @@
       "patterns": [
         {
           "name": "keyword.control.packmol",
-          "match": "\\b(tolerance|seed|output|filetype|nloop|maxtry|writeout|writebad|check|sidemax|randominitialpoint|avoid_overlap|discale)\\b"
+          "match": "\\b(tolerance|seed|output|filetype|nloop|maxtry|writeout|writebad|check|sidemax|randominitialpoint|avoid_overlap|discale|add_box_sides)\\b"
         }
       ]
     },
@@ -49,7 +49,7 @@
       "patterns": [
         {
           "name": "entity.name.function.command.packmol",
-          "match": "\\b(structure|end|number|center|fixed|centerofmass|changechains|resnumbers|chain|segid)\\b"
+          "match": "\\b(structure|end|number|center|fixed|centerofmass|changechains|resnumbers|chain|segid|restart_to|restart_from)\\b"
         }
       ]
     },
@@ -65,7 +65,7 @@
       "patterns": [
         {
           "name": "entity.name.function.geometry.packmol",
-          "match": "\\b(sphere|box|cube|plane|cylinder|ellipsoid)\\b"
+          "match": "\\b(sphere|box|cube|plane|cylinder|ellipsoid|xygauss)\\b"
         }
       ]
     },

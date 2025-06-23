@@ -53,7 +53,9 @@ export class PackmolSemanticTokensProvider implements vscode.DocumentSemanticTok
       const keywords = [
         'tolerance', 'seed', 'output', 'filetype', 'nloop', 'maxtry',
         'writeout', 'writebad', 'check', 'sidemax', 'randominitialpoint',
-        'avoid_overlap', 'discale'
+        'avoid_overlap', 'discale', 'restart_to', 'restart_from', 'add_box_sides',
+        'pbc', 'fscale', 'short_radius', 'short_radius_scale', 'add_amber_ter',
+        'add_to_list', 'comment'
       ];
       
       if (keywords.includes(firstToken)) {
@@ -81,7 +83,7 @@ export class PackmolSemanticTokensProvider implements vscode.DocumentSemanticTok
       // 处理约束
       const constraints = [
         'constrain_rotation', 'atoms', 'radius', 'fscale', 'short_radius',
-        'short_radius_scale', 'over', 'below', 'outside', 'inside'
+        'short_radius_scale', 'over', 'below', 'outside', 'inside', 'above', 'mindistance'
       ];
       
       if (constraints.includes(firstToken)) {
@@ -93,7 +95,7 @@ export class PackmolSemanticTokensProvider implements vscode.DocumentSemanticTok
       }
       
       // 处理几何形状
-      const geometries = ['sphere', 'box', 'cube', 'plane', 'cylinder', 'ellipsoid'];
+      const geometries = ['sphere', 'box', 'cube', 'plane', 'cylinder', 'ellipsoid', 'xygauss'];
       
       for (let j = 0; j < tokens.length; j++) {
         const token = tokens[j].toLowerCase();
@@ -153,6 +155,16 @@ export class PackmolSemanticTokensProvider implements vscode.DocumentSemanticTok
             'packmol_filename'
           );
         }
+      }
+
+      // 处理重启文件
+      if ((firstToken === 'restart_to' || firstToken === 'restart_from') && tokens.length > 1) {
+        const filename = tokens[1];
+        const tokenStart = line.indexOf(filename);
+        tokensBuilder.push(
+          new vscode.Range(i, tokenStart, i, tokenStart + filename.length),
+          'packmol_filename'
+        );
       }
 
       if (firstToken === 'end') {

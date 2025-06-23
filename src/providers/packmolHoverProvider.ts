@@ -88,7 +88,8 @@ export class PackmolHoverProvider implements vscode.HoverProvider {
       'writeout': `Write intermediate configurations during packing.\n\n**Usage:** \`writeout 100\`\n\nWrites configuration every N steps for monitoring progress.`,
       'writebad': `Write configurations that violate constraints.\n\n**Usage:** \`writebad\`\n\nUseful for debugging constraint problems.`,
       'check': `Check overlaps in the final configuration.\n\n**Usage:** \`check\`\n\nVerifies that the final configuration satisfies all constraints.`,
-      'sidemax': `Maximum displacement in random moves.\n\n**Default:** 1000.0\n\n**Usage:** \`sidemax 50.0\`\n\nControls the maximum distance a molecule can move in one step.`
+      'sidemax': `Maximum displacement in random moves.\n\n**Default:** 1000.0\n\n**Usage:** \`sidemax 50.0\`\n\nControls the maximum distance a molecule can move in one step.`,
+      'add_box_sides': `Adds sides to the bounding box.\n\n**Usage:** \`add_box_sides 5.0\`\n\nExpands the bounding box by this amount on each side.`,
     };
     return docs[keyword];
   }
@@ -104,7 +105,9 @@ export class PackmolHoverProvider implements vscode.HoverProvider {
       'changechains': `Changes chain identifiers in the output.\n\n**Usage:** \`changechains\`\n\nAutomatically assigns different chain IDs to different molecules.`,
       'resnumbers': `Controls residue numbering scheme.\n\n**Usage:** \`resnumbers 3\`\n\nSets how residues are numbered in the output.`,
       'chain': `Sets the chain identifier.\n\n**Usage:** \`chain A\`\n\nAssigns a specific chain ID to this structure.`,
-      'segid': `Sets the segment identifier.\n\n**Usage:** \`segid WAT\`\n\nUseful for organizing different molecule types.`
+      'segid': `Sets the segment identifier.\n\n**Usage:** \`segid WAT\`\n\nUseful for organizing different molecule types.`,
+      'restart_to': `From version 16.143 on, it is possible to build the system from multiple and independent executions of Packmol by the use of restart files. In order to write a restart file, the following keyword must be used: restart_to restart.pack where restart..pack is the name of the restart file to be created.`,
+      'restart_from': ` It is possible to write restart files for the whole system, if the keyword is put outside structure...end structure sections, or to write a restart file for a specific part of the system.`
     };
     return docs[command];
   }
@@ -130,7 +133,8 @@ export class PackmolHoverProvider implements vscode.HoverProvider {
       'cube': `Cubic region defined by one corner and size.\n\n**Usage:** \`cube xmin ymin zmin size\`\n\n**Example:** \`cube 0. 0. 0. 25.\`\n\nDefines a cube starting at (xmin,ymin,zmin) with given size.`,
       'plane': `Plane defined by equation ax + by + cz = d.\n\n**Usage:** \`plane a b c d\`\n\n**Example:** \`plane 0. 0. 1. 0.\` (xy-plane)\n\nDefines a plane using the equation ax + by + cz = d.`,
       'cylinder': `Cylindrical region with axis and radius.\n\n**Usage:** \`cylinder x1 y1 z1 x2 y2 z2 radius\`\n\nDefines a cylinder from point 1 to point 2 with given radius.`,
-      'ellipsoid': `Ellipsoidal region with semi-axes.\n\n**Usage:** \`ellipsoid x y z a b c\`\n\nDefines an ellipsoid centered at (x,y,z) with semi-axes a, b, c.`
+      'ellipsoid': `Ellipsoidal region with semi-axes.\n\n**Usage:** \`ellipsoid x y z a b c\`\n\nDefines an ellipsoid centered at (x,y,z) with semi-axes a, b, c.`,
+      'xygauss': 'Parameters (*a_1*, *b_1*) define center of the gaussian, while *c* specifies the height in the *z* dimension. *a_2* and *b_2* set the width of the gaussian in *x*, and *y*, respectively, while *h* specifies its height. It is possible to restrict atoms to be over or below the gaussian plane. The gaussian surface as implemented is restricted to be over the *xy* plane.',
     };
     return docs[geometry];
   }

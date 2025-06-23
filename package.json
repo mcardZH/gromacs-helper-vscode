@@ -909,6 +909,12 @@
         "when": "resourceExtname == .xvg"
       },
       {
+        "command": "gromacs-helper.previewPackmol",
+        "title": "Preview Packmol 3D Structure",
+        "icon": "$(symbol-structure)",
+        "when": "resourceExtname == .inp || resourceExtname == .packmol"
+      },
+      {
         "command": "gromacs-helper.manageSnippets",
         "title": "Manage MDP Snippets",
         "icon": "$(symbol-snippet)",
@@ -973,6 +979,24 @@
           "icon": "$(symbol-snippet)",
           "when": "true"
         }
+      ],
+      "gromacs-preview": [
+        {
+          "id": "gromacs-helper.packmolPreview",
+          "type": "webview",
+          "name": "Packmol 3D Preview",
+          "icon": "$(symbol-structure)",
+          "when": "true"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "gromacs-preview",
+          "title": "GROMACS Preview",
+          "icon": "$(symbol-structure)"
+        }
       ]
     },
     "menus": {
@@ -981,12 +1005,22 @@
           "command": "gromacs-helper.previewXvg",
           "when": "resourceExtname == .xvg",
           "group": "gromacs-helper"
+        },
+        {
+          "command": "gromacs-helper.previewPackmol",
+          "when": "resourceExtname == .inp || resourceExtname == .packmol",
+          "group": "gromacs-helper"
         }
       ],
       "editor/title": [
         {
           "command": "gromacs-helper.previewXvg",
           "when": "resourceExtname == .xvg",
+          "group": "navigation"
+        },
+        {
+          "command": "gromacs-helper.previewPackmol",
+          "when": "resourceExtname == .inp || resourceExtname == .packmol",
           "group": "navigation"
         }
       ],

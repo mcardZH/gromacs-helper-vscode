@@ -295,6 +295,10 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
           this.validateGeometryCommand(originalLine, tokens, i, diagnostics);
         }
         
+        if (firstToken === 'above' || firstToken === 'below' || firstToken === 'over') {
+          this.validateConstraintCommand(originalLine, tokens, i, diagnostics);
+        }
+        
         if (firstToken === 'fixed') {
           if (tokens.length < 7) {
             diagnostics.push(this.createDiagnostic(
@@ -320,14 +324,160 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
             }
           }
         }
+        
+        // 验证 center 命令
+        if (firstToken === 'center') {
+          // center 命令不需要参数，只检查是否有多余参数
+          if (tokens.length > 1) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              `Center command takes no parameters, got ${tokens.length - 1}`,
+              vscode.DiagnosticSeverity.Warning
+            ));
+          }
+        }
+        
+        // 验证 changechains 命令
+        if (firstToken === 'changechains') {
+          // changechains 命令不需要参数，只检查是否有多余参数
+          if (tokens.length > 1) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              `Changechains command takes no parameters, got ${tokens.length - 1}`,
+              vscode.DiagnosticSeverity.Warning
+            ));
+          }
+        }
+        
+        // 验证 chain 命令
+        if (firstToken === 'chain') {
+          if (tokens.length < 2) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              'Chain command requires a chain identifier',
+              vscode.DiagnosticSeverity.Error
+            ));
+          } else if (tokens.length > 2) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              `Chain command has too many parameters. Expected 1 (chain ID), got ${tokens.length - 1}`,
+              vscode.DiagnosticSeverity.Warning
+            ));
+          }
+        }
+        
+        // 验证 resnumbers 命令
+        if (firstToken === 'resnumbers') {
+          if (tokens.length < 3) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              'Resnumbers command requires at least 2 parameters: start_number [step]',
+              vscode.DiagnosticSeverity.Error
+            ));
+          } else {
+            const startNum = parseInt(tokens[1]);
+            if (isNaN(startNum)) {
+              diagnostics.push(this.createDiagnostic(
+                i, 0, line.length,
+                'Resnumbers start number must be an integer',
+                vscode.DiagnosticSeverity.Error
+              ));
+            }
+            if (tokens.length > 2) {
+              const step = parseInt(tokens[2]);
+              if (isNaN(step)) {
+                diagnostics.push(this.createDiagnostic(
+                  i, 0, line.length,
+                  'Resnumbers step must be an integer',
+                  vscode.DiagnosticSeverity.Error
+                ));
+              }
+            }
+          }
+        }
+        
+        // 验证 segid 命令
+        if (firstToken === 'segid') {
+          if (tokens.length < 2) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              'Segid command requires a segment identifier',
+              vscode.DiagnosticSeverity.Error
+            ));
+          } else if (tokens.length > 2) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              `Segid command has too many parameters. Expected 1 (segment ID), got ${tokens.length - 1}`,
+              vscode.DiagnosticSeverity.Warning
+            ));
+          }
+        }
+        
+        // 验证 restart_to 命令
+        if (firstToken === 'restart_to') {
+          if (tokens.length < 2) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              'Restart_to command requires a restart file name',
+              vscode.DiagnosticSeverity.Error
+            ));
+          } else if (tokens.length > 2) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              `Restart_to command has too many parameters. Expected 1 (filename), got ${tokens.length - 1}`,
+              vscode.DiagnosticSeverity.Warning
+            ));
+          } else {
+            // 检查文件扩展名建议
+            const filename = tokens[1];
+            if (!filename.endsWith('.pack')) {
+              diagnostics.push(this.createDiagnostic(
+                i, 0, line.length,
+                'Restart file typically uses .pack extension',
+                vscode.DiagnosticSeverity.Information
+              ));
+            }
+          }
+        }
+        
+        // 验证 restart_from 命令
+        if (firstToken === 'restart_from') {
+          if (tokens.length < 2) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              'Restart_from command requires a restart file name',
+              vscode.DiagnosticSeverity.Error
+            ));
+          } else if (tokens.length > 2) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              `Restart_from command has too many parameters. Expected 1 (filename), got ${tokens.length - 1}`,
+              vscode.DiagnosticSeverity.Warning
+            ));
+          } else {
+            // 检查文件是否存在
+            const filename = tokens[1];
+            this.checkFileExists(document, filename, i, diagnostics);
+            
+            // 检查文件扩展名
+            if (!filename.endsWith('.pack')) {
+              diagnostics.push(this.createDiagnostic(
+                i, 0, line.length,
+                'Restart file should typically use .pack extension',
+                vscode.DiagnosticSeverity.Information
+              ));
+            }
+          }
+        }
       }
       
       // 检查在结构块外不应该出现的命令
       if (structureBlockDepth === 0) {
         const structureOnlyCommands = [
-          'number', 'inside', 'outside', 'center', 'fixed', 'atoms',
+          'number', 'inside', 'outside', 'above', 'below', 'over', 'center', 'fixed', 'atoms',
           'mindistance', 'radius', 'constrain_rotation', 'changechains',
-          'resnumbers', 'chain', 'segid', 'centerofmass'
+          'resnumbers', 'chain', 'segid', 'centerofmass', 'fscale', 'short_radius',
+          'short_radius_scale', 'add_to_list', 'restart_to', 'restart_from'
         ];
         if (structureOnlyCommands.includes(firstToken)) {
           diagnostics.push(this.createDiagnostic(
@@ -341,11 +491,12 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
       // 检查未知命令
       const validCommands = [
         'tolerance', 'seed', 'output', 'filetype', 'nloop', 'maxtry', 'writeout', 'writebad',
-        'check', 'sidemax', 'randominitialpoint', 'avoid_overlap', 'discale',
+        'check', 'sidemax', 'randominitialpoint', 'avoid_overlap', 'discale', 'pbc',
         'structure', 'end', 'number', 'center', 'fixed', 'centerofmass', 'changechains',
         'resnumbers', 'chain', 'segid', 'constrain_rotation', 'atoms', 'radius', 'fscale',
-        'short_radius', 'short_radius_scale', 'over', 'below', 'outside', 'inside',
-        'mindistance'
+        'short_radius', 'short_radius_scale', 'over', 'below', 'outside', 'inside', 'above',
+        'mindistance', 'add_box_sides', 'add_amber_ter', 'add_to_list', 'comment',
+        'restart_to', 'restart_from'
       ];
       
       if (!validCommands.includes(firstToken)) {
@@ -611,26 +762,57 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
         break;
         
       case 'cylinder':
-        if (tokens.length < 9) {
-          addError('Cylinder requires exactly 7 parameters: x1 y1 z1 x2 y2 z2 radius');
-        } else if (tokens.length > 9) {
-          addError(`Cylinder has too many parameters. Expected 7 (x1 y1 z1 x2 y2 z2 radius), got ${tokens.length - 2}`);
+        if (tokens.length < 10) {
+          addError('Cylinder requires exactly 8 parameters: a1 b1 c1 a2 b2 c2 d l');
+        } else if (tokens.length > 10) {
+          addError(`Cylinder has too many parameters. Expected 8 (a1 b1 c1 a2 b2 c2 d l), got ${tokens.length - 2}`);
         } else {
-          for (let i = 2; i <= 8; i++) {
+          for (let i = 2; i <= 9; i++) {
             if (isNaN(parseFloat(tokens[i]))) {
               addError(`Cylinder parameter ${i-1} must be a number`);
             }
           }
-          const radius = parseFloat(tokens[8]);
+          const radius = parseFloat(tokens[8]); // d parameter (radius)
+          const length = parseFloat(tokens[9]); // l parameter (length)
           if (!isNaN(radius) && radius <= 0) {
-            addError('Cylinder radius must be a positive number');
+            addError('Cylinder radius (d) must be a positive number');
           }
-          const coords = tokens.slice(2, 8).map(t => parseFloat(t));
-          if (coords.every(c => !isNaN(c))) {
-            const [x1, y1, z1, x2, y2, z2] = coords;
-            if (x1 === x2 && y1 === y2 && z1 === z2) {
-              addError('Cylinder endpoints cannot be the same point');
+          if (!isNaN(length) && length <= 0) {
+            addError('Cylinder length (l) must be a positive number');
+          }
+          const startPoint = tokens.slice(2, 5).map(t => parseFloat(t));
+          const direction = tokens.slice(5, 8).map(t => parseFloat(t));
+          if (direction.every(c => !isNaN(c))) {
+            const [dx, dy, dz] = direction;
+            if (dx === 0 && dy === 0 && dz === 0) {
+              addError('Cylinder direction vector (a2, b2, c2) cannot be zero vector');
             }
+          }
+        }
+        break;
+        
+      case 'xygauss':
+        if (tokens.length < 8) {
+          addError('Xygauss requires exactly 6 parameters: a1 b1 a2 b2 c h');
+        } else if (tokens.length > 8) {
+          addError(`Xygauss has too many parameters. Expected 6 (a1 b1 a2 b2 c h), got ${tokens.length - 2}`);
+        } else {
+          for (let i = 2; i <= 7; i++) {
+            if (isNaN(parseFloat(tokens[i]))) {
+              addError(`Xygauss parameter ${i-1} must be a number`);
+            }
+          }
+          const a2 = parseFloat(tokens[4]); // a2 parameter (width in x)
+          const b2 = parseFloat(tokens[5]); // b2 parameter (width in y)
+          const h = parseFloat(tokens[7]);  // h parameter (height)
+          if (!isNaN(a2) && a2 <= 0) {
+            addError('Xygauss width parameter a2 must be positive');
+          }
+          if (!isNaN(b2) && b2 <= 0) {
+            addError('Xygauss width parameter b2 must be positive');
+          }
+          if (!isNaN(h) && h <= 0) {
+            addError('Xygauss height parameter h must be positive');
           }
         }
         break;
@@ -656,12 +838,100 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
         break;
         
       default:
-        const validGeometries = ['sphere', 'box', 'cube', 'plane', 'cylinder', 'ellipsoid'];
+        const validGeometries = ['sphere', 'box', 'cube', 'plane', 'cylinder', 'ellipsoid', 'xygauss'];
         addError(`Unknown geometry type: ${geometryType}. Valid types: ${validGeometries.join(', ')}`);
         break;
     }
   }
   
+  private validateConstraintCommand(originalLine: string, tokens: string[], lineNumber: number, diagnostics: vscode.Diagnostic[]): void {
+    if (tokens.length < 2) {
+      diagnostics.push(this.createLineDiagnostic(
+        lineNumber, originalLine,
+        `${tokens[0]} command requires parameters`,
+        vscode.DiagnosticSeverity.Error
+      ));
+      return;
+    }
+    
+    const commandType = tokens[0].toLowerCase();
+    
+    // 使用统一的错误报告方法
+    const addError = (message: string) => {
+      diagnostics.push(this.createLineDiagnostic(lineNumber, originalLine, message, vscode.DiagnosticSeverity.Error));
+    };
+    
+    // 检查是否是 xygauss 类型
+    if (tokens.length > 2 && tokens[1].toLowerCase() === 'xygauss') {
+      // over/below xygauss 需要6个参数: a1 b1 a2 b2 c h
+      if (tokens.length < 8) {
+        addError(`${commandType} xygauss requires exactly 6 parameters: a1 b1 a2 b2 c h`);
+      } else if (tokens.length > 8) {
+        addError(`${commandType} xygauss has too many parameters. Expected 6 (a1 b1 a2 b2 c h), got ${tokens.length - 2}`);
+      } else {
+        for (let i = 2; i <= 7; i++) {
+          if (isNaN(parseFloat(tokens[i]))) {
+            addError(`${commandType} xygauss parameter ${i-1} must be a number`);
+          }
+        }
+        const a2 = parseFloat(tokens[4]); // a2 parameter (width in x)
+        const b2 = parseFloat(tokens[5]); // b2 parameter (width in y) 
+        const h = parseFloat(tokens[7]);  // h parameter (height)
+        if (!isNaN(a2) && a2 <= 0) {
+          addError(`${commandType} xygauss width parameter a2 must be positive`);
+        }
+        if (!isNaN(b2) && b2 <= 0) {
+          addError(`${commandType} xygauss width parameter b2 must be positive`);
+        }
+        if (!isNaN(h) && h <= 0) {
+          addError(`${commandType} xygauss height parameter h must be positive`);
+        }
+      }
+    } else if (tokens.length > 1 && tokens[1].toLowerCase() === 'plane') {
+      // above/below/over plane 需要4个参数: a b c d
+      if (tokens.length < 6) {
+        addError(`${commandType} plane requires exactly 4 parameters: a b c d`);
+      } else if (tokens.length > 6) {
+        addError(`${commandType} plane has too many parameters. Expected 4 (a b c d), got ${tokens.length - 2}`);
+      } else {
+        for (let i = 2; i <= 5; i++) {
+          if (isNaN(parseFloat(tokens[i]))) {
+            addError(`${commandType} plane parameter ${i-1} must be a number`);
+          }
+        }
+        
+        // 检查平面法向量是否为零向量
+        const a = parseFloat(tokens[2]);
+        const b = parseFloat(tokens[3]);
+        const c = parseFloat(tokens[4]);
+        if (!isNaN(a) && !isNaN(b) && !isNaN(c) && a === 0 && b === 0 && c === 0) {
+          addError(`${commandType} plane normal vector (a, b, c) cannot be zero vector`);
+        }
+      }
+    } else {
+      // above, below, over 命令默认需要平面方程参数 a b c d
+      if (tokens.length < 5) {
+        addError(`${commandType} command requires exactly 4 parameters: a b c d (plane equation)`);
+      } else if (tokens.length > 5) {
+        addError(`${commandType} command has too many parameters. Expected 4 (a b c d), got ${tokens.length - 1}`);
+      } else {
+        for (let i = 1; i <= 4; i++) {
+          if (isNaN(parseFloat(tokens[i]))) {
+            addError(`${commandType} parameter ${i} must be a number`);
+          }
+        }
+        
+        // 检查平面法向量是否为零向量
+        const a = parseFloat(tokens[1]);
+        const b = parseFloat(tokens[2]);
+        const c = parseFloat(tokens[3]);
+        if (!isNaN(a) && !isNaN(b) && !isNaN(c) && a === 0 && b === 0 && c === 0) {
+          addError(`${commandType} plane normal vector (a, b, c) cannot be zero vector`);
+        }
+      }
+    }
+  }
+
   // 简化的诊断创建方法，自动处理行范围
   private createGeometryDiagnostic(
     lineNumber: number,
