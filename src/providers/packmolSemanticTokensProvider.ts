@@ -67,7 +67,7 @@ export class PackmolSemanticTokensProvider implements vscode.DocumentSemanticTok
       // 处理命令
       const commands = [
         'structure', 'end', 'number', 'center', 'fixed', 'centerofmass',
-        'changechains', 'resnumbers', 'chain', 'segid'
+        'changechains', 'resnumbers', 'chain', 'segid', 'atoms'
       ];
       
       if (commands.includes(firstToken)) {
@@ -142,6 +142,28 @@ export class PackmolSemanticTokensProvider implements vscode.DocumentSemanticTok
           new vscode.Range(i, tokenStart, i, tokenStart + filename.length),
           'packmol_filename'
         );
+      }
+
+      if (firstToken === 'filetype' && tokens.length > 1) {
+        const fileType = tokens[1].toLowerCase();
+        if (['pdb', 'xyz', 'mol2', 'tinker'].includes(fileType)) {
+          const tokenStart = line.indexOf(fileType);
+          tokensBuilder.push(
+            new vscode.Range(i, tokenStart, i, tokenStart + fileType.length),
+            'packmol_filename'
+          );
+        }
+      }
+
+      if (firstToken === 'end') {
+        // 如果是 end，第二个 token 为 structure 或 atoms 则标记为command
+        if (tokens.length > 1 && (tokens[1].toLowerCase() === 'structure' || tokens[1].toLowerCase() === 'atoms')) {
+          const tokenStart = line.indexOf(tokens[1]);
+          tokensBuilder.push(
+            new vscode.Range(i, tokenStart, i, tokenStart + tokens[1].length),
+            'packmol_command'
+          );
+        }
       }
     }
     

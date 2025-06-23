@@ -34,8 +34,7 @@
   "categories": [
     "Other",
     "Programming Languages",
-    "Snippets",
-    "Themes"
+    "Snippets"
   ],
   "icon": "imgs/icon.png",
   "activationEvents": [],
@@ -476,8 +475,8 @@
         ],
         "configuration": "./syntaxes/packmol/packmol-language-configuration.json",
         "icon": {
-          "light": "./imgs/packmol.svg",
-          "dark": "./imgs/packmol.svg"
+          "light": "./imgs/inp.svg",
+          "dark": "./imgs/inp.svg"
         }
       }
     ],

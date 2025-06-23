@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * Packmol 代码补全提供者
@@ -38,6 +40,12 @@ export class PackmolCompletionProvider implements vscode.CompletionItemProvider 
     
     const lineText = document.lineAt(position).text;
     const linePrefix = lineText.substring(0, position.character);
+    
+    // 检查是否在 structure 命令后需要文件名补全
+    const structureMatch = linePrefix.match(/^\s*structure\s+(.*)$/);
+    if (structureMatch) {
+      return this.getStructureFileCompletions(document, structureMatch[1]);
+    }
     
     const completions: vscode.CompletionItem[] = [];
     
@@ -93,6 +101,12 @@ export class PackmolCompletionProvider implements vscode.CompletionItemProvider 
         item.kind = vscode.CompletionItemKind.Snippet;
       } else if (geom === 'plane') {
         item.insertText = new vscode.SnippetString('plane ${1:a} ${2:b} ${3:c} ${4:d}');
+        item.kind = vscode.CompletionItemKind.Snippet;
+      } else if (geom === 'cylinder') {
+        item.insertText = new vscode.SnippetString('cylinder ${1:x1} ${2:y1} ${3:z1} ${4:x2} ${5:y2} ${6:z2} ${7:radius}');
+        item.kind = vscode.CompletionItemKind.Snippet;
+      } else if (geom === 'ellipsoid') {
+        item.insertText = new vscode.SnippetString('ellipsoid ${1:x} ${2:y} ${3:z} ${4:a} ${5:b} ${6:c}');
         item.kind = vscode.CompletionItemKind.Snippet;
       }
       
@@ -168,5 +182,84 @@ export class PackmolCompletionProvider implements vscode.CompletionItemProvider 
       'ellipsoid': 'Ellipsoidal region with semi-axes'
     };
     return docs[geometry] || '';
+  }
+
+  /**
+   * 获取结构文件的自动补全项
+   * @param document 当前文档
+   * @param partialFilename 部分文件名
+   * @returns 补全项数组
+   */
+  private getStructureFileCompletions(
+    document: vscode.TextDocument,
+    partialFilename: string
+  ): vscode.CompletionItem[] {
+    const completions: vscode.CompletionItem[] = [];
+    
+    try {
+      // 获取当前文档所在目录
+      const documentDir = path.dirname(document.uri.fsPath);
+      
+      // 读取目录中的文件
+      const files = fs.readdirSync(documentDir);
+      
+      // 过滤出结构文件
+      const structureFiles = files.filter(file => {
+        const ext = path.extname(file).toLowerCase();
+        return this.fileTypes.some(fileType => ext === `.${fileType}`);
+      });
+      
+      // 创建补全项
+      structureFiles.forEach(file => {
+        // 检查文件名是否匹配部分输入
+        if (file.toLowerCase().startsWith(partialFilename.toLowerCase()) || partialFilename === '') {
+          const item = new vscode.CompletionItem(file, vscode.CompletionItemKind.File);
+          item.detail = `Structure file (${path.extname(file)})`;
+          item.documentation = `Structure file: ${file}`;
+          
+          // 添加文件存在标识
+          const filePath = path.join(documentDir, file);
+          try {
+            const stats = fs.statSync(filePath);
+            item.documentation = `Structure file: ${file}\nSize: ${(stats.size / 1024).toFixed(2)} KB\nModified: ${stats.mtime.toLocaleDateString()}`;
+          } catch (error) {
+            // 如果无法获取文件信息，使用基本信息
+          }
+          
+          // 设置排序优先级，最近修改的文件优先
+          try {
+            const stats = fs.statSync(filePath);
+            item.sortText = `${1000000000000 - stats.mtime.getTime()}_${file}`;
+          } catch (error) {
+            item.sortText = file;
+          }
+          
+          completions.push(item);
+        }
+      });
+      
+      // 如果没有找到匹配的文件，提供一些常见的文件名模板
+      if (completions.length === 0 && partialFilename.length > 0) {
+        this.fileTypes.forEach(ext => {
+          const suggestionName = `${partialFilename}.${ext}`;
+          const item = new vscode.CompletionItem(suggestionName, vscode.CompletionItemKind.Text);
+          item.detail = `New ${ext.toUpperCase()} file`;
+          item.documentation = `Create new ${ext} structure file: ${suggestionName}`;
+          item.sortText = `z_${suggestionName}`; // 放在最后
+          completions.push(item);
+        });
+      }
+      
+    } catch (error) {
+      // 如果读取目录失败，提供基本的文件扩展名建议
+      this.fileTypes.forEach(ext => {
+        const item = new vscode.CompletionItem(`structure.${ext}`, vscode.CompletionItemKind.Text);
+        item.detail = `${ext.toUpperCase()} structure file`;
+        item.documentation = `Structure file with ${ext} format`;
+        completions.push(item);
+      });
+    }
+    
+    return completions;
   }
 }

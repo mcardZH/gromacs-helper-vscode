@@ -42,7 +42,16 @@ export class ColorManager {
         // General colors
         comment: "#5CB85C",
         number: "#00CEC9",
-        keyword: "#FD79A8"
+        keyword: "#FD79A8",
+        
+        // Packmol colors
+        packmol_keyword: "#D63031",
+        packmol_command: "#0984E3",
+        packmol_constraint: "#00B894",
+        packmol_geometry: "#E17055",
+        packmol_number: "#A29BFE",
+        packmol_filename: "#00CEC9",
+        packmol_comment: "#636E72"
     };
 
     private constructor() {}
@@ -312,15 +321,31 @@ export class ColorManager {
                 // Packmol file colors
                 {
                     "scope": "keyword.control.packmol",
-                    "settings": { "foreground": this.getColor('keyword') }
+                    "settings": { "foreground": this.getColor('packmol_keyword') }
+                },
+                {
+                    "scope": "entity.name.function.command.packmol",
+                    "settings": { "foreground": this.getColor('packmol_command') }
+                },
+                {
+                    "scope": "entity.name.function.constraint.packmol",
+                    "settings": { "foreground": this.getColor('packmol_constraint') }
+                },
+                {
+                    "scope": "entity.name.function.geometry.packmol",
+                    "settings": { "foreground": this.getColor('packmol_geometry') }
                 },
                 {
                     "scope": "constant.numeric.packmol",
-                    "settings": { "foreground": this.getColor('number') }
+                    "settings": { "foreground": this.getColor('packmol_number') }
                 },
                 {
-                    "scope": "comment.line.packmol",
-                    "settings": { "foreground": this.getColor('comment') }
+                    "scope": "string.quoted.double.filename.packmol",
+                    "settings": { "foreground": this.getColor('packmol_filename') }
+                },
+                {
+                    "scope": "comment.line.hash.packmol",
+                    "settings": { "foreground": this.getColor('packmol_comment') }
                 }
             ]
         };

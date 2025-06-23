@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * Packmol 诊断提供者
@@ -51,9 +53,12 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
     let hasTolerance = false;
     let structureBlockDepth = 0;
     let structureStartLine = -1;
+    let currentStructureHasNumber = false;
+    let currentStructureFilename = '';
     
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
+      const originalLine = lines[i];
+      const line = originalLine.trim();
       
       // 跳过注释和空行
       if (line.startsWith('#') || line === '') {
@@ -67,10 +72,16 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
       if (firstToken === 'output') {
         hasOutput = true;
         if (tokens.length < 2) {
-          diagnostics.push(this.createDiagnostic(
-            i, 0, line.length,
+          diagnostics.push(this.createLineDiagnostic(
+            i, originalLine,
             'Output filename is required',
             vscode.DiagnosticSeverity.Error
+          ));
+        } else if (tokens.length > 2) {
+          diagnostics.push(this.createLineDiagnostic(
+            i, originalLine,
+            `Output command has too many parameters. Expected 1 (filename), got ${tokens.length - 1}`,
+            vscode.DiagnosticSeverity.Warning
           ));
         }
       }
@@ -78,17 +89,120 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
       if (firstToken === 'tolerance') {
         hasTolerance = true;
         if (tokens.length < 2) {
-          diagnostics.push(this.createDiagnostic(
-            i, 0, line.length,
+          diagnostics.push(this.createLineDiagnostic(
+            i, originalLine,
             'Tolerance value is required',
             vscode.DiagnosticSeverity.Error
           ));
-        } else if (isNaN(parseFloat(tokens[1]))) {
-          diagnostics.push(this.createDiagnostic(
-            i, 0, line.length,
-            'Tolerance must be a valid number',
+        } else if (tokens.length > 2) {
+          diagnostics.push(this.createLineDiagnostic(
+            i, originalLine,
+            `Tolerance command has too many parameters. Expected 1 (value), got ${tokens.length - 1}`,
             vscode.DiagnosticSeverity.Error
           ));
+        } else {
+          const tolerance = parseFloat(tokens[1]);
+          if (isNaN(tolerance)) {
+            diagnostics.push(this.createLineDiagnostic(
+              i, originalLine,
+              'Tolerance must be a valid number',
+              vscode.DiagnosticSeverity.Error
+            ));
+          } else if (tolerance <= 0) {
+            diagnostics.push(this.createLineDiagnostic(
+              i, originalLine,
+              'Tolerance must be a positive number',
+              vscode.DiagnosticSeverity.Error
+            ));
+          } else if (tolerance < 0.5) {
+            diagnostics.push(this.createLineDiagnostic(
+              i, originalLine,
+              'Tolerance value is very small, may cause packing difficulties',
+              vscode.DiagnosticSeverity.Warning
+            ));
+          } else if (tolerance > 10.0) {
+            diagnostics.push(this.createLineDiagnostic(
+              i, originalLine,
+              'Tolerance value is very large, may result in poor packing',
+              vscode.DiagnosticSeverity.Warning
+            ));
+          }
+        }
+      }
+      
+      // 验证其他全局参数
+      if (firstToken === 'seed') {
+        if (tokens.length < 2) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            'Seed value is required',
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else if (tokens.length > 2) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            `Seed command has too many parameters. Expected 1 (value), got ${tokens.length - 1}`,
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else {
+          const seed = parseInt(tokens[1]);
+          if (isNaN(seed)) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              'Seed must be a valid integer',
+              vscode.DiagnosticSeverity.Error
+            ));
+          }
+        }
+      }
+      
+      if (firstToken === 'nloop') {
+        if (tokens.length < 2) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            'Nloop value is required',
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else if (tokens.length > 2) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            `Nloop command has too many parameters. Expected 1 (value), got ${tokens.length - 1}`,
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else {
+          const nloop = parseInt(tokens[1]);
+          if (isNaN(nloop) || nloop <= 0) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              'Nloop must be a positive integer',
+              vscode.DiagnosticSeverity.Error
+            ));
+          }
+        }
+      }
+      
+      if (firstToken === 'maxtry') {
+        if (tokens.length < 2) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            'Maxtry value is required',
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else if (tokens.length > 2) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            `Maxtry command has too many parameters. Expected 1 (value), got ${tokens.length - 1}`,
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else {
+          const maxtry = parseInt(tokens[1]);
+          if (isNaN(maxtry) || maxtry <= 0) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              'Maxtry must be a positive integer',
+              vscode.DiagnosticSeverity.Error
+            ));
+          }
         }
       }
       
@@ -103,11 +217,19 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
         }
         structureBlockDepth++;
         structureStartLine = i;
+        currentStructureHasNumber = false;
+        currentStructureFilename = tokens.length > 1 ? tokens[1] : '';
         
         if (tokens.length < 2) {
           diagnostics.push(this.createDiagnostic(
             i, 0, line.length,
             'Structure filename is required',
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else if (tokens.length > 2) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            `Structure command has too many parameters. Expected 1 (filename), got ${tokens.length - 1}`,
             vscode.DiagnosticSeverity.Error
           ));
         } else {
@@ -124,6 +246,9 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
               vscode.DiagnosticSeverity.Warning
             ));
           }
+          
+          // 检查文件是否存在
+          this.checkFileExists(document, filename, i, diagnostics);
         }
       }
       
@@ -135,6 +260,14 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
             vscode.DiagnosticSeverity.Error
           ));
         } else {
+          // 检查结构块是否有必需的 number 命令
+          if (!currentStructureHasNumber) {
+            diagnostics.push(this.createDiagnostic(
+              structureStartLine, 0, lines[structureStartLine].length,
+              `Structure block '${currentStructureFilename}' is missing required 'number' command`,
+              vscode.DiagnosticSeverity.Error
+            ));
+          }
           structureBlockDepth--;
         }
       }
@@ -142,6 +275,7 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
       // 在结构块内的命令检查
       if (structureBlockDepth > 0) {
         if (firstToken === 'number') {
+          currentStructureHasNumber = true;
           if (tokens.length < 2) {
             diagnostics.push(this.createDiagnostic(
               i, 0, line.length,
@@ -158,14 +292,20 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
         }
         
         if (firstToken === 'inside' || firstToken === 'outside') {
-          this.validateGeometryCommand(line, tokens, i, diagnostics);
+          this.validateGeometryCommand(originalLine, tokens, i, diagnostics);
         }
         
         if (firstToken === 'fixed') {
           if (tokens.length < 7) {
             diagnostics.push(this.createDiagnostic(
               i, 0, line.length,
-              'Fixed command requires 6 parameters: x y z alpha beta gamma',
+              'Fixed command requires exactly 6 parameters: x y z alpha beta gamma',
+              vscode.DiagnosticSeverity.Error
+            ));
+          } else if (tokens.length > 7) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              `Fixed command has too many parameters. Expected 6 (x y z alpha beta gamma), got ${tokens.length - 1}`,
               vscode.DiagnosticSeverity.Error
             ));
           } else {
@@ -173,7 +313,7 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
               if (isNaN(parseFloat(tokens[j]))) {
                 diagnostics.push(this.createDiagnostic(
                   i, 0, line.length,
-                  `Parameter ${j} must be a valid number`,
+                  `Fixed parameter ${j} must be a valid number`,
                   vscode.DiagnosticSeverity.Error
                 ));
               }
@@ -184,7 +324,11 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
       
       // 检查在结构块外不应该出现的命令
       if (structureBlockDepth === 0) {
-        const structureOnlyCommands = ['number', 'inside', 'outside', 'center', 'fixed', 'atoms'];
+        const structureOnlyCommands = [
+          'number', 'inside', 'outside', 'center', 'fixed', 'atoms',
+          'mindistance', 'radius', 'constrain_rotation', 'changechains',
+          'resnumbers', 'chain', 'segid', 'centerofmass'
+        ];
         if (structureOnlyCommands.includes(firstToken)) {
           diagnostics.push(this.createDiagnostic(
             i, 0, line.length,
@@ -200,7 +344,8 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
         'check', 'sidemax', 'randominitialpoint', 'avoid_overlap', 'discale',
         'structure', 'end', 'number', 'center', 'fixed', 'centerofmass', 'changechains',
         'resnumbers', 'chain', 'segid', 'constrain_rotation', 'atoms', 'radius', 'fscale',
-        'short_radius', 'short_radius_scale', 'over', 'below', 'outside', 'inside'
+        'short_radius', 'short_radius_scale', 'over', 'below', 'outside', 'inside',
+        'mindistance'
       ];
       
       if (!validCommands.includes(firstToken)) {
@@ -209,6 +354,132 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
           `Unknown command: ${firstToken}`,
           vscode.DiagnosticSeverity.Warning
         ));
+      }
+      
+      // 验证 mindistance 命令
+      if (firstToken === 'mindistance') {
+        if (tokens.length < 2) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            'Mindistance command requires exactly 1 parameter: distance',
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else if (tokens.length > 2) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            `Mindistance command has too many parameters. Expected 1 (distance), got ${tokens.length - 1}`,
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else {
+          const distance = parseFloat(tokens[1]);
+          if (isNaN(distance)) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              'Mindistance parameter must be a valid number',
+              vscode.DiagnosticSeverity.Error
+            ));
+          } else if (distance <= 0) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              'Mindistance must be a positive number',
+              vscode.DiagnosticSeverity.Error
+            ));
+          }
+        }
+      }
+      
+      // 验证 radius 命令
+      if (firstToken === 'radius') {
+        if (tokens.length < 2) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            'Radius command requires exactly 1 parameter: scale_factor',
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else if (tokens.length > 2) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            `Radius command has too many parameters. Expected 1 (scale_factor), got ${tokens.length - 1}`,
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else {
+          const scale = parseFloat(tokens[1]);
+          if (isNaN(scale)) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              'Radius scale factor must be a valid number',
+              vscode.DiagnosticSeverity.Error
+            ));
+          } else if (scale <= 0) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              'Radius scale factor must be positive',
+              vscode.DiagnosticSeverity.Error
+            ));
+          }
+        }
+      }
+      
+      // 验证 constrain_rotation 命令
+      if (firstToken === 'constrain_rotation') {
+        if (tokens.length < 3) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            'Constrain_rotation requires at least 2 parameters: axis value',
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else {
+          const validAxes = ['x', 'y', 'z'];
+          let i_token = 1;
+          while (i_token < tokens.length) {
+            if (validAxes.includes(tokens[i_token].toLowerCase())) {
+              if (i_token + 1 >= tokens.length) {
+                diagnostics.push(this.createDiagnostic(
+                  i, 0, line.length,
+                  `Constrain_rotation axis '${tokens[i_token]}' requires a value`,
+                  vscode.DiagnosticSeverity.Error
+                ));
+                break;
+              } else if (isNaN(parseFloat(tokens[i_token + 1]))) {
+                diagnostics.push(this.createDiagnostic(
+                  i, 0, line.length,
+                  `Constrain_rotation value for axis '${tokens[i_token]}' must be a number`,
+                  vscode.DiagnosticSeverity.Error
+                ));
+              }
+              i_token += 2;
+            } else {
+              diagnostics.push(this.createDiagnostic(
+                i, 0, line.length,
+                `Invalid axis '${tokens[i_token]}'. Valid axes are: x, y, z`,
+                vscode.DiagnosticSeverity.Error
+              ));
+              break;
+            }
+          }
+        }
+      }
+      
+      // 验证 atoms 命令
+      if (firstToken === 'atoms') {
+        if (tokens.length < 2) {
+          diagnostics.push(this.createDiagnostic(
+            i, 0, line.length,
+            'Atoms command requires at least 1 atom index',
+            vscode.DiagnosticSeverity.Error
+          ));
+        } else {
+          for (let j = 1; j < tokens.length; j++) {
+            const atomIndex = parseInt(tokens[j]);
+            if (isNaN(atomIndex) || atomIndex <= 0) {
+              diagnostics.push(this.createDiagnostic(
+                i, 0, line.length,
+                `Atom index '${tokens[j]}' must be a positive integer`,
+                vscode.DiagnosticSeverity.Error
+              ));
+            }
+          }
+        }
       }
     }
     
@@ -241,10 +512,10 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
     this.diagnosticCollection.set(document.uri, diagnostics);
   }
   
-  private validateGeometryCommand(line: string, tokens: string[], lineNumber: number, diagnostics: vscode.Diagnostic[]): void {
+  private validateGeometryCommand(originalLine: string, tokens: string[], lineNumber: number, diagnostics: vscode.Diagnostic[]): void {
     if (tokens.length < 2) {
-      diagnostics.push(this.createDiagnostic(
-        lineNumber, 0, line.length,
+      diagnostics.push(this.createLineDiagnostic(
+        lineNumber, originalLine,
         'Geometry type is required after inside/outside',
         vscode.DiagnosticSeverity.Error
       ));
@@ -253,100 +524,157 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
     
     const geometryType = tokens[1].toLowerCase();
     
+    // 使用统一的错误报告方法
+    const addError = (message: string) => {
+      diagnostics.push(this.createLineDiagnostic(lineNumber, originalLine, message, vscode.DiagnosticSeverity.Error));
+    };
+    
     switch (geometryType) {
       case 'sphere':
         if (tokens.length < 6) {
-          diagnostics.push(this.createDiagnostic(
-            lineNumber, 0, line.length,
-            'Sphere requires 4 parameters: x y z radius',
-            vscode.DiagnosticSeverity.Error
-          ));
+          addError('Sphere requires exactly 4 parameters: x y z radius');
+        } else if (tokens.length > 6) {
+          addError(`Sphere has too many parameters. Expected 4 (x y z radius), got ${tokens.length - 2}`);
         } else {
           for (let i = 2; i <= 5; i++) {
             if (isNaN(parseFloat(tokens[i]))) {
-              diagnostics.push(this.createDiagnostic(
-                lineNumber, 0, line.length,
-                `Sphere parameter ${i-1} must be a number`,
-                vscode.DiagnosticSeverity.Error
-              ));
+              addError(`Sphere parameter ${i-1} must be a number`);
             }
+          }
+          const radius = parseFloat(tokens[5]);
+          if (!isNaN(radius) && radius <= 0) {
+            addError('Sphere radius must be a positive number');
           }
         }
         break;
         
       case 'box':
         if (tokens.length < 8) {
-          diagnostics.push(this.createDiagnostic(
-            lineNumber, 0, line.length,
-            'Box requires 6 parameters: xmin ymin zmin xmax ymax zmax',
-            vscode.DiagnosticSeverity.Error
-          ));
+          addError('Box requires exactly 6 parameters: xmin ymin zmin xmax ymax zmax');
+        } else if (tokens.length > 8) {
+          addError(`Box has too many parameters. Expected 6 (xmin ymin zmin xmax ymax zmax), got ${tokens.length - 2}`);
         } else {
           for (let i = 2; i <= 7; i++) {
             if (isNaN(parseFloat(tokens[i]))) {
-              diagnostics.push(this.createDiagnostic(
-                lineNumber, 0, line.length,
-                `Box parameter ${i-1} must be a number`,
-                vscode.DiagnosticSeverity.Error
-              ));
+              addError(`Box parameter ${i-1} must be a number`);
             }
+          }
+          const coords = tokens.slice(2, 8).map(t => parseFloat(t));
+          if (!isNaN(coords[0]) && !isNaN(coords[3]) && coords[0] >= coords[3]) {
+            addError('Box constraint error: xmin must be less than xmax');
+          }
+          if (!isNaN(coords[1]) && !isNaN(coords[4]) && coords[1] >= coords[4]) {
+            addError('Box constraint error: ymin must be less than ymax');
+          }
+          if (!isNaN(coords[2]) && !isNaN(coords[5]) && coords[2] >= coords[5]) {
+            addError('Box constraint error: zmin must be less than zmax');
           }
         }
         break;
         
       case 'cube':
         if (tokens.length < 6) {
-          diagnostics.push(this.createDiagnostic(
-            lineNumber, 0, line.length,
-            'Cube requires 4 parameters: xmin ymin zmin size',
-            vscode.DiagnosticSeverity.Error
-          ));
+          addError('Cube requires exactly 4 parameters: xmin ymin zmin size');
+        } else if (tokens.length > 6) {
+          addError(`Cube has too many parameters. Expected 4 (xmin ymin zmin size), got ${tokens.length - 2}`);
         } else {
           for (let i = 2; i <= 5; i++) {
             if (isNaN(parseFloat(tokens[i]))) {
-              diagnostics.push(this.createDiagnostic(
-                lineNumber, 0, line.length,
-                `Cube parameter ${i-1} must be a number`,
-                vscode.DiagnosticSeverity.Error
-              ));
+              addError(`Cube parameter ${i-1} must be a number`);
             }
+          }
+          const size = parseFloat(tokens[5]);
+          if (!isNaN(size) && size <= 0) {
+            addError('Cube size must be a positive number');
           }
         }
         break;
         
       case 'plane':
         if (tokens.length < 6) {
-          diagnostics.push(this.createDiagnostic(
-            lineNumber, 0, line.length,
-            'Plane requires 4 parameters: a b c d',
-            vscode.DiagnosticSeverity.Error
-          ));
+          addError('Plane requires exactly 4 parameters: a b c d');
+        } else if (tokens.length > 6) {
+          addError(`Plane has too many parameters. Expected 4 (a b c d), got ${tokens.length - 2}`);
         } else {
           for (let i = 2; i <= 5; i++) {
             if (isNaN(parseFloat(tokens[i]))) {
-              diagnostics.push(this.createDiagnostic(
-                lineNumber, 0, line.length,
-                `Plane parameter ${i-1} must be a number`,
-                vscode.DiagnosticSeverity.Error
-              ));
+              addError(`Plane parameter ${i-1} must be a number`);
             }
+          }
+          const a = parseFloat(tokens[2]);
+          const b = parseFloat(tokens[3]);
+          const c = parseFloat(tokens[4]);
+          if (!isNaN(a) && !isNaN(b) && !isNaN(c) && a === 0 && b === 0 && c === 0) {
+            addError('Plane normal vector (a, b, c) cannot be zero vector');
+          }
+        }
+        break;
+        
+      case 'cylinder':
+        if (tokens.length < 9) {
+          addError('Cylinder requires exactly 7 parameters: x1 y1 z1 x2 y2 z2 radius');
+        } else if (tokens.length > 9) {
+          addError(`Cylinder has too many parameters. Expected 7 (x1 y1 z1 x2 y2 z2 radius), got ${tokens.length - 2}`);
+        } else {
+          for (let i = 2; i <= 8; i++) {
+            if (isNaN(parseFloat(tokens[i]))) {
+              addError(`Cylinder parameter ${i-1} must be a number`);
+            }
+          }
+          const radius = parseFloat(tokens[8]);
+          if (!isNaN(radius) && radius <= 0) {
+            addError('Cylinder radius must be a positive number');
+          }
+          const coords = tokens.slice(2, 8).map(t => parseFloat(t));
+          if (coords.every(c => !isNaN(c))) {
+            const [x1, y1, z1, x2, y2, z2] = coords;
+            if (x1 === x2 && y1 === y2 && z1 === z2) {
+              addError('Cylinder endpoints cannot be the same point');
+            }
+          }
+        }
+        break;
+        
+      case 'ellipsoid':
+        if (tokens.length < 9) {
+          addError('Ellipsoid requires at least 6 parameters: x y z a b c [phi theta psi]');
+        } else if (tokens.length > 11) {
+          addError(`Ellipsoid has too many parameters. Expected 6-9 parameters, got ${tokens.length - 2}`);
+        } else {
+          for (let i = 2; i < tokens.length; i++) {
+            if (isNaN(parseFloat(tokens[i]))) {
+              addError(`Ellipsoid parameter ${i-1} must be a number`);
+            }
+          }
+          if (tokens.length >= 8) {
+            const [, , , a, b, c] = tokens.slice(2, 8).map(t => parseFloat(t));
+            if (!isNaN(a) && a <= 0) addError('Ellipsoid semi-axis a must be positive');
+            if (!isNaN(b) && b <= 0) addError('Ellipsoid semi-axis b must be positive');
+            if (!isNaN(c) && c <= 0) addError('Ellipsoid semi-axis c must be positive');
           }
         }
         break;
         
       default:
         const validGeometries = ['sphere', 'box', 'cube', 'plane', 'cylinder', 'ellipsoid'];
-        if (!validGeometries.includes(geometryType)) {
-          diagnostics.push(this.createDiagnostic(
-            lineNumber, 0, line.length,
-            `Unknown geometry type: ${geometryType}. Valid types: ${validGeometries.join(', ')}`,
-            vscode.DiagnosticSeverity.Error
-          ));
-        }
+        addError(`Unknown geometry type: ${geometryType}. Valid types: ${validGeometries.join(', ')}`);
         break;
     }
   }
   
+  // 简化的诊断创建方法，自动处理行范围
+  private createGeometryDiagnostic(
+    lineNumber: number,
+    originalLine: string,
+    message: string,
+    severity: vscode.DiagnosticSeverity
+  ): vscode.Diagnostic {
+    const trimmedLine = originalLine.trim();
+    const startOffset = originalLine.indexOf(trimmedLine);
+    const endOffset = startOffset + trimmedLine.length;
+    return this.createDiagnostic(lineNumber, startOffset, endOffset, message, severity);
+  }
+
   private createDiagnostic(
     line: number,
     startChar: number,
@@ -358,6 +686,72 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
     const diagnostic = new vscode.Diagnostic(range, message, severity);
     diagnostic.source = 'packmol';
     return diagnostic;
+  }
+
+  private createLineDiagnostic(
+    lineNumber: number,
+    originalLine: string,
+    message: string,
+    severity: vscode.DiagnosticSeverity
+  ): vscode.Diagnostic {
+    const trimmedLine = originalLine.trim();
+    const startOffset = originalLine.indexOf(trimmedLine);
+    const endOffset = startOffset + trimmedLine.length;
+    return this.createDiagnostic(lineNumber, startOffset, endOffset, message, severity);
+  }
+  
+  /**
+   * 检查指定的文件是否存在
+   * @param document 当前文档
+   * @param filename 要检查的文件名
+   * @param lineNumber 行号
+   * @param diagnostics 诊断数组
+   */
+  private checkFileExists(
+    document: vscode.TextDocument,
+    filename: string,
+    lineNumber: number,
+    diagnostics: vscode.Diagnostic[]
+  ): void {
+    try {
+      // 获取当前文档的目录
+      const documentDir = path.dirname(document.uri.fsPath);
+      
+      // 处理相对路径和绝对路径
+      let filePath: string;
+      if (path.isAbsolute(filename)) {
+        filePath = filename;
+      } else {
+        filePath = path.resolve(documentDir, filename);
+      }
+      
+      // 检查文件是否存在
+      if (!fs.existsSync(filePath)) {
+        diagnostics.push(this.createDiagnostic(
+          lineNumber, 0, document.lineAt(lineNumber).text.length,
+          `Structure file '${filename}' does not exist`,
+          vscode.DiagnosticSeverity.Warning
+        ));
+      } else {
+        // 检查文件是否可读
+        try {
+          fs.accessSync(filePath, fs.constants.R_OK);
+        } catch (error) {
+          diagnostics.push(this.createDiagnostic(
+            lineNumber, 0, document.lineAt(lineNumber).text.length,
+            `Structure file '${filename}' exists but is not readable`,
+            vscode.DiagnosticSeverity.Error
+          ));
+        }
+      }
+    } catch (error) {
+      // 如果路径处理出错，给出警告
+      diagnostics.push(this.createDiagnostic(
+        lineNumber, 0, document.lineAt(lineNumber).text.length,
+        `Cannot validate structure file path '${filename}': ${error instanceof Error ? error.message : 'Unknown error'}`,
+        vscode.DiagnosticSeverity.Information
+      ));
+    }
   }
   
   public dispose(): void {

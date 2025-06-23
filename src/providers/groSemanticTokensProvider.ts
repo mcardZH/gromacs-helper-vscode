@@ -89,7 +89,6 @@ export class GroSemanticTokensProvider extends BaseSemanticTokensProvider {
                     const tokenType = this.getResidueTokenType(residueName);
                     this.addToken(lineIndex, startPos, residueName.length, tokenType);
                     tokenCount++;
-                    console.log(`Found residue: ${residueName} (type: ${getResidueType(residueName)}) at line ${lineIndex + 1}`);
                 }
             }
             
