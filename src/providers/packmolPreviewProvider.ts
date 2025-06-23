@@ -70,12 +70,17 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
     });
   }
   
+  private _currentPackmolUri?: vscode.Uri;
+
   /**
    * 预览 Packmol 文件
    */
   public async previewPackmolFile(uri: vscode.Uri): Promise<void> {
     try {
       console.log('Starting Packmol preview for:', uri.fsPath);
+      
+      // 保存当前的 Packmol URI
+      this._currentPackmolUri = uri;
       
       // 解析 Packmol 输入文件
       this._currentInput = await PackmolStructureParser.parsePackmolInput(uri);
@@ -128,45 +133,153 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
   /**
    * 更新预览
    */
-  private _updatePreview(): void {
+  private async _updatePreview(): Promise<void> {
     console.log('🔄 === _updatePreview START ===');
     console.log('View exists:', !!this._view);
     console.log('Current input exists:', !!this._currentInput);
+    console.log('Current Packmol URI exists:', !!this._currentPackmolUri);
     console.log('Webview ready:', this._isWebviewReady);
     
-    if (!this._view || !this._currentInput) {
-      console.log('❌ Missing view or input, aborting update');
+    if (!this._view || !this._currentInput || !this._currentPackmolUri) {
+      console.log('❌ Missing view, input, or URI, aborting update');
       return;
     }
-    
-    const data = {
-      type: 'update',
-      input: this._currentInput,
-      // 不传递结构数据，只传递配置信息
-      structureData: {}
-    };
-    
-    console.log('📦 Prepared data for webview:', data);
-    console.log('Input structures count:', this._currentInput.structures?.length || 0);
-    
-    if (this._isWebviewReady) {
-      console.log('📤 Sending data to webview immediately');
-      try {
-        this._view.webview.postMessage(data);
-        console.log('✅ Data sent successfully');
-      } catch (error) {
-        console.error('❌ Error sending data to webview:', error);
-        vscode.window.showErrorMessage(`Failed to send data to webview: ${error}`);
+
+    try {
+      // 生成包含多球拟合数据的场景数据
+      console.log('🎬 Generating scene data with multisphere fitting...');
+      const sceneData = await this._generateSceneData(this._currentInput, this._currentPackmolUri);
+      
+      // 确保数据可以正确序列化 - 深度克隆所有数据
+      const serializedStructures = sceneData.structures.map((structure: any) => {
+        const serialized: any = {
+          id: structure.id,
+          filename: structure.filename,
+          number: structure.number,
+          constraints: structure.constraints || [],
+          visualInfo: structure.visualInfo ? {
+            type: structure.visualInfo.type,
+            atomCount: structure.visualInfo.atomCount
+          } : undefined
+        };
+        
+        // 如果有多球几何体数据，确保正确序列化
+        if (structure.visualInfo && structure.visualInfo.geometry && 
+            structure.visualInfo.geometry.type === 'multi_sphere') {
+          serialized.visualInfo.geometry = {
+            type: 'multi_sphere',
+            spheres: structure.visualInfo.geometry.spheres.map((sphere: any) => ({
+              center: Array.isArray(sphere.center) ? [...sphere.center] : sphere.center,
+              radius: sphere.radius
+            }))
+          };
+          console.log(`🔮 Serializing multisphere for ${structure.id}: ${structure.visualInfo.geometry.spheres.length} spheres`);
+        }
+        
+        return serialized;
+      });
+      
+      const data = {
+        type: 'update',
+        input: {
+          config: this._currentInput.config,
+          structures: serializedStructures
+        },
+        sceneData: {
+          structures: serializedStructures,
+          globalBounds: sceneData.globalBounds
+        },
+        structureData: {}
+      };
+      
+      console.log('📦 Prepared serialized data for webview');
+      console.log('Input structures count:', data.input.structures?.length || 0);
+      console.log('Multisphere structures:', data.input.structures?.filter((s: any) => 
+        s.visualInfo && s.visualInfo.geometry && s.visualInfo.geometry.type === 'multi_sphere').length || 0);
+      
+      // 验证多球数据的序列化
+      const multisphereStructures = data.input.structures.filter((s: any) => 
+        s.visualInfo && s.visualInfo.geometry && s.visualInfo.geometry.type === 'multi_sphere');
+      multisphereStructures.forEach((structure: any, i: number) => {
+        console.log(`🔮 Multisphere ${i + 1} (${structure.id}): ${structure.visualInfo.geometry.spheres.length} spheres`);
+        structure.visualInfo.geometry.spheres.forEach((sphere: any, j: number) => {
+          console.log(`  Sphere ${j + 1}: center=[${sphere.center.join(', ')}], radius=${sphere.radius}`);
+        });
+      });
+      
+      if (this._isWebviewReady) {
+        console.log('📤 Sending serialized data to webview immediately');
+        try {
+          this._view.webview.postMessage(data);
+          console.log('✅ Serialized data sent successfully');
+        } catch (error) {
+          console.error('❌ Error sending serialized data to webview:', error);
+          vscode.window.showErrorMessage(`Failed to send data to webview: ${error}`);
+        }
+      } else {
+        console.log('⏳ Webview not ready, storing serialized data for later');
+        this._pendingData = data;
+        // 强制显示视图以触发初始化
+        console.log('📺 Forcing view to show');
+        this._view.show?.(true);
       }
-    } else {
-      console.log('⏳ Webview not ready, storing data for later');
-      this._pendingData = data;
-      // 强制显示视图以触发初始化
-      console.log('📺 Forcing view to show');
-      this._view.show?.(true);
+    } catch (error) {
+      console.error('❌ Error generating scene data:', error);
+      vscode.window.showErrorMessage(`Failed to generate scene data: ${error}`);
     }
     
     console.log('🔄 === _updatePreview END ===');
+  }
+  
+  /**
+   * 生成场景数据，包括多球拟合
+   */
+  private async _generateSceneData(input: PackmolInput, packmolUri: vscode.Uri): Promise<any> {
+    console.log('🎬 === _generateSceneData START ===');
+    console.log('Packmol URI:', packmolUri.fsPath);
+    console.log('Input structures:', input.structures.length);
+    
+    try {
+      // 使用 PackmolStructureParser 生成场景数据
+      const sceneData = await PackmolStructureParser.generateSceneData(input, packmolUri);
+      console.log('Generated scene data with', sceneData.structures.length, 'structures');
+      
+      // 检查多球结构
+      const multisphereStructures = sceneData.structures.filter(s => 
+        s.visualInfo && s.visualInfo.geometry && s.visualInfo.geometry.type === 'multi_sphere');
+      console.log('✅ Multisphere structures found:', multisphereStructures.length);
+      
+      multisphereStructures.forEach((structure, i) => {
+        const sphereCount = structure.visualInfo.geometry?.spheres?.length || 0;
+        console.log(`🔮 Multisphere structure ${i + 1}: ${structure.filename} with ${sphereCount} spheres`);
+        if (structure.visualInfo.geometry?.spheres) {
+          structure.visualInfo.geometry.spheres.forEach((sphere, j) => {
+            console.log(`  Sphere ${j + 1}: center=(${sphere.center.join(', ')}), radius=${sphere.radius}`);
+          });
+        }
+      });
+      
+      // 直接返回包含 visualInfo 的结构数据
+      return {
+        structures: input.structures, // 使用原始结构，其中已包含 visualInfo
+        globalBounds: sceneData.globalBounds
+      };
+      
+    } catch (error) {
+      console.error('❌ Error in _generateSceneData:', error);
+      // 返回基本场景数据
+      return {
+        structures: input.structures.map(s => ({ 
+          ...s, 
+          visualInfo: s.visualInfo || { 
+            type: s.number === 1 ? 'single_molecule' : 'multiple_molecules' 
+          } 
+        })),
+        globalBounds: { min: [-50, -50, -50], max: [50, 50, 50] }
+      };
+    } finally {
+      console.log('🎬 === _generateSceneData END ===');
+    }
   }
   
   /**
@@ -396,6 +509,7 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
                     <h3>View Controls</h3>
                     <button class="button" onclick="resetCamera()">Reset Camera</button>
                     <button class="button" onclick="toggleWireframe()">Toggle Wireframe</button>
+                    <button class="button" onclick="toggleMultisphere()">Toggle Multisphere</button>
                     <button class="button" onclick="randomizeColors()">Random Colors</button>
                     <button class="button" onclick="resetColors()">Reset Colors</button>
                 </div>
@@ -673,13 +787,44 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
                     // 创建结构
                     if (data.input && data.input.structures) {
                         console.log('🏗️ Creating structures for:', data.input.structures.length, 'structures');
+                        
+                        // 检查多球数据
+                        const multisphereStructures = data.input.structures.filter(s => 
+                            s.visualInfo && s.visualInfo.geometry && s.visualInfo.geometry.type === 'multi_sphere'
+                        );
+                        console.log('🔮 Found', multisphereStructures.length, 'structures with multisphere geometry');
+                        
+                        multisphereStructures.forEach((structure, i) => {
+                            const sphereCount = structure.visualInfo.geometry.spheres?.length || 0;
+                            console.log('🔮 Multisphere structure', i + 1, ':', structure.filename, 'with', sphereCount, 'spheres');
+                            if (structure.visualInfo.geometry.spheres) {
+                                structure.visualInfo.geometry.spheres.forEach((sphere, j) => {
+                                    console.log('  Sphere', j + 1, ':', sphere.center, 'radius=', sphere.radius);
+                                });
+                            }
+                        });
+                        
                         data.input.structures.forEach((structure, index) => {
-                            console.log(\`📦 Creating structure \${index}:\`, structure);
+                            console.log('📦 Creating structure ' + index + ':', structure.filename, 'number=' + structure.number);
+                            
+                            // 详细检查结构的可视化信息
+                            if (structure.visualInfo) {
+                                console.log('  📊 VisualInfo type:', structure.visualInfo.type);
+                                if (structure.visualInfo.geometry) {
+                                    console.log('  🔮 Geometry type:', structure.visualInfo.geometry.type);
+                                    if (structure.visualInfo.geometry.type === 'multi_sphere') {
+                                        console.log('  🎯 MULTISPHERE DETECTED! Spheres:', structure.visualInfo.geometry.spheres?.length || 0);
+                                    }
+                                }
+                            } else {
+                                console.warn('  ❌ No visualInfo found for structure:', structure.filename);
+                            }
+                            
                             try {
                                 createStructureVisualization(structure);
-                                console.log(\`✅ Structure \${index} created successfully\`);
+                                console.log('✅ Structure ' + index + ' created successfully');
                             } catch (structError) {
-                                console.error(\`❌ Error creating structure \${index}:\`, structError);
+                                console.error('❌ Error creating structure ' + index + ':', structError);
                             }
                         });
                     } else {
@@ -705,19 +850,194 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
                 }
             }
             
-            // 创建结构可视化（简化版本，不显示具体原子）
+            // 创建多球拟合可视化
+            function createMultisphereVisualization(structure, group) {
+                console.log('Creating multisphere visualization for:', structure.id);
+                
+                // 检查是否有多球几何体数据
+                if (structure.visualInfo && structure.visualInfo.geometry && 
+                    structure.visualInfo.geometry.type === 'multi_sphere' && 
+                    structure.visualInfo.geometry.spheres) {
+                    
+                    const spheres = structure.visualInfo.geometry.spheres;
+                    console.log('Creating ' + spheres.length + ' spheres for structure:', structure.id);
+                    
+                    const structureColor = getStructureColor(structure.id);
+                    
+                    // 创建每个球体
+                    spheres.forEach((sphere, index) => {
+                        const sphereGeometry = new THREE.SphereGeometry(sphere.radius, 24, 24);
+                        
+                        // 为不同的球体使用略微不同的颜色
+                        const color = new THREE.Color(structureColor);
+                        const hsl = {};
+                        color.getHSL(hsl);
+                        
+                        // 调整色调和饱和度来区分不同的球体
+                        hsl.h = (hsl.h + index * 0.1) % 1.0;
+                        hsl.s = Math.min(1.0, hsl.s + index * 0.05);
+                        color.setHSL(hsl.h, hsl.s, hsl.l);
+                        
+                        const sphereMaterial = new THREE.MeshLambertMaterial({
+                            color: color,
+                            transparent: true,
+                            opacity: 0.6,
+                            wireframe: false
+                        });
+                        
+                        const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+                        sphereMesh.position.set(sphere.center[0], sphere.center[1], sphere.center[2]);
+                        sphereMesh.name = structure.id + '_multisphere_' + index;
+                        
+                        // 添加球体边框（线框）
+                        const wireframeGeometry = new THREE.SphereGeometry(sphere.radius, 16, 16);
+                        const wireframeMaterial = new THREE.MeshBasicMaterial({
+                            color: structureColor,
+                            wireframe: true,
+                            transparent: true,
+                            opacity: 0.4
+                        });
+                        const wireframeMesh = new THREE.Mesh(wireframeGeometry, wireframeMaterial);
+                        wireframeMesh.position.set(sphere.center[0], sphere.center[1], sphere.center[2]);
+                        wireframeMesh.name = structure.id + '_multisphere_wireframe_' + index;
+                        
+                        group.add(sphereMesh);
+                        group.add(wireframeMesh);
+                        
+                        console.log('Added sphere ' + index + ': center=(' + sphere.center.join(', ') + '), radius=' + sphere.radius.toFixed(2));
+                    });
+                    
+                    // 添加连接线来显示球体之间的关系
+                    if (spheres.length > 1) {
+                        createSphereBonds(spheres, group, structureColor);
+                    }
+                    
+                    // 添加质心标记
+                    const centroid = calculateSphereCentroid(spheres);
+                    const centroidGeometry = new THREE.SphereGeometry(0.8, 8, 8);
+                    const centroidMaterial = new THREE.MeshBasicMaterial({
+                        color: structureColor,
+                        transparent: true,
+                        opacity: 0.9
+                    });
+                    const centroidMesh = new THREE.Mesh(centroidGeometry, centroidMaterial);
+                    centroidMesh.position.set(centroid[0], centroid[1], centroid[2]);
+                    centroidMesh.name = structure.id + '_centroid';
+                    group.add(centroidMesh);
+                    
+                    console.log('Multisphere visualization created with ' + spheres.length + ' spheres');
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            // 创建球体之间的连接线
+            function createSphereBonds(spheres, group, color) {
+                const bondMaterial = new THREE.LineBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.3,
+                    linewidth: 2
+                });
+                
+                // 连接相近的球体
+                for (let i = 0; i < spheres.length; i++) {
+                    for (let j = i + 1; j < spheres.length; j++) {
+                        const sphere1 = spheres[i];
+                        const sphere2 = spheres[j];
+                        
+                        // 计算球体中心之间的距离
+                        const distance = Math.sqrt(
+                            Math.pow(sphere1.center[0] - sphere2.center[0], 2) +
+                            Math.pow(sphere1.center[1] - sphere2.center[1], 2) +
+                            Math.pow(sphere1.center[2] - sphere2.center[2], 2)
+                        );
+                        
+                        // 如果距离小于两个球体半径之和的1.5倍，则连接它们
+                        const maxBondDistance = (sphere1.radius + sphere2.radius) * 1.5;
+                        if (distance <= maxBondDistance) {
+                            const bondGeometry = new THREE.BufferGeometry().setFromPoints([
+                                new THREE.Vector3(sphere1.center[0], sphere1.center[1], sphere1.center[2]),
+                                new THREE.Vector3(sphere2.center[0], sphere2.center[1], sphere2.center[2])
+                            ]);
+                            
+                            const bondLine = new THREE.Line(bondGeometry, bondMaterial);
+                            bondLine.name = 'bond_' + i + '_' + j;
+                            group.add(bondLine);
+                        }
+                    }
+                }
+            }
+            
+            // 计算多球质心
+            function calculateSphereCentroid(spheres) {
+                const totalVolume = spheres.reduce((sum, sphere) => 
+                    sum + (4/3) * Math.PI * Math.pow(sphere.radius, 3), 0);
+                
+                let weightedX = 0, weightedY = 0, weightedZ = 0;
+                
+                spheres.forEach(sphere => {
+                    const volume = (4/3) * Math.PI * Math.pow(sphere.radius, 3);
+                    const weight = volume / totalVolume;
+                    
+                    weightedX += sphere.center[0] * weight;
+                    weightedY += sphere.center[1] * weight;
+                    weightedZ += sphere.center[2] * weight;
+                });
+                
+                return [weightedX, weightedY, weightedZ];
+            }
+            
+            // 创建结构可视化（支持多球拟合）
             function createStructureVisualization(structure) {
-                console.log('createStructureVisualization called for:', structure);
+                console.log('🎨 === createStructureVisualization START ===');
+                console.log('Structure ID:', structure.id);
+                console.log('Structure filename:', structure.filename);
+                console.log('Structure number:', structure.number);
+                console.log('Has visualInfo:', !!structure.visualInfo);
+                
+                if (structure.visualInfo) {
+                    console.log('VisualInfo type:', structure.visualInfo.type);
+                    console.log('Has geometry:', !!structure.visualInfo.geometry);
+                    if (structure.visualInfo.geometry) {
+                        console.log('Geometry type:', structure.visualInfo.geometry.type);
+                        if (structure.visualInfo.geometry.type === 'multi_sphere') {
+                            console.log('🔮 MULTISPHERE GEOMETRY FOUND!');
+                            console.log('Number of spheres:', structure.visualInfo.geometry.spheres?.length || 0);
+                        }
+                    }
+                }
                 
                 try {
                     const group = new THREE.Group();
                     group.name = structure.id;
-                    console.log('Created group for structure:', structure.id);
+                    console.log('✅ Created group for structure:', structure.id);
                     
-                    // 创建一个简单的占位符来表示结构
-                    // 根据约束来确定结构的大小和位置
-                    let structureGeometry, structurePosition;
+                    // 检查是否为单分子结构且有多球拟合数据
+                    const isMultisphereStructure = structure.number === 1 && 
+                        structure.visualInfo && 
+                        structure.visualInfo.geometry && 
+                        structure.visualInfo.geometry.type === 'multi_sphere';
                     
+                    console.log('Is multisphere structure:', isMultisphereStructure);
+                    
+                    if (isMultisphereStructure) {
+                        console.log('🔮 Creating multisphere representation for single molecule:', structure.id);
+                        
+                        // 创建多球拟合可视化
+                        const multisphereCreated = createMultisphereVisualization(structure, group);
+                        
+                        if (multisphereCreated) {
+                            console.log('✅ Multisphere representation created successfully');
+                        } else {
+                            console.warn('❌ Failed to create multisphere representation, falling back to default');
+                        }
+                    } else {
+                        console.log('📦 Not a multisphere structure, using default visualization');
+                    }
+                    
+                    // 处理约束（如果有）
                     if (structure.constraints && structure.constraints.length > 0) {
                         console.log('Processing', structure.constraints.length, 'constraints for structure:', structure.id);
                         
@@ -958,12 +1278,38 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
                         }
                         break;
                     case 'cylinder':
-                        if (geometry.parameters.length >= 7) {
-                            const [x1, y1, z1, x2, y2, z2, radius] = geometry.parameters;
-                            const height = Math.sqrt((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2);
-                            console.log(\`Creating cylinder from (\${x1}, \${y1}, \${z1}) to (\${x2}, \${y2}, \${z2}) with radius \${radius}\`);
-                            const cylinderGeometry = new THREE.CylinderGeometry(radius, radius, height, 32);
-                            cylinderGeometry.translate((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2);
+                        if (geometry.parameters.length >= 8) {
+                            const [a1, b1, c1, a2, b2, c2, d, l] = geometry.parameters;
+                            
+                            // a1,b1,c1 是起点，a2,b2,c2 是方向向量，d 是半径，l 是长度
+                            console.log(\`Creating cylinder from (\${a1}, \${b1}, \${c1}) direction (\${a2}, \${b2}, \${c2}) radius \${d} length \${l}\`);
+                            
+                            // 标准化方向向量
+                            const dirLength = Math.sqrt(a2*a2 + b2*b2 + c2*c2);
+                            if (dirLength === 0) {
+                                console.warn('Cylinder direction vector is zero');
+                                break;
+                            }
+                            const dirX = a2 / dirLength;
+                            const dirY = b2 / dirLength;
+                            const dirZ = c2 / dirLength;
+                            
+                            // 创建圆柱体几何
+                            const cylinderGeometry = new THREE.CylinderGeometry(d, d, l, 32);
+                            
+                            // Three.js 默认圆柱体沿 Y 轴，需要旋转到正确方向
+                            // 计算从 Y 轴到目标方向的旋转
+                            const yAxis = new THREE.Vector3(0, 1, 0);
+                            const targetDir = new THREE.Vector3(dirX, dirY, dirZ);
+                            const quaternion = new THREE.Quaternion().setFromUnitVectors(yAxis, targetDir);
+                            cylinderGeometry.applyQuaternion(quaternion);
+                            
+                            // 移动到正确位置（圆柱体中心）
+                            const centerX = a1 + (dirX * l / 2);
+                            const centerY = b1 + (dirY * l / 2);
+                            const centerZ = c1 + (dirZ * l / 2);
+                            cylinderGeometry.translate(centerX, centerY, centerZ);
+                            
                             return cylinderGeometry;
                         }
                         break;
@@ -1108,7 +1454,21 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
                     structureInfo.style.flex = '1';
                     
                     const structureLabel = document.createElement('span');
-                    structureLabel.innerHTML = \`📦 \${structure.filename}<span class="structure-count">(\${structure.number})</span>\`;
+                    
+                    // 构建结构标签文本
+                    let labelText = '📦 ' + structure.filename + '<span class="structure-count">(' + structure.number + ')</span>';
+                    
+                    // 如果是单分子且有多球拟合数据，添加球体信息
+                    if (structure.number === 1 && structure.visualInfo && 
+                        structure.visualInfo.geometry && 
+                        structure.visualInfo.geometry.type === 'multi_sphere' &&
+                        structure.visualInfo.geometry.spheres) {
+                        
+                        const sphereCount = structure.visualInfo.geometry.spheres.length;
+                        labelText += '<br><span style="font-size: 10px; color: #88c999;">🔮 ' + sphereCount + ' spheres fitted</span>';
+                    }
+                    
+                    structureLabel.innerHTML = labelText;
                     structureLabel.style.flex = '1';
                     
                     // 添加颜色选择器
@@ -1137,6 +1497,74 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
                     structureItem.appendChild(structureCheckbox);
                     structureItem.appendChild(structureInfo);
                     structureContainer.appendChild(structureItem);
+                    
+                    // 添加多球拟合信息（如果有）
+                    if (structure.number === 1 && structure.visualInfo && 
+                        structure.visualInfo.geometry && 
+                        structure.visualInfo.geometry.type === 'multi_sphere' &&
+                        structure.visualInfo.geometry.spheres) {
+                        
+                        const multisphereInfo = document.createElement('div');
+                        multisphereInfo.style.marginLeft = '20px';
+                        multisphereInfo.style.borderLeft = '2px solid #88c999';
+                        multisphereInfo.style.paddingLeft = '8px';
+                        multisphereInfo.style.marginTop = '5px';
+                        multisphereInfo.style.marginBottom = '5px';
+                        
+                        const spheres = structure.visualInfo.geometry.spheres;
+                        
+                        // 多球拟合总览
+                        const multisphereHeader = document.createElement('div');
+                        multisphereHeader.style.fontSize = '11px';
+                        multisphereHeader.style.color = '#88c999';
+                        multisphereHeader.style.fontWeight = 'bold';
+                        multisphereHeader.style.marginBottom = '3px';
+                        multisphereHeader.textContent = '🔮 Multi-sphere Fitting (' + spheres.length + ' spheres)';
+                        multisphereInfo.appendChild(multisphereHeader);
+                        
+                        // 计算总体积
+                        const totalVolume = spheres.reduce((sum, sphere) => 
+                            sum + (4/3) * Math.PI * Math.pow(sphere.radius, 3), 0);
+                        
+                        // 平均半径
+                        const avgRadius = spheres.reduce((sum, sphere) => sum + sphere.radius, 0) / spheres.length;
+                        
+                        // 显示统计信息
+                        const statsDiv = document.createElement('div');
+                        statsDiv.style.fontSize = '10px';
+                        statsDiv.style.color = '#aaa';
+                        statsDiv.style.marginBottom = '3px';
+                        statsDiv.textContent = 'Volume: ' + totalVolume.toFixed(1) + ' Å³, Avg radius: ' + avgRadius.toFixed(1) + ' Å';
+                        multisphereInfo.appendChild(statsDiv);
+                        
+                        // 显示每个球体（最多显示前5个）
+                        const maxDisplaySpheres = Math.min(5, spheres.length);
+                        for (let i = 0; i < maxDisplaySpheres; i++) {
+                            const sphere = spheres[i];
+                            const sphereItem = document.createElement('div');
+                            sphereItem.style.fontSize = '9px';
+                            sphereItem.style.color = '#999';
+                            sphereItem.style.marginLeft = '10px';
+                            sphereItem.style.marginBottom = '1px';
+                            
+                            const centerStr = sphere.center.map(c => c.toFixed(1)).join(', ');
+                            sphereItem.textContent = '• Sphere ' + (i + 1) + ': (' + centerStr + ') r=' + sphere.radius.toFixed(1);
+                            multisphereInfo.appendChild(sphereItem);
+                        }
+                        
+                        // 如果有更多球体，显示省略信息
+                        if (spheres.length > maxDisplaySpheres) {
+                            const moreInfo = document.createElement('div');
+                            moreInfo.style.fontSize = '9px';
+                            moreInfo.style.color = '#777';
+                            moreInfo.style.marginLeft = '10px';
+                            moreInfo.style.fontStyle = 'italic';
+                            moreInfo.textContent = '... and ' + (spheres.length - maxDisplaySpheres) + ' more spheres';
+                            multisphereInfo.appendChild(moreInfo);
+                        }
+                        
+                        structureContainer.appendChild(multisphereInfo);
+                    }
                     
                     // 添加约束子项
                     if (structure.constraints && structure.constraints.length > 0) {
@@ -1500,6 +1928,27 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
                 
                 console.log('=== MESSAGE PROCESSING COMPLETE ===');
             });
+            
+            // 切换多球显示
+            let multisphereVisible = true;
+            function toggleMultisphere() {
+                multisphereVisible = !multisphereVisible;
+                
+                structureGroups.forEach(group => {
+                    group.traverse(child => {
+                        // 切换多球和相关元素的可见性
+                        if (child.name && (
+                            child.name.includes('_multisphere_') || 
+                            child.name.includes('_centroid') ||
+                            child.name.includes('bond_')
+                        )) {
+                            child.visible = multisphereVisible;
+                        }
+                    });
+                });
+                
+                console.log('Multisphere visibility toggled to:', multisphereVisible);
+            }
             
             // 启动初始化
             console.log('🏁 Starting initialization sequence...');

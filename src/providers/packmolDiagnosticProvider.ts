@@ -573,39 +573,39 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
       
       // 验证 constrain_rotation 命令
       if (firstToken === 'constrain_rotation') {
-        if (tokens.length < 3) {
+        if (tokens.length < 4) {
           diagnostics.push(this.createDiagnostic(
             i, 0, line.length,
-            'Constrain_rotation requires at least 2 parameters: axis value',
+            'Constrain_rotation requires 3 parameters: axis angle tolerance (e.g., constrain_rotation x 180. 20.)',
             vscode.DiagnosticSeverity.Error
           ));
         } else {
           const validAxes = ['x', 'y', 'z'];
-          let i_token = 1;
-          while (i_token < tokens.length) {
-            if (validAxes.includes(tokens[i_token].toLowerCase())) {
-              if (i_token + 1 >= tokens.length) {
-                diagnostics.push(this.createDiagnostic(
-                  i, 0, line.length,
-                  `Constrain_rotation axis '${tokens[i_token]}' requires a value`,
-                  vscode.DiagnosticSeverity.Error
-                ));
-                break;
-              } else if (isNaN(parseFloat(tokens[i_token + 1]))) {
-                diagnostics.push(this.createDiagnostic(
-                  i, 0, line.length,
-                  `Constrain_rotation value for axis '${tokens[i_token]}' must be a number`,
-                  vscode.DiagnosticSeverity.Error
-                ));
-              }
-              i_token += 2;
-            } else {
+          const axis = tokens[1].toLowerCase();
+          
+          if (!validAxes.includes(axis)) {
+            diagnostics.push(this.createDiagnostic(
+              i, 0, line.length,
+              `Invalid axis '${tokens[1]}'. Valid axes are: x, y, z`,
+              vscode.DiagnosticSeverity.Error
+            ));
+          } else {
+            // 验证角度值
+            if (isNaN(parseFloat(tokens[2]))) {
               diagnostics.push(this.createDiagnostic(
                 i, 0, line.length,
-                `Invalid axis '${tokens[i_token]}'. Valid axes are: x, y, z`,
+                `Angle value '${tokens[2]}' must be a number`,
                 vscode.DiagnosticSeverity.Error
               ));
-              break;
+            }
+            
+            // 验证容差值
+            if (isNaN(parseFloat(tokens[3]))) {
+              diagnostics.push(this.createDiagnostic(
+                i, 0, line.length,
+                `Tolerance value '${tokens[3]}' must be a number`,
+                vscode.DiagnosticSeverity.Error
+              ));
             }
           }
         }

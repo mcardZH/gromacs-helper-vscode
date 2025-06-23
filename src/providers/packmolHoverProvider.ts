@@ -114,7 +114,7 @@ export class PackmolHoverProvider implements vscode.HoverProvider {
   
   private getConstraintDocumentation(constraint: string): string | undefined {
     const docs: { [key: string]: string } = {
-      'constrain_rotation': `Constrains rotation around a specific axis.\n\n**Usage:** \`constrain_rotation x 0. y 0. z 1.\`\n\nPrevents rotation around specified axes.`,
+      'constrain_rotation': `Constrains rotation around a specific axis.\n\n**Usage:** \`constrain_rotation x 180. 20.\`\n\nRestricts rotation angles around the specified axis (x, y, or z) to be within angle±tolerance degrees.\n\n**Example:**\n\`\`\`\nconstrain_rotation x 0. 20.\nconstrain_rotation y 0. 20.\n\`\`\`\n\nThis constrains the molecule to align along the z-axis.`,
       'atoms': `Specifies which atoms to consider for constraints.\n\n**Usage:** \`atoms 1 2 3\`\n\nOnly these atom indices will be checked for constraint violations.`,
       'radius': `Sets the atomic radius scaling factor.\n\n**Usage:** \`radius 2.5\`\n\nScales all atomic radii by this factor for overlap checking.`,
       'over': `Places molecules over a geometric constraint.\n\n**Usage:** \`over plane 0. 0. 1. 0.\`\n\nMolecules will be placed above the specified plane.`,
@@ -132,7 +132,7 @@ export class PackmolHoverProvider implements vscode.HoverProvider {
       'box': `Rectangular box defined by two corner points.\n\n**Usage:** \`box xmin ymin zmin xmax ymax zmax\`\n\n**Example:** \`box 0. 0. 0. 30. 30. 30.\`\n\nDefines a box from (xmin,ymin,zmin) to (xmax,ymax,zmax).`,
       'cube': `Cubic region defined by one corner and size.\n\n**Usage:** \`cube xmin ymin zmin size\`\n\n**Example:** \`cube 0. 0. 0. 25.\`\n\nDefines a cube starting at (xmin,ymin,zmin) with given size.`,
       'plane': `Plane defined by equation ax + by + cz = d.\n\n**Usage:** \`plane a b c d\`\n\n**Example:** \`plane 0. 0. 1. 0.\` (xy-plane)\n\nDefines a plane using the equation ax + by + cz = d.`,
-      'cylinder': `Cylindrical region with axis and radius.\n\n**Usage:** \`cylinder x1 y1 z1 x2 y2 z2 radius\`\n\nDefines a cylinder from point 1 to point 2 with given radius.`,
+      'cylinder': `Cylindrical region defined by parametric equation.\n\n**Usage:** \`cylinder a1 b1 c1 a2 b2 c2 d l\`\n\n**Parameters:**\n- (a1, b1, c1): Starting point of cylinder axis\n- (a2, b2, c2): Direction vector of cylinder axis\n- d: Radius of cylinder\n- l: Length of cylinder\n\n**Example:** \`cylinder 0. 0. 0. 1. 0. 0. 5. 20.\`\n(cylinder starting at origin, along x-axis, radius 5, length 20)\n\nThe cylinder is defined by the parametric equation:\np = (a1, b1, c1) + t × (a2, b2, c2)\nwhere t is the parameter, and the cylinder extends from t=0 to t=l/|(a2,b2,c2)|.`,
       'ellipsoid': `Ellipsoidal region with semi-axes.\n\n**Usage:** \`ellipsoid x y z a b c\`\n\nDefines an ellipsoid centered at (x,y,z) with semi-axes a, b, c.`,
       'xygauss': 'Parameters (*a_1*, *b_1*) define center of the gaussian, while *c* specifies the height in the *z* dimension. *a_2* and *b_2* set the width of the gaussian in *x*, and *y*, respectively, while *h* specifies its height. It is possible to restrict atoms to be over or below the gaussian plane. The gaussian surface as implemented is restricted to be over the *xy* plane.',
     };

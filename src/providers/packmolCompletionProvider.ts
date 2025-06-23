@@ -93,6 +93,14 @@ export class PackmolCompletionProvider implements vscode.CompletionItemProvider 
       const item = new vscode.CompletionItem(constraint, vscode.CompletionItemKind.Property);
       item.detail = 'Packmol constraint';
       item.documentation = this.getConstraintDocumentation(constraint);
+      
+      // 为 constrain_rotation 添加特殊的代码片段
+      if (constraint === 'constrain_rotation') {
+        item.insertText = new vscode.SnippetString('constrain_rotation ${1|x,y,z|} ${2:180.} ${3:20.}');
+        item.kind = vscode.CompletionItemKind.Snippet;
+        item.documentation = 'Constrains rotation around a specific axis. Usage: constrain_rotation <axis> <angle> <tolerance>\nExample: constrain_rotation x 180. 20.';
+      }
+      
       completions.push(item);
     });
     
@@ -178,7 +186,7 @@ export class PackmolCompletionProvider implements vscode.CompletionItemProvider 
   
   private getConstraintDocumentation(constraint: string): string {
     const docs: { [key: string]: string } = {
-      'constrain_rotation': 'Constrains rotation around a specific axis',
+      'constrain_rotation': 'Constrains rotation around a specific axis. Syntax: constrain_rotation <axis> <angle> <tolerance>\nExample: constrain_rotation x 180. 20.',
       'atoms': 'Specifies which atoms to consider for constraints',
       'radius': 'Sets the atomic radius scaling factor',
       'fscale': 'Scaling factor for the force field',

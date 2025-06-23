@@ -80,9 +80,30 @@ export class PackmolSemanticTokensProvider implements vscode.DocumentSemanticTok
         );
       }
       
-      // 处理约束
+      // 处理特殊的 constrain_rotation 命令
+      if (firstToken === 'constrain_rotation') {
+        const tokenStart = line.indexOf(tokens[0]);
+        tokensBuilder.push(
+          new vscode.Range(i, tokenStart, i, tokenStart + tokens[0].length),
+          'packmol_constraint'
+        );
+        
+        // 处理轴参数 (x, y, z)
+        if (tokens.length > 1) {
+          const axis = tokens[1].toLowerCase();
+          if (['x', 'y', 'z'].includes(axis)) {
+            const axisStart = line.indexOf(tokens[1]);
+            tokensBuilder.push(
+              new vscode.Range(i, axisStart, i, axisStart + tokens[1].length),
+              'packmol_geometry' // 轴用几何类型标记
+            );
+          }
+        }
+      }
+      
+      // 处理其他约束
       const constraints = [
-        'constrain_rotation', 'atoms', 'radius', 'fscale', 'short_radius',
+        'atoms', 'radius', 'fscale', 'short_radius',
         'short_radius_scale', 'over', 'below', 'outside', 'inside', 'above', 'mindistance'
       ];
       
