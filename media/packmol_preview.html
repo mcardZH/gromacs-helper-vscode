@@ -30,24 +30,154 @@
         top: 10px;
         left: 10px;
         z-index: 100;
-        background: rgba(30, 30, 30, 0.9);
-        padding: 10px;
-        border-radius: 5px;
-        max-width: 250px;
+        background: rgba(30, 30, 30, 0.95);
+        padding: 0;
+        border-radius: 8px;
+        max-width: 280px;
+        min-width: 200px;
         max-height: calc(100vh - 40px);
+        overflow: visible;
+        border: 1px solid #555;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      #controls.dragging {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        transform: scale(1.02);
+      }
+
+      .controls-header {
+        background: rgba(0, 102, 204, 0.9);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px 8px 0 0;
+        cursor: move;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        -webkit-user-select: none;
+        user-select: none;
+        font-weight: bold;
+        font-size: 13px;
+      }
+
+      .controls-header:hover {
+        background: rgba(0, 82, 163, 0.9);
+      }
+
+      .controls-content {
+        padding: 10px;
+        max-height: calc(100vh - 100px);
         overflow-y: auto;
+      }
+
+      .controls-toggle {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
+      }
+
+      .controls-toggle:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      #controls.collapsed .controls-content {
+        display: none;
+      }
+
+      #controls.collapsed {
+        border-radius: 8px;
       }
 
       .control-group {
         margin-bottom: 15px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+      }
+
+      .control-group:hover {
+        border-color: #444;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .control-group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        -webkit-user-select: none;
+        user-select: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+      }
+
+      .control-group-header:hover {
+        background: rgba(255, 255, 255, 0.05);
       }
 
       .control-group h3 {
-        margin: 0 0 8px 0;
+        margin: 0;
         font-size: 14px;
         color: #ffffff;
-        border-bottom: 1px solid #444;
-        padding-bottom: 4px;
+        flex: 1;
+        padding-bottom: 0;
+        border-bottom: none;
+      }
+
+      .control-group-toggle {
+        background: none;
+        border: none;
+        color: #ccc;
+        font-size: 12px;
+        cursor: pointer;
+        padding: 2px 4px;
+        border-radius: 3px;
+        transition: all 0.2s;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .control-group-toggle:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
+
+      .control-group-content {
+        margin-top: 8px;
+        padding-left: 4px;
+        border-left: 2px solid #444;
+        margin-left: 4px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+      }
+
+      .control-group.collapsed .control-group-content {
+        max-height: 0;
+        margin-top: 0;
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      .control-group:not(.collapsed) .control-group-content {
+        max-height: 1000px;
+        opacity: 1;
+        transform: translateY(0);
       }
 
       .structure-item {
@@ -99,14 +229,66 @@
         color: white;
         border: none;
         padding: 6px 12px;
-        border-radius: 3px;
+        border-radius: 4px;
         cursor: pointer;
         font-size: 12px;
         margin: 2px;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        flex-shrink: 0;
       }
 
       .button:hover {
         background: #0052a3;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 102, 204, 0.3);
+      }
+
+      .button:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(0, 102, 204, 0.3);
+      }
+
+      /* 折叠状态下的控制面板优化 */
+      #controls.collapsed {
+        min-width: auto;
+        width: auto;
+      }
+
+      #controls.collapsed .controls-header {
+        border-radius: 8px;
+        padding: 6px 10px;
+      }
+
+      /* 响应式设计 - 小屏幕优化 */
+      @media (max-width: 768px) {
+        #controls {
+          max-width: calc(100vw - 20px);
+          font-size: 11px;
+        }
+        
+        .button {
+          padding: 4px 8px;
+          font-size: 11px;
+          margin: 1px;
+        }
+        
+        .controls-header {
+          padding: 6px 8px;
+          font-size: 12px;
+        }
+        
+        .control-group h3 {
+          font-size: 13px;
+        }
+      }
+
+      /* 拖拽时的视觉反馈增强 */
+      #controls.dragging {
+        transition: none;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.6);
+        transform: scale(1.02) rotate(1deg);
+        z-index: 1000;
       }
 
       .loading {
@@ -380,32 +562,61 @@
       <div id="canvas-container"></div>
 
       <div id="controls">
-        <div class="control-group">
-          <h3>View Controls</h3>
-          <button class="button" onclick="resetCamera()">Reset Camera</button>
-          <button class="button" onclick="toggleWireframe()">
-            Toggle Wireframe
+        <div class="controls-header" id="controls-header">
+          <div>🎛️ Control Panel</div>
+          <button class="controls-toggle" onclick="toggleControlsPanel()" title="折叠/展开面板">
+            <span id="controls-toggle-icon">−</span>
           </button>
-          <button class="button" onclick="toggleMultisphere()">
-            Toggle Multisphere
-          </button>
-          <button class="button" onclick="toggleSurfaceArrows()">
-            Toggle Surface Arrows
-          </button>
-          <button class="button" onclick="randomizeColors()">
-            Random Colors
-          </button>
-          <button class="button" onclick="resetColors()">Reset Colors</button>
         </div>
+        <div class="controls-content">
+          <div class="control-group">
+            <div class="control-group-header" onclick="toggleControlGroup(this)">
+              <h3>🎮 View Controls</h3>
+              <button class="control-group-toggle" title="折叠/展开">
+                <span>−</span>
+              </button>
+            </div>
+            <div class="control-group-content">
+              <button class="button" onclick="resetCamera()">Reset Camera</button>
+              <button class="button" onclick="toggleWireframe()">
+                Toggle Wireframe
+              </button>
+              <button class="button" onclick="toggleMultisphere()">
+                Toggle Multisphere
+              </button>
+              <button class="button" onclick="toggleSurfaceArrows()">
+                Toggle Surface Arrows
+              </button>
+              <button class="button" onclick="randomizeColors()">
+                Random Colors
+              </button>
+              <button class="button" onclick="resetColors()">Reset Colors</button>
+            </div>
+          </div>
 
-        <div class="control-group">
-          <h3>Structures & Constraints</h3>
-          <div id="structure-list"></div>
-        </div>
+          <div class="control-group">
+            <div class="control-group-header" onclick="toggleControlGroup(this)">
+              <h3>📦 Structures & Constraints</h3>
+              <button class="control-group-toggle" title="折叠/展开">
+                <span>−</span>
+              </button>
+            </div>
+            <div class="control-group-content">
+              <div id="structure-list"></div>
+            </div>
+          </div>
 
-        <div class="control-group">
-          <h3>Statistics</h3>
-          <div id="constraint-list"></div>
+          <div class="control-group">
+            <div class="control-group-header" onclick="toggleControlGroup(this)">
+              <h3>📊 Statistics</h3>
+              <button class="control-group-toggle" title="折叠/展开">
+                <span>−</span>
+              </button>
+            </div>
+            <div class="control-group-content">
+              <div id="constraint-list"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -535,6 +746,20 @@
       const MAX_INIT_ATTEMPTS = 20;
       // 存储表面约束的大小参数
       let surfaceConstraintSizes = new Map();
+      
+      // 控制面板相关变量
+      let isDragging = false;
+      let dragOffsetX = 0;
+      let dragOffsetY = 0;
+      let controlPanelState = {
+        collapsed: false,
+        position: { x: 10, y: 10 },
+        groupStates: {
+          'view-controls': false,
+          'structures-constraints': false,
+          'statistics': false
+        }
+      };
       
       // 设置相关全局变量
       let ambientLight, directionalLight;
@@ -711,6 +936,10 @@
 
               // 初始化设置界面
               initializeSettings();
+
+              // 初始化控制面板功能
+              loadControlPanelState();
+              initializeControlsDrag();
 
               // 发送准备就绪消息
               sendReadyMessage();
@@ -2641,6 +2870,236 @@
           }
 
           return window.structureColorMap.get(structureId);
+      }
+
+      // ========== 控制面板折叠和拖拽功能 ==========
+
+      // 切换整个控制面板的折叠状态
+      function toggleControlsPanel() {
+          const controls = document.getElementById('controls');
+          const toggleIcon = document.getElementById('controls-toggle-icon');
+          
+          controlPanelState.collapsed = !controlPanelState.collapsed;
+          
+          if (controlPanelState.collapsed) {
+              controls.classList.add('collapsed');
+              toggleIcon.textContent = '+';
+          } else {
+              controls.classList.remove('collapsed');
+              toggleIcon.textContent = '−';
+          }
+          
+          saveControlPanelState();
+          console.log('Controls panel toggled:', controlPanelState.collapsed ? 'collapsed' : 'expanded');
+      }
+
+      // 切换控制组的折叠状态
+      function toggleControlGroup(headerElement) {
+          const controlGroup = headerElement.parentElement;
+          const toggleButton = headerElement.querySelector('.control-group-toggle span');
+          const h3Text = headerElement.querySelector('h3').textContent;
+          
+          // 确定组的标识符
+          let groupKey = '';
+          if (h3Text.includes('View Controls')) {
+              groupKey = 'view-controls';
+          } else if (h3Text.includes('Structures')) {
+              groupKey = 'structures-constraints';
+          } else if (h3Text.includes('Statistics')) {
+              groupKey = 'statistics';
+          }
+          
+          // 切换状态
+          controlPanelState.groupStates[groupKey] = !controlPanelState.groupStates[groupKey];
+          const isCollapsed = controlPanelState.groupStates[groupKey];
+          
+          if (isCollapsed) {
+              controlGroup.classList.add('collapsed');
+              toggleButton.textContent = '+';
+          } else {
+              controlGroup.classList.remove('collapsed');
+              toggleButton.textContent = '−';
+          }
+          
+          saveControlPanelState();
+          console.log(`Control group ${groupKey} toggled:`, isCollapsed ? 'collapsed' : 'expanded');
+      }
+
+      // 保存控制面板状态到localStorage
+      function saveControlPanelState() {
+          try {
+              localStorage.setItem('packmolControlPanelState', JSON.stringify(controlPanelState));
+          } catch (error) {
+              console.warn('Failed to save control panel state:', error);
+          }
+      }
+
+      // 加载控制面板状态
+      function loadControlPanelState() {
+          try {
+              const saved = localStorage.getItem('packmolControlPanelState');
+              if (saved) {
+                  controlPanelState = { ...controlPanelState, ...JSON.parse(saved) };
+                  applyControlPanelState();
+              }
+          } catch (error) {
+              console.warn('Failed to load control panel state:', error);
+          }
+      }
+
+      // 应用控制面板状态
+      function applyControlPanelState() {
+          const controls = document.getElementById('controls');
+          const toggleIcon = document.getElementById('controls-toggle-icon');
+          
+          // 应用位置
+          controls.style.left = controlPanelState.position.x + 'px';
+          controls.style.top = controlPanelState.position.y + 'px';
+          
+          // 应用整体折叠状态
+          if (controlPanelState.collapsed) {
+              controls.classList.add('collapsed');
+              toggleIcon.textContent = '+';
+          } else {
+              controls.classList.remove('collapsed');
+              toggleIcon.textContent = '−';
+          }
+          
+          // 应用各组的折叠状态
+          setTimeout(() => {
+              // 等待DOM完全渲染后再应用组状态
+              const controlGroups = document.querySelectorAll('.control-group');
+              controlGroups.forEach((group, index) => {
+                  const keys = ['view-controls', 'structures-constraints', 'statistics'];
+                  const groupKey = keys[index];
+                  const isCollapsed = controlPanelState.groupStates[groupKey];
+                  const toggleButton = group.querySelector('.control-group-toggle span');
+                  
+                  if (isCollapsed && toggleButton) {
+                      group.classList.add('collapsed');
+                      toggleButton.textContent = '+';
+                  } else if (toggleButton) {
+                      group.classList.remove('collapsed');
+                      toggleButton.textContent = '−';
+                  }
+              });
+          }, 100);
+      }
+
+      // 初始化拖拽功能
+      function initializeControlsDrag() {
+          const controlsHeader = document.getElementById('controls-header');
+          const controls = document.getElementById('controls');
+          
+          if (!controlsHeader || !controls) {
+              console.warn('Controls header or controls panel not found');
+              return;
+          }
+          
+          // 鼠标按下开始拖拽
+          controlsHeader.addEventListener('mousedown', (e) => {
+              if (e.target.classList.contains('controls-toggle') || 
+                  e.target.closest('.controls-toggle')) {
+                  return; // 不在切换按钮上开始拖拽
+              }
+              
+              isDragging = true;
+              controls.classList.add('dragging');
+              
+              const rect = controls.getBoundingClientRect();
+              dragOffsetX = e.clientX - rect.left;
+              dragOffsetY = e.clientY - rect.top;
+              
+              // 阻止文本选择
+              e.preventDefault();
+              
+              console.log('Started dragging controls panel');
+          });
+          
+          // 鼠标移动
+          document.addEventListener('mousemove', (e) => {
+              if (!isDragging) return;
+              
+              const viewportWidth = window.innerWidth;
+              const viewportHeight = window.innerHeight;
+              const controlsRect = controls.getBoundingClientRect();
+              
+              // 计算新位置，确保不超出视窗边界
+              let newX = e.clientX - dragOffsetX;
+              let newY = e.clientY - dragOffsetY;
+              
+              // 边界检查
+              newX = Math.max(0, Math.min(newX, viewportWidth - controlsRect.width));
+              newY = Math.max(0, Math.min(newY, viewportHeight - controlsRect.height));
+              
+              controls.style.left = newX + 'px';
+              controls.style.top = newY + 'px';
+              
+              // 更新状态
+              controlPanelState.position.x = newX;
+              controlPanelState.position.y = newY;
+          });
+          
+          // 鼠标释放结束拖拽
+          document.addEventListener('mouseup', () => {
+              if (isDragging) {
+                  isDragging = false;
+                  controls.classList.remove('dragging');
+                  saveControlPanelState();
+                  console.log('Ended dragging controls panel at:', controlPanelState.position);
+              }
+          });
+          
+          // 触摸设备支持
+          controlsHeader.addEventListener('touchstart', (e) => {
+              if (e.target.classList.contains('controls-toggle') || 
+                  e.target.closest('.controls-toggle')) {
+                  return;
+              }
+              
+              const touch = e.touches[0];
+              isDragging = true;
+              controls.classList.add('dragging');
+              
+              const rect = controls.getBoundingClientRect();
+              dragOffsetX = touch.clientX - rect.left;
+              dragOffsetY = touch.clientY - rect.top;
+              
+              e.preventDefault();
+          });
+          
+          document.addEventListener('touchmove', (e) => {
+              if (!isDragging) return;
+              
+              const touch = e.touches[0];
+              const viewportWidth = window.innerWidth;
+              const viewportHeight = window.innerHeight;
+              const controlsRect = controls.getBoundingClientRect();
+              
+              let newX = touch.clientX - dragOffsetX;
+              let newY = touch.clientY - dragOffsetY;
+              
+              newX = Math.max(0, Math.min(newX, viewportWidth - controlsRect.width));
+              newY = Math.max(0, Math.min(newY, viewportHeight - controlsRect.height));
+              
+              controls.style.left = newX + 'px';
+              controls.style.top = newY + 'px';
+              
+              controlPanelState.position.x = newX;
+              controlPanelState.position.y = newY;
+              
+              e.preventDefault();
+          });
+          
+          document.addEventListener('touchend', () => {
+              if (isDragging) {
+                  isDragging = false;
+                  controls.classList.remove('dragging');
+                  saveControlPanelState();
+              }
+          });
+          
+          console.log('✅ Controls drag functionality initialized');
       }
 
       // 启动初始化
