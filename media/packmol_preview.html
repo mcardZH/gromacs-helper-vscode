@@ -389,6 +389,9 @@
           <button class="button" onclick="toggleMultisphere()">
             Toggle Multisphere
           </button>
+          <button class="button" onclick="toggleSurfaceArrows()">
+            Toggle Surface Arrows
+          </button>
           <button class="button" onclick="randomizeColors()">
             Random Colors
           </button>
@@ -1151,6 +1154,20 @@
           const mesh = new THREE.Mesh(geometry, material);
           mesh.name = id;
 
+          // 为表面约束（plane 和 xygauss）添加方向箭头
+          if (constraint.geometry.type === 'plane' || constraint.geometry.type === 'xygauss') {
+              const constraintGroup = new THREE.Group();
+              constraintGroup.add(mesh);
+              
+              // 创建方向箭头
+              const arrows = createSurfaceDirectionArrows(constraint, constraintColor, id);
+              arrows.forEach(arrow => constraintGroup.add(arrow));
+              
+              constraintGroup.name = id;
+              console.log('Created constraint group with surface arrows for:', constraint.geometry.type);
+              return constraintGroup;
+          }
+
           console.log('Created constraint mesh with color:', constraintColor.toString(16));
           return mesh;
       }
@@ -1218,8 +1235,8 @@
           surfaceConstraintSizes.set(constraintId, size);
 
           // 重新创建该约束的几何体
-          const constraintMesh = constraintGroups.get(constraintId);
-          if (constraintMesh) {
+          const constraintObject = constraintGroups.get(constraintId);
+          if (constraintObject) {
               // 获取约束数据
               const parts = constraintId.split('_constraint_');
               const structureId = parts[0];
@@ -1228,11 +1245,42 @@
               const structure = currentData.input.structures.find(s => s.id === structureId);
               if (structure && structure.constraints && structure.constraints[constraintIndex]) {
                   const constraint = structure.constraints[constraintIndex];
-                  const newGeometry = getConstraintGeometry(constraint.geometry, constraintId);
-
-                  if (newGeometry) {
-                      constraintMesh.geometry.dispose(); // 清理旧几何体
-                      constraintMesh.geometry = newGeometry;
+                  
+                  // 判断是否为表面约束（有箭头的Group）还是普通约束（单个Mesh）
+                  if (constraint.geometry.type === 'plane' || constraint.geometry.type === 'xygauss') {
+                      // 表面约束：重新创建整个组（包括箭头）
+                      const parent = constraintObject.parent;
+                      if (parent) {
+                          // 移除旧的约束组
+                          parent.remove(constraintObject);
+                          
+                          // 清理旧几何体
+                          constraintObject.traverse(child => {
+                              if (child.geometry) {
+                                  child.geometry.dispose();
+                              }
+                              if (child.material) {
+                                  if (child.material.map) {
+                                      child.material.map.dispose();
+                                  }
+                                  child.material.dispose();
+                              }
+                          });
+                          
+                          // 创建新的约束可视化（包括新尺寸的几何体和箭头）
+                          const newConstraintVisualization = createConstraintVisualization(constraint, constraintId);
+                          if (newConstraintVisualization) {
+                              parent.add(newConstraintVisualization);
+                              constraintGroups.set(constraintId, newConstraintVisualization);
+                          }
+                      }
+                  } else {
+                      // 非表面约束：只更新几何体
+                      const newGeometry = getConstraintGeometry(constraint.geometry, constraintId);
+                      if (newGeometry && constraintObject.geometry) {
+                          constraintObject.geometry.dispose(); // 清理旧几何体
+                          constraintObject.geometry = newGeometry;
+                      }
                   }
               }
           }
@@ -1882,6 +1930,209 @@
           });
       }
 
+      // ========== 表面约束箭头功能 ==========
+
+      // 存储当前处理的约束信息
+      let currentConstraintInfo = null;
+
+      // 为表面约束创建方向箭头
+      function createSurfaceDirectionArrows(constraint, color, constraintId) {
+          currentConstraintInfo = constraint; // 设置当前约束信息
+          const arrows = [];
+          const arrowColor = new THREE.Color(color);
+          arrowColor.multiplyScalar(1.2); // 稍微亮一些以便区分
+          
+          if (constraint.geometry.type === 'plane') {
+              arrows.push(...createPlaneDirectionArrows(constraint, arrowColor, constraintId));
+          } else if (constraint.geometry.type === 'xygauss') {
+              arrows.push(...createXYGaussDirectionArrows(constraint, arrowColor, constraintId));
+          }
+          
+          currentConstraintInfo = null; // 清除约束信息
+          return arrows;
+      }
+
+      // 为平面约束创建方向箭头
+      function createPlaneDirectionArrows(constraint, color, constraintId) {
+          const arrows = [];
+          const [a, b, c, d] = constraint.geometry.parameters;
+          
+          // 计算平面法向量
+          const normal = new THREE.Vector3(a, b, c).normalize();
+          
+          // 计算平面上的参考点
+          let planePoint = new THREE.Vector3();
+          if (Math.abs(c) > 0.1) {
+              planePoint.set(0, 0, d / c);
+          } else if (Math.abs(b) > 0.1) {
+              planePoint.set(0, d / b, 0);
+          } else if (Math.abs(a) > 0.1) {
+              planePoint.set(d / a, 0, 0);
+          }
+          
+          // 根据约束类型确定箭头方向
+          let arrowDirection = normal.clone();
+          if (constraint.type === 'below') {
+              arrowDirection.negate(); // below 时方向相反
+          }
+          
+          // 获取当前表面大小并调整箭头间距
+          const surfaceSize = constraintId ? getSurfaceConstraintSize(constraintId) : 50;
+          const arrowSpacing = Math.min(surfaceSize * 0.2, 15); // 根据表面大小调整箭头间距
+          
+          // 创建多个箭头显示在平面上不同位置
+          const arrowPositions = [
+              planePoint.clone(),
+              planePoint.clone().add(new THREE.Vector3(arrowSpacing, 0, 0)),
+              planePoint.clone().add(new THREE.Vector3(-arrowSpacing, 0, 0)),
+              planePoint.clone().add(new THREE.Vector3(0, arrowSpacing, 0)),
+              planePoint.clone().add(new THREE.Vector3(0, -arrowSpacing, 0)),
+              planePoint.clone().add(new THREE.Vector3(arrowSpacing * 0.7, arrowSpacing * 0.7, 0)),
+              planePoint.clone().add(new THREE.Vector3(-arrowSpacing * 0.7, -arrowSpacing * 0.7, 0))
+          ];
+          
+          arrowPositions.forEach((position, index) => {
+              const arrow = createArrow(position, arrowDirection, 8, color, constraint.type);
+              arrow.name = `plane_arrow_${index}`;
+              arrows.push(arrow);
+          });
+          
+          console.log(`Created ${arrows.length} plane arrows for ${constraint.type} constraint`);
+          return arrows;
+      }
+
+      // 为 XY 高斯表面约束创建方向箭头
+      function createXYGaussDirectionArrows(constraint, color, constraintId) {
+          const arrows = [];
+          const [a1, b1, a2, b2, c, h] = constraint.geometry.parameters;
+          
+          // 高斯表面的中心点
+          const centerPoint = new THREE.Vector3(a1, b1, c);
+          
+          // 根据约束类型确定箭头方向（高斯表面始终在 XY 平面，方向为 Z 轴）
+          let arrowDirection = new THREE.Vector3(0, 0, 1);
+          if (constraint.type === 'below') {
+              arrowDirection.negate(); // below 时指向 -Z 方向
+          }
+          
+          // 获取当前表面大小并调整箭头分布
+          const surfaceSize = constraintId ? getSurfaceConstraintSize(constraintId) : Math.max(a2, b2) * 3;
+          const scaleFactor = Math.min(surfaceSize / (Math.max(a2, b2) * 3), 2.0); // 限制最大缩放倍数
+          
+          // 在高斯表面的几个特征点创建箭头
+          const arrowPositions = [
+              centerPoint.clone(), // 中心
+              centerPoint.clone().add(new THREE.Vector3(a2 * 0.8 * scaleFactor, 0, 0)), // X 方向偏移
+              centerPoint.clone().add(new THREE.Vector3(-a2 * 0.8 * scaleFactor, 0, 0)),
+              centerPoint.clone().add(new THREE.Vector3(0, b2 * 0.8 * scaleFactor, 0)), // Y 方向偏移
+              centerPoint.clone().add(new THREE.Vector3(0, -b2 * 0.8 * scaleFactor, 0)),
+              centerPoint.clone().add(new THREE.Vector3(a2 * 0.6 * scaleFactor, b2 * 0.6 * scaleFactor, 0)), // 对角位置
+              centerPoint.clone().add(new THREE.Vector3(-a2 * 0.6 * scaleFactor, -b2 * 0.6 * scaleFactor, 0))
+          ];
+          
+          arrowPositions.forEach((position, index) => {
+              // 计算该位置的高斯表面高度
+              const gaussHeight = h * Math.exp(-((position.x - a1) ** 2) / (2 * a2 ** 2) - ((position.y - b1) ** 2) / (2 * b2 ** 2));
+              position.z = c + gaussHeight;
+              
+              const arrow = createArrow(position, arrowDirection, 6, color, constraint.type);
+              arrow.name = `xygauss_arrow_${index}`;
+              arrows.push(arrow);
+          });
+          
+          console.log(`Created ${arrows.length} xygauss arrows for ${constraint.type} constraint`);
+          return arrows;
+      }
+
+      // 创建箭头几何体
+      function createArrow(position, direction, length, color, constraintType) {
+          const arrowGroup = new THREE.Group();
+          
+          // 标准化方向向量
+          const normalizedDirection = direction.clone().normalize();
+          
+          // 创建箭头主体（圆柱体）
+          const shaftLength = length * 0.7;
+          const shaftRadius = length * 0.025;
+          const shaftGeometry = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftLength, 8);
+          const shaftMaterial = new THREE.MeshLambertMaterial({ 
+              color: color,
+              transparent: true,
+              opacity: 0.8
+          });
+          const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
+          
+          // 创建箭头头部（圆锥体）
+          const headLength = length * 0.3;
+          const headRadius = length * 0.08;
+          const headGeometry = new THREE.ConeGeometry(headRadius, headLength, 8);
+          const headMaterial = new THREE.MeshLambertMaterial({ 
+              color: color,
+              transparent: true,
+              opacity: 0.9
+          });
+          const head = new THREE.Mesh(headGeometry, headMaterial);
+          
+          // 定位箭头组件
+          shaft.position.set(0, shaftLength / 2, 0);
+          head.position.set(0, shaftLength + headLength / 2, 0);
+          
+          arrowGroup.add(shaft);
+          arrowGroup.add(head);
+          
+          // 旋转箭头使其指向正确方向
+          const yAxis = new THREE.Vector3(0, 1, 0);
+          const quaternion = new THREE.Quaternion().setFromUnitVectors(yAxis, normalizedDirection);
+          arrowGroup.applyQuaternion(quaternion);
+          
+          // 设置箭头位置
+          arrowGroup.position.copy(position);
+          
+          // 添加约束类型标签（小的文字提示）
+          if (constraintType) {
+              const textSprite = createTextSprite(constraintType.toUpperCase(), color);
+              textSprite.position.set(0, length + 2, 0);
+              arrowGroup.add(textSprite);
+          }
+          
+          return arrowGroup;
+      }
+
+      // 创建文字精灵（用于显示约束类型）
+      function createTextSprite(text, color) {
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.width = 128;
+          canvas.height = 64;
+          
+          // 设置画布背景为半透明黑色
+          context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // 绘制文字
+          context.font = 'bold 20px Arial';
+          context.fillStyle = `#${color.getHexString()}`;
+          context.strokeStyle = '#000000';
+          context.lineWidth = 2;
+          context.textAlign = 'center';
+          context.textBaseline = 'middle';
+          
+          // 先描边再填充，产生边框效果
+          context.strokeText(text, canvas.width / 2, canvas.height / 2);
+          context.fillText(text, canvas.width / 2, canvas.height / 2);
+          
+          const texture = new THREE.CanvasTexture(canvas);
+          const spriteMaterial = new THREE.SpriteMaterial({ 
+              map: texture,
+              transparent: true,
+              opacity: 0.9
+          });
+          const sprite = new THREE.Sprite(spriteMaterial);
+          sprite.scale.set(3, 1.5, 1); // 稍微调整大小使其更清晰
+          
+          return sprite;
+      }
+
       // 消息处理
       window.addEventListener('message', event => {
           console.log('=== WEBVIEW MESSAGE RECEIVED ===');
@@ -1947,6 +2198,41 @@
           });
 
           console.log('Multisphere visibility toggled to:', multisphereVisible);
+      }
+
+      // 切换表面箭头显示
+      let surfaceArrowsVisible = true;
+      function toggleSurfaceArrows() {
+          surfaceArrowsVisible = !surfaceArrowsVisible;
+
+          // 遍历所有约束组，切换箭头的可见性
+          constraintGroups.forEach(constraintGroup => {
+              if (constraintGroup.children) {
+                  constraintGroup.traverse(child => {
+                      // 切换箭头和相关元素的可见性
+                      if (child.name && (
+                          child.name.includes('plane_arrow_') ||
+                          child.name.includes('xygauss_arrow_')
+                      )) {
+                          child.visible = surfaceArrowsVisible;
+                      }
+                  });
+              }
+          });
+
+          // 同时遍历结构组中的约束（因为约束可能作为结构的子对象存在）
+          structureGroups.forEach(group => {
+              group.traverse(child => {
+                  if (child.name && (
+                      child.name.includes('plane_arrow_') ||
+                      child.name.includes('xygauss_arrow_')
+                  )) {
+                      child.visible = surfaceArrowsVisible;
+                  }
+              });
+          });
+
+          console.log('Surface arrows visibility toggled to:', surfaceArrowsVisible);
       }
 
       // ========== 设置功能 ==========
@@ -2161,12 +2447,27 @@
           // 发送到扩展端保存
           sendSettingsToExtension({ constraintOpacity: newValue });
           
-          // 应用到所有约束材质
+          // 应用到所有约束材质（包括箭头）
           constraintGroups.forEach(constraintMesh => {
-              if (constraintMesh.material) {
-                  constraintMesh.material.opacity = currentSettings.constraintOpacity;
-                  constraintMesh.material.transparent = true;
-              }
+              constraintMesh.traverse(child => {
+                  if (child.material) {
+                      child.material.opacity = currentSettings.constraintOpacity;
+                      child.material.transparent = true;
+                  }
+              });
+          });
+          
+          // 同时更新结构组中的约束箭头
+          structureGroups.forEach(group => {
+              group.traverse(child => {
+                  if (child.name && (
+                      child.name.includes('plane_arrow_') ||
+                      child.name.includes('xygauss_arrow_')
+                  ) && child.material) {
+                      child.material.opacity = currentSettings.constraintOpacity;
+                      child.material.transparent = true;
+                  }
+              });
           });
           
           console.log('Updated constraint opacity to:', value);
