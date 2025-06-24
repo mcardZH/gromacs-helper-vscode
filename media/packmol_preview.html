@@ -178,6 +178,201 @@
         cursor: pointer;
         border: 2px solid #ffffff;
       }
+
+      /* 设置面板样式 */
+      .settings-panel {
+        display: none;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 101;
+        background: rgba(30, 30, 30, 0.95);
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #555;
+        min-width: 280px;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .settings-panel.visible {
+        display: block;
+      }
+
+      .settings-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #444;
+      }
+
+      .settings-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #ffffff;
+      }
+
+      .close-settings {
+        background: #666;
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .close-settings:hover {
+        background: #888;
+      }
+
+      .settings-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 100;
+        background: rgba(0, 102, 204, 0.9);
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .settings-button:hover {
+        background: rgba(0, 82, 163, 0.9);
+      }
+
+      .setting-item {
+        margin-bottom: 15px;
+      }
+
+      .setting-label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 13px;
+        color: #ccc;
+        font-weight: 500;
+      }
+
+      .setting-input {
+        width: 100%;
+        padding: 6px 8px;
+        background: #2a2a2a;
+        border: 1px solid #555;
+        border-radius: 4px;
+        color: #fff;
+        font-size: 12px;
+      }
+
+      .setting-input:focus {
+        outline: none;
+        border-color: #0066cc;
+      }
+
+      .setting-slider {
+        width: 100%;
+        height: 20px;
+        background: #444;
+        border-radius: 10px;
+        outline: none;
+        cursor: pointer;
+      }
+
+      .setting-slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #0066cc;
+        cursor: pointer;
+        border: 2px solid #ffffff;
+      }
+
+      .setting-slider::-webkit-slider-thumb:hover {
+        background: #0052a3;
+      }
+
+      .setting-value {
+        display: inline-block;
+        margin-left: 8px;
+        font-size: 11px;
+        color: #aaa;
+        min-width: 30px;
+      }
+
+      .theme-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 5px;
+      }
+
+      .theme-option {
+        padding: 8px;
+        background: #2a2a2a;
+        border: 2px solid #444;
+        border-radius: 6px;
+        cursor: pointer;
+        text-align: center;
+        font-size: 11px;
+        color: #ccc;
+        transition: all 0.2s;
+      }
+
+      .theme-option.active {
+        border-color: #0066cc;
+        background: #0066cc20;
+        color: #fff;
+      }
+
+      .theme-option:hover {
+        border-color: #666;
+        background: #333;
+      }
+
+      .theme-colors {
+        display: flex;
+        justify-content: center;
+        gap: 2px;
+        margin-top: 4px;
+      }
+
+      .theme-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        border: 1px solid #555;
+      }
+
+      .color-preset-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        margin-top: 5px;
+      }
+
+      .color-preset {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: border-color 0.2s;
+      }
+
+      .color-preset:hover {
+        border-color: #666;
+      }
+
+      .color-preset.active {
+        border-color: #0066cc;
+      }
     </style>
   </head>
   <body>
@@ -211,6 +406,113 @@
         </div>
       </div>
 
+      <!-- 设置按钮 -->
+      <button class="settings-button" onclick="toggleSettings()">⚙️ Settings</button>
+
+      <!-- 设置面板 -->
+      <div id="settings-panel" class="settings-panel">
+        <div class="settings-header">
+          <div class="settings-title">⚙️ 可视化设置</div>
+          <button class="close-settings" onclick="toggleSettings()">✕</button>
+        </div>
+
+        <!-- 颜色主题 -->
+        <div class="setting-item">
+          <label class="setting-label">🎨 颜色主题</label>
+          <div class="theme-grid" id="theme-grid">
+            <!-- 主题选项将通过 JavaScript 动态生成 -->
+          </div>
+        </div>
+
+        <!-- 几何体分段数设置 -->
+        <div class="setting-item">
+          <label class="setting-label">🔗 连线密度</label>
+          <div style="display: flex; align-items: center;">
+            <input type="range" class="setting-slider" id="segments-slider" 
+                   min="8" max="64" step="2" value="16" 
+                   oninput="updateGeometrySegments(this.value)">
+            <span class="setting-value" id="segments-value">16</span>
+          </div>
+          <div style="font-size: 10px; color: #888; margin-top: 2px;">
+            调整几何体的分段数，数值越大连线越密集
+          </div>
+        </div>
+
+        <!-- 透明度设置 -->
+        <div class="setting-item">
+          <label class="setting-label">🔍 结构透明度</label>
+          <div style="display: flex; align-items: center;">
+            <input type="range" class="setting-slider" id="opacity-slider" 
+                   min="0.1" max="1.0" step="0.05" value="0.6" 
+                   oninput="updateOpacity(this.value)">
+            <span class="setting-value" id="opacity-value">0.60</span>
+          </div>
+        </div>
+
+        <!-- 约束透明度设置 -->
+        <div class="setting-item">
+          <label class="setting-label">📐 约束透明度</label>
+          <div style="display: flex; align-items: center;">
+            <input type="range" class="setting-slider" id="constraint-opacity-slider" 
+                   min="0.1" max="1.0" step="0.05" value="0.3" 
+                   oninput="updateConstraintOpacity(this.value)">
+            <span class="setting-value" id="constraint-opacity-value">0.30</span>
+          </div>
+        </div>
+
+        <!-- 背景颜色 -->
+        <div class="setting-item">
+          <label class="setting-label">🌌 背景颜色</label>
+          <div class="color-preset-grid" id="background-presets">
+            <!-- 背景色预设将通过 JavaScript 动态生成 -->
+          </div>
+          <input type="color" class="setting-input" id="background-color" 
+                 value="#1e1e1e" onchange="updateBackgroundColor(this.value)"
+                 style="margin-top: 8px; height: 32px;">
+        </div>
+
+        <!-- 光照强度 -->
+        <div class="setting-item">
+          <label class="setting-label">💡 环境光强度</label>
+          <div style="display: flex; align-items: center;">
+            <input type="range" class="setting-slider" id="ambient-light-slider" 
+                   min="0.1" max="1.5" step="0.1" value="0.6" 
+                   oninput="updateAmbientLight(this.value)">
+            <span class="setting-value" id="ambient-light-value">0.6</span>
+          </div>
+        </div>
+
+        <!-- 方向光强度 -->
+        <div class="setting-item">
+          <label class="setting-label">🔆 方向光强度</label>
+          <div style="display: flex; align-items: center;">
+            <input type="range" class="setting-slider" id="directional-light-slider" 
+                   min="0.1" max="2.0" step="0.1" value="0.8" 
+                   oninput="updateDirectionalLight(this.value)">
+            <span class="setting-value" id="directional-light-value">0.8</span>
+          </div>
+        </div>
+
+        <!-- 重置按钮 -->
+        <div class="setting-item">
+          <button class="button" onclick="resetSettings()" style="width: 100%;">
+            🔄 重置所有设置
+          </button>
+        </div>
+
+        <!-- 保存/加载设置 -->
+        <div class="setting-item">
+          <div style="display: flex; gap: 8px;">
+            <button class="button" onclick="saveSettings()" style="flex: 1;">
+              💾 保存设置
+            </button>
+            <button class="button" onclick="loadSettings()" style="flex: 1;">
+              📁 加载设置
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div id="info">Mouse: Left=Rotate, Right=Pan, Wheel=Zoom</div>
 
       <div id="loading" class="loading">Loading...</div>
@@ -230,6 +532,55 @@
       const MAX_INIT_ATTEMPTS = 20;
       // 存储表面约束的大小参数
       let surfaceConstraintSizes = new Map();
+      
+      // 设置相关全局变量
+      let ambientLight, directionalLight;
+      let currentSettings = {
+        geometrySegments: 16,  // 几何体分段数（控制连线数量）
+        structureOpacity: 0.6,
+        constraintOpacity: 0.3,
+        backgroundColor: '#1e1e1e',
+        ambientLightIntensity: 0.6,
+        directionalLightIntensity: 0.8,
+        colorTheme: 'default'
+      };
+
+      // 颜色主题定义
+      const colorThemes = {
+        'default': {
+          name: '默认',
+          colors: [0xff6b6b, 0x4ecdc4, 0x45b7d1, 0x96ceb4, 0xffeaa7, 0xdda0dd, 0x74b9ff, 0xfd79a8, 0xa29bfe, 0x6c5ce7]
+        },
+        'warm': {
+          name: '暖色调',
+          colors: [0xff7675, 0xfd79a8, 0xe17055, 0xf39c12, 0xe74c3c, 0x9b59b6, 0x8e44ad, 0x3f3f3f, 0x34495e, 0x2c3e50]
+        },
+        'cool': {
+          name: '冷色调',
+          colors: [0x00b894, 0x00cec9, 0x0984e3, 0x74b9ff, 0x6c5ce7, 0xa29bfe, 0x81ecec, 0x55a3ff, 0x2d3436, 0x636e72]
+        },
+        'pastel': {
+          name: '柔和色',
+          colors: [0xfab1a0, 0xffeaa7, 0xbadc58, 0x6c5ce7, 0xa29bfe, 0xfd79a8, 0x74b9ff, 0x00b894, 0xe17055, 0x636e72]
+        },
+        'monochrome': {
+          name: '单色调',
+          colors: [0xffffff, 0xe6e6e6, 0xcccccc, 0xb3b3b3, 0x999999, 0x808080, 0x666666, 0x4d4d4d, 0x333333, 0x1a1a1a]
+        },
+        'vibrant': {
+          name: '鲜艳色',
+          colors: [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xff8000, 0x8000ff, 0x00ff80, 0xff0080]
+        }
+      };
+
+      // 背景色预设
+      const backgroundPresets = [
+        { name: '深灰', color: '#1e1e1e' },
+        { name: '黑色', color: '#000000' },
+        { name: '深蓝', color: '#0f1419' },
+        { name: '白色', color: '#ffffff' },
+        { name: '浅灰', color: '#f5f5f5' }
+      ];
 
       // VS Code API
       let vscode;
@@ -275,7 +626,7 @@
       // 检查 Three.js 是否加载
       function checkThreeJS() {
           initializationAttempts++;
-          console.log(`🔍 Checking Three.js (attempt \${initializationAttempts}/\${MAX_INIT_ATTEMPTS})...`);
+          console.log(`🔍 Checking Three.js (attempt ${initializationAttempts}/${MAX_INIT_ATTEMPTS})...`);
 
           if (typeof THREE !== 'undefined') {
               console.log('✅ Three.js loaded successfully');
@@ -305,7 +656,7 @@
           try {
               // 场景
               scene = new THREE.Scene();
-              scene.background = new THREE.Color(0x1e1e1e);
+              scene.background = new THREE.Color(currentSettings.backgroundColor);
               console.log('✅ Scene created');
 
               // 相机
@@ -328,10 +679,10 @@
               console.log('✅ Controls setup complete');
 
               // 光照
-              const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+              ambientLight = new THREE.AmbientLight(0x404040, currentSettings.ambientLightIntensity);
               scene.add(ambientLight);
 
-              const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+              directionalLight = new THREE.DirectionalLight(0xffffff, currentSettings.directionalLightIntensity);
               directionalLight.position.set(100, 100, 50);
               directionalLight.castShadow = true;
               directionalLight.shadow.mapSize.width = 2048;
@@ -354,6 +705,9 @@
               // 标记为准备就绪
               isThreeJSReady = true;
               console.log('🎉 Three.js initialization complete!');
+
+              // 初始化设置界面
+              initializeSettings();
 
               // 发送准备就绪消息
               sendReadyMessage();
@@ -455,6 +809,12 @@
 
           try {
               currentData = data;
+              
+              // 如果收到了配置数据，应用它们
+              if (data.settings) {
+                  console.log('📝 Applying settings from extension:', data.settings);
+                  applySettingsFromExtension(data.settings);
+              }
                    // 清除现有的结构
           console.log('🧹 Clearing existing structures...');
           console.log('Structure groups count:', structureGroups.size);
@@ -524,12 +884,12 @@
               fitCameraToScene();
 
               console.log('✅ === updateData COMPLETE ===');
-              alert('数据更新完成！结构数量: ' + (data.input?.structures?.length || 0));
+              // alert('数据更新完成！结构数量: ' + (data.input?.structures?.length || 0));
 
           } catch (error) {
               console.error('❌ === updateData ERROR ===');
               console.error('Error details:', error);
-              alert('updateData 出错: ' + error.message);
+              // alert('updateData 出错: ' + error.message);
           }
       }
 
@@ -549,7 +909,7 @@
 
               // 创建每个球体
               spheres.forEach((sphere, index) => {
-                  const sphereGeometry = new THREE.SphereGeometry(sphere.radius, 24, 24);
+                  const sphereGeometry = new THREE.SphereGeometry(sphere.radius, currentSettings.geometrySegments, currentSettings.geometrySegments);
 
                   // 为不同的球体使用略微不同的颜色
                   const color = new THREE.Color(structureColor);
@@ -564,7 +924,7 @@
                   const sphereMaterial = new THREE.MeshLambertMaterial({
                       color: color,
                       transparent: true,
-                      opacity: 0.6,
+                      opacity: currentSettings.structureOpacity,
                       wireframe: false
                   });
 
@@ -573,7 +933,7 @@
                   sphereMesh.name = structure.id + '_multisphere_' + index;
 
                   // 添加球体边框（线框）
-                  const wireframeGeometry = new THREE.SphereGeometry(sphere.radius, 16, 16);
+                  const wireframeGeometry = new THREE.SphereGeometry(sphere.radius, Math.max(8, currentSettings.geometrySegments / 2), Math.max(8, currentSettings.geometrySegments / 2));
                   const wireframeMaterial = new THREE.MeshBasicMaterial({
                       color: structureColor,
                       wireframe: true,
@@ -597,7 +957,8 @@
 
               // 添加质心标记
               const centroid = calculateSphereCentroid(spheres);
-              const centroidGeometry = new THREE.SphereGeometry(0.8, 8, 8);
+              const centroidSegments = Math.max(6, Math.floor(currentSettings.geometrySegments / 3));
+              const centroidGeometry = new THREE.SphereGeometry(0.8, centroidSegments, centroidSegments);
               const centroidMaterial = new THREE.MeshBasicMaterial({
                   color: structureColor,
                   transparent: true,
@@ -620,8 +981,7 @@
           const bondMaterial = new THREE.LineBasicMaterial({
               color: color,
               transparent: true,
-              opacity: 0.3,
-              linewidth: 2
+              opacity: currentSettings.constraintOpacity
           });
 
           // 连接相近的球体
@@ -726,7 +1086,7 @@
 
                   // 基于约束创建可视化，并添加到结构组中
                   structure.constraints.forEach((constraint, index) => {
-                      console.log(`Creating constraint \${index}:`, constraint);
+                      console.log(`Creating constraint ${index}:`, constraint);
                       const constraintMesh = createConstraintVisualization(constraint, structure.id + '_constraint_' + index);
                       if (constraintMesh) {
                           console.log('Successfully created constraint mesh');
@@ -784,7 +1144,7 @@
           const material = new THREE.MeshLambertMaterial({
               color: constraintColor,
               transparent: true,
-              opacity: 0.3,
+              opacity: currentSettings.constraintOpacity,
               wireframe: true
           });
 
@@ -885,8 +1245,8 @@
               case 'sphere':
                   if (geometry.parameters.length >= 4) {
                       const [x, y, z, radius] = geometry.parameters;
-                      console.log(`Creating sphere at (\${x}, \${y}, \${z}) with radius \${radius}`);
-                      const sphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
+                      console.log(`Creating sphere at (${x}, ${y}, ${z}) with radius ${radius}`);
+                      const sphereGeometry = new THREE.SphereGeometry(radius, currentSettings.geometrySegments, currentSettings.geometrySegments);
                       sphereGeometry.translate(x, y, z);
                       return sphereGeometry;
                   }
@@ -897,8 +1257,9 @@
                       const width = Math.abs(x2 - x1);
                       const height = Math.abs(y2 - y1);
                       const depth = Math.abs(z2 - z1);
-                      console.log(`Creating box from (\${x1}, \${y1}, \${z1}) to (\${x2}, \${y2}, \${z2})`);
-                      const boxGeometry = new THREE.BoxGeometry(width, height, depth);
+                      console.log(`Creating box from (${x1}, ${y1}, ${z1}) to (${x2}, ${y2}, ${z2})`);
+                      const boxSegments = Math.max(1, Math.floor(currentSettings.geometrySegments / 8));
+                      const boxGeometry = new THREE.BoxGeometry(width, height, depth, boxSegments, boxSegments, boxSegments);
                       boxGeometry.translate((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2);
                       return boxGeometry;
                   }
@@ -907,8 +1268,9 @@
                   // outside cube xmin ymin zmin d
                   if (geometry.parameters.length >= 4) {
                       const [xmin, ymin, zmin, d] = geometry.parameters;
-                      console.log(`Creating cube at (\${xmin}, \${ymin}, \${zmin}) with size \${d}`);
-                      const cubeGeometry = new THREE.BoxGeometry(d, d, d);
+                      console.log(`Creating cube at (${xmin}, ${ymin}, ${zmin}) with size ${d}`);
+                      const cubeSegments = Math.max(1, Math.floor(currentSettings.geometrySegments / 8));
+                      const cubeGeometry = new THREE.BoxGeometry(d, d, d, cubeSegments, cubeSegments, cubeSegments);
                       cubeGeometry.translate(xmin + d/2, ymin + d/2, zmin + d/2);
                       return cubeGeometry;
                   }
@@ -918,7 +1280,7 @@
                       const [a1, b1, c1, a2, b2, c2, d, l] = geometry.parameters;
 
                       // a1,b1,c1 是起点，a2,b2,c2 是方向向量，d 是半径，l 是长度
-                      console.log(`Creating cylinder from (\${a1}, \${b1}, \${c1}) direction (\${a2}, \${b2}, \${c2}) radius \${d} length \${l}`);
+                      console.log(`Creating cylinder from (${a1}, ${b1}, ${c1}) direction (${a2}, ${b2}, ${c2}) radius ${d} length ${l}`);
 
                       // 标准化方向向量
                       const dirLength = Math.sqrt(a2*a2 + b2*b2 + c2*c2);
@@ -931,7 +1293,7 @@
                       const dirZ = c2 / dirLength;
 
                       // 创建圆柱体几何
-                      const cylinderGeometry = new THREE.CylinderGeometry(d, d, l, 32);
+                      const cylinderGeometry = new THREE.CylinderGeometry(d, d, l, currentSettings.geometrySegments);
 
                       // Three.js 默认圆柱体沿 Y 轴，需要旋转到正确方向
                       // 计算从 Y 轴到目标方向的旋转
@@ -953,11 +1315,12 @@
                   // above/below plane a b c d (ax + by + cz - d = 0)
                   if (geometry.parameters.length >= 4) {
                       const [a, b, c, d] = geometry.parameters;
-                      console.log(`Creating plane with equation \${a}x + \${b}y + \${c}z - \${d} = 0`);
+                      console.log(`Creating plane with equation ${a}x + ${b}y + ${c}z - ${d} = 0`);
 
                       // 使用可调节的平面大小
                       const planeSize = constraintId ? getSurfaceConstraintSize(constraintId) : 50;
-                      const planeGeometry = new THREE.PlaneGeometry(planeSize, planeSize, 10, 10);
+                      const planeSegments = Math.max(4, Math.floor(currentSettings.geometrySegments / 2));
+                      const planeGeometry = new THREE.PlaneGeometry(planeSize, planeSize, planeSegments, planeSegments);
 
                       // 计算平面的法向量
                       const normal = new THREE.Vector3(a, b, c).normalize();
@@ -983,10 +1346,10 @@
                   // 椭球体 (目前用球体近似，可以后续改进为真正的椭球体)
                   if (geometry.parameters.length >= 7) {
                       const [x, y, z, a, b, c, d] = geometry.parameters;
-                      console.log(`Creating ellipsoid at (\${x}, \${y}, \${z}) with semi-axes (\${a/d}, \${b/d}, \${c/d})`);
+                      console.log(`Creating ellipsoid at (${x}, ${y}, ${z}) with semi-axes (${a/d}, ${b/d}, ${c/d})`);
 
                       // 创建单位球体然后缩放
-                      const ellipsoidGeometry = new THREE.SphereGeometry(1, 32, 32);
+                      const ellipsoidGeometry = new THREE.SphereGeometry(1, currentSettings.geometrySegments, currentSettings.geometrySegments);
                       ellipsoidGeometry.scale(a/d, b/d, c/d);
                       ellipsoidGeometry.translate(x, y, z);
                       return ellipsoidGeometry;
@@ -997,11 +1360,11 @@
                   // 高斯表面: h * exp(-((x-a1)²/(2a2²) + (y-b1)²/(2b2²))) - (z-c) = 0
                   if (geometry.parameters.length >= 6) {
                       const [a1, b1, a2, b2, c, h] = geometry.parameters;
-                      console.log(`Creating xygauss surface at (\${a1}, \${b1}) with parameters a2=\${a2}, b2=\${b2}, c=\${c}, h=\${h}`);
+                      console.log(`Creating xygauss surface at (${a1}, ${b1}) with parameters a2=${a2}, b2=${b2}, c=${c}, h=${h}`);
 
                       // 使用可调节的表面范围大小
                       const surfaceSize = constraintId ? getSurfaceConstraintSize(constraintId) : Math.max(a2, b2) * 3;
-                      const resolution = 32;
+                      const resolution = Math.max(8, currentSettings.geometrySegments);
                       const range = surfaceSize / 2;
                       const positions = [];
                       const indices = [];
@@ -1235,13 +1598,13 @@
                       constraintInfo.className = 'structure-info';
 
                       // 更详细的约束信息
-                      let constraintText = `🔧 \${constraint.type} \${constraint.geometry.type}`;
+                      let constraintText = `🔧 ${constraint.type} ${constraint.geometry.type}`;
                       if (constraint.geometry.parameters) {
                           switch (constraint.geometry.type) {
                               case 'sphere':
                                   if (constraint.geometry.parameters.length >= 4) {
                                       const [x, y, z, r] = constraint.geometry.parameters;
-                                      constraintText += ` (r=\${r.toFixed(1)})`;
+                                      constraintText += ` (r=${r.toFixed(1)})`;
                                   }
                                   break;
                               case 'box':
@@ -1250,37 +1613,37 @@
                                       const w = Math.abs(x2 - x1);
                                       const h = Math.abs(y2 - y1);
                                       const d = Math.abs(z2 - z1);
-                                      constraintText += ` (\${w.toFixed(1)}×\${h.toFixed(1)}×\${d.toFixed(1)})`;
+                                      constraintText += ` (${w.toFixed(1)}×${h.toFixed(1)}×${d.toFixed(1)})`;
                                   }
                                   break;
                               case 'cube':
                                   if (constraint.geometry.parameters.length >= 4) {
                                       const d = constraint.geometry.parameters[3];
-                                      constraintText += ` (size=\${d.toFixed(1)})`;
+                                      constraintText += ` (size=${d.toFixed(1)})`;
                                   }
                                   break;
                               case 'cylinder':
                                   if (constraint.geometry.parameters.length >= 7) {
                                       const r = constraint.geometry.parameters[6];
-                                      constraintText += ` (r=\${r.toFixed(1)})`;
+                                      constraintText += ` (r=${r.toFixed(1)})`;
                                   }
                                   break;
                               case 'plane':
                                   if (constraint.geometry.parameters.length >= 4) {
                                       const [a, b, c, d] = constraint.geometry.parameters;
-                                      constraintText += ` (\${a.toFixed(1)}x+\${b.toFixed(1)}y+\${c.toFixed(1)}z=\${d.toFixed(1)})`;
+                                      constraintText += ` (${a.toFixed(1)}x+${b.toFixed(1)}y+${c.toFixed(1)}z=${d.toFixed(1)})`;
                                   }
                                   break;
                               case 'ellipsoid':
                                   if (constraint.geometry.parameters.length >= 6) {
                                       const [x, y, z, a, b, c] = constraint.geometry.parameters;
-                                      constraintText += ` (a=\${a.toFixed(1)}, b=\${b.toFixed(1)}, c=\${c.toFixed(1)})`;
+                                      constraintText += ` (a=${a.toFixed(1)}, b=${b.toFixed(1)}, c=${c.toFixed(1)})`;
                                   }
                                   break;
                               case 'xygauss':
                                   if (constraint.geometry.parameters.length >= 6) {
                                       const [a1, b1, a2, b2, c, h] = constraint.geometry.parameters;
-                                      constraintText += ` (σx=\${a2.toFixed(1)}, σy=\${b2.toFixed(1)}, h=\${h.toFixed(1)})`;
+                                      constraintText += ` (σx=${a2.toFixed(1)}, σy=${b2.toFixed(1)}, h=${h.toFixed(1)})`;
                                   }
                                   break;
                           }
@@ -1356,7 +1719,7 @@
 
           const totalStructures = currentData.input.structures.length;
           const totalConstraints = currentData.input.structures.reduce((sum, s) => sum + (s.constraints?.length || 0), 0);
-          statsDiv.textContent = `Total: \${totalStructures} structures, \${totalConstraints} constraints`;
+          statsDiv.textContent = `Total: ${totalStructures} structures, ${totalConstraints} constraints`;
 
           constraintList.appendChild(statsDiv);
       }
@@ -1530,12 +1893,12 @@
           // 添加视觉确认
           if (message.type === 'update') {
               console.log('📦 UPDATE message received! Creating alert...');
-              alert('收到 UPDATE 消息！正在处理...');
+              // alert('收到 UPDATE 消息！正在处理...');
           }
 
           if (!isThreeJSReady && message.type !== 'ready') {
               console.log('⚠️ Three.js not ready, ignoring message:', message);
-              alert('Three.js 还未准备好，忽略消息: ' + message.type);
+              // alert('Three.js 还未准备好，忽略消息: ' + message.type);
               return;
           }
 
@@ -1547,7 +1910,7 @@
                       console.log('✅ Update processing completed');
                   } catch (error) {
                       console.error('❌ Error in updateData:', error);
-                      alert('更新数据时出错: ' + error.message);
+                      // alert('更新数据时出错: ' + error.message);
                   }
                   break;
               case 'toggleStructure':
@@ -1584,6 +1947,399 @@
           });
 
           console.log('Multisphere visibility toggled to:', multisphereVisible);
+      }
+
+      // ========== 设置功能 ==========
+
+      /**
+       * 从扩展端应用配置
+       */
+      function applySettingsFromExtension(settings) {
+          console.log('📝 Applying settings from extension:', settings);
+          
+          // 更新当前设置
+          currentSettings = { ...currentSettings, ...settings };
+          
+          // 更新UI显示
+          updateSettingsUI();
+          
+          // 应用设置到场景
+          applyAllSettings();
+          
+          console.log('✅ Settings applied from extension');
+      }
+
+      /**
+       * 发送设置更新到扩展端
+       */
+      function sendSettingsToExtension(settings) {
+          if (vscode) {
+              try {
+                  vscode.postMessage({
+                      type: 'updateSettings',
+                      settings: settings
+                  });
+                  console.log('📤 Settings sent to extension:', settings);
+              } catch (error) {
+                  console.error('❌ Failed to send settings to extension:', error);
+              }
+          }
+      }
+
+      // 初始化设置界面
+      function initializeSettings() {
+          console.log('🎛️ Initializing settings interface...');
+          
+          // 生成主题选项
+          generateThemeOptions();
+          
+          // 生成背景色预设
+          generateBackgroundPresets();
+          
+          // 更新UI显示值
+          updateSettingsUI();
+          
+          console.log('✅ Settings interface initialized');
+      }
+
+      // 生成主题选项
+      function generateThemeOptions() {
+          const themeGrid = document.getElementById('theme-grid');
+          themeGrid.innerHTML = '';
+          
+          Object.keys(colorThemes).forEach(themeKey => {
+              const theme = colorThemes[themeKey];
+              const themeDiv = document.createElement('div');
+              themeDiv.className = 'theme-option';
+              themeDiv.onclick = () => selectTheme(themeKey);
+              
+              if (themeKey === currentSettings.colorTheme) {
+                  themeDiv.classList.add('active');
+              }
+              
+              themeDiv.innerHTML = `
+                  <div>${theme.name}</div>
+                  <div class="theme-colors">
+                      ${theme.colors.slice(0, 3).map(color => 
+                          `<div class="theme-color" style="background-color: #${color.toString(16).padStart(6, '0')};"></div>`
+                      ).join('')}
+                  </div>
+              `;
+              
+              themeGrid.appendChild(themeDiv);
+          });
+      }
+
+      // 生成背景色预设
+      function generateBackgroundPresets() {
+          const presetsGrid = document.getElementById('background-presets');
+          presetsGrid.innerHTML = '';
+          
+          backgroundPresets.forEach(preset => {
+              const presetDiv = document.createElement('div');
+              presetDiv.className = 'color-preset';
+              presetDiv.style.backgroundColor = preset.color;
+              presetDiv.title = preset.name;
+              presetDiv.onclick = () => {
+                  document.getElementById('background-color').value = preset.color;
+                  updateBackgroundColor(preset.color);
+              };
+              
+              if (preset.color === currentSettings.backgroundColor) {
+                  presetDiv.classList.add('active');
+              }
+              
+              presetsGrid.appendChild(presetDiv);
+          });
+      }
+
+      // 切换设置面板
+      function toggleSettings() {
+          const panel = document.getElementById('settings-panel');
+          panel.classList.toggle('visible');
+      }
+
+      // 选择主题
+      function selectTheme(themeKey) {
+          currentSettings.colorTheme = themeKey;
+          
+          // 发送到扩展端保存
+          sendSettingsToExtension({ colorTheme: themeKey });
+          
+          // 更新主题选项的活动状态
+          document.querySelectorAll('.theme-option').forEach(option => {
+              option.classList.remove('active');
+          });
+          event.target.classList.add('active');
+          
+          // 应用新主题
+          applyColorTheme();
+          
+          console.log('Applied color theme:', themeKey);
+      }
+
+      // 应用颜色主题
+      function applyColorTheme() {
+          if (!window.structureColorMap) {
+              window.structureColorMap = new Map();
+              window.structureColorIndex = 0;
+          }
+          
+          // 清除现有颜色映射
+          window.structureColorMap.clear();
+          window.structureColorIndex = 0;
+          
+          // 为每个结构重新分配颜色
+          if (currentData && currentData.input && currentData.input.structures) {
+              currentData.input.structures.forEach(structure => {
+                  const newColor = getStructureColor(structure.id);
+                  updateStructureColors(structure.id, newColor);
+              });
+          }
+          
+          // 更新控制面板
+          updateControlPanel();
+      }
+
+      // 更新几何体分段数
+      function updateGeometrySegments(value) {
+          const newValue = parseInt(value);
+          currentSettings.geometrySegments = newValue;
+          document.getElementById('segments-value').textContent = value;
+          
+          // 发送到扩展端保存
+          sendSettingsToExtension({ geometrySegments: newValue });
+          
+          // 重新生成所有几何体以应用新的分段数
+          console.log('Updating geometry segments to:', value);
+          
+          if (currentData && currentData.input && currentData.input.structures) {
+              // 清除现有几何体
+              structureGroups.forEach(group => {
+                  scene.remove(group);
+              });
+              structureGroups.clear();
+              constraintGroups.clear();
+              
+              // 重新创建几何体
+              currentData.input.structures.forEach((structure) => {
+                  createStructureVisualization(structure);
+              });
+              
+              console.log('Regenerated all geometries with', value, 'segments');
+          }
+      }
+
+      // 更新结构透明度
+      function updateOpacity(value) {
+          const newValue = parseFloat(value);
+          currentSettings.structureOpacity = newValue;
+          document.getElementById('opacity-value').textContent = newValue.toFixed(2);
+          
+          // 发送到扩展端保存
+          sendSettingsToExtension({ structureOpacity: newValue });
+          
+          // 应用到所有结构材质
+          structureGroups.forEach(group => {
+              group.traverse(child => {
+                  if (child.material && !child.name.includes('wireframe')) {
+                      child.material.opacity = currentSettings.structureOpacity;
+                      child.material.transparent = true;
+                  }
+              });
+          });
+          
+          console.log('Updated structure opacity to:', value);
+      }
+
+      // 更新约束透明度
+      function updateConstraintOpacity(value) {
+          const newValue = parseFloat(value);
+          currentSettings.constraintOpacity = newValue;
+          document.getElementById('constraint-opacity-value').textContent = newValue.toFixed(2);
+          
+          // 发送到扩展端保存
+          sendSettingsToExtension({ constraintOpacity: newValue });
+          
+          // 应用到所有约束材质
+          constraintGroups.forEach(constraintMesh => {
+              if (constraintMesh.material) {
+                  constraintMesh.material.opacity = currentSettings.constraintOpacity;
+                  constraintMesh.material.transparent = true;
+              }
+          });
+          
+          console.log('Updated constraint opacity to:', value);
+      }
+
+      // 更新背景颜色
+      function updateBackgroundColor(value) {
+          currentSettings.backgroundColor = value;
+          
+          // 发送到扩展端保存
+          sendSettingsToExtension({ backgroundColor: value });
+          
+          if (scene) {
+              scene.background = new THREE.Color(value);
+          }
+          
+          // 更新背景预设的活动状态
+          document.querySelectorAll('.color-preset').forEach(preset => {
+              preset.classList.remove('active');
+              if (preset.style.backgroundColor === value || 
+                  preset.style.backgroundColor === new THREE.Color(value).getStyle()) {
+                  preset.classList.add('active');
+              }
+          });
+          
+          console.log('Updated background color to:', value);
+      }
+
+      // 更新环境光强度
+      function updateAmbientLight(value) {
+          const newValue = parseFloat(value);
+          currentSettings.ambientLightIntensity = newValue;
+          document.getElementById('ambient-light-value').textContent = value;
+          
+          // 发送到扩展端保存
+          sendSettingsToExtension({ ambientLightIntensity: newValue });
+          
+          if (ambientLight) {
+              ambientLight.intensity = currentSettings.ambientLightIntensity;
+          }
+          
+          console.log('Updated ambient light intensity to:', value);
+      }
+
+      // 更新方向光强度
+      function updateDirectionalLight(value) {
+          const newValue = parseFloat(value);
+          currentSettings.directionalLightIntensity = newValue;
+          document.getElementById('directional-light-value').textContent = value;
+          
+          // 发送到扩展端保存
+          sendSettingsToExtension({ directionalLightIntensity: newValue });
+          
+          if (directionalLight) {
+              directionalLight.intensity = currentSettings.directionalLightIntensity;
+          }
+          
+          console.log('Updated directional light intensity to:', value);
+      }
+
+      // 重置所有设置
+      function resetSettings() {
+          const defaultSettings = {
+              geometrySegments: 16,
+              structureOpacity: 0.6,
+              constraintOpacity: 0.3,
+              backgroundColor: '#1e1e1e',
+              ambientLightIntensity: 0.6,
+              directionalLightIntensity: 0.8,
+              colorTheme: 'default'
+          };
+          
+          currentSettings = { ...defaultSettings };
+          
+          // 发送到扩展端保存
+          sendSettingsToExtension(defaultSettings);
+          
+          // 更新UI
+          updateSettingsUI();
+          
+          // 应用设置
+          applyAllSettings();
+          
+          console.log('Reset all settings to defaults');
+      }
+
+      // 更新设置UI显示
+      function updateSettingsUI() {
+          document.getElementById('segments-slider').value = currentSettings.geometrySegments;
+          document.getElementById('segments-value').textContent = currentSettings.geometrySegments;
+          
+          document.getElementById('opacity-slider').value = currentSettings.structureOpacity;
+          document.getElementById('opacity-value').textContent = currentSettings.structureOpacity.toFixed(2);
+          
+          document.getElementById('constraint-opacity-slider').value = currentSettings.constraintOpacity;
+          document.getElementById('constraint-opacity-value').textContent = currentSettings.constraintOpacity.toFixed(2);
+          
+          document.getElementById('background-color').value = currentSettings.backgroundColor;
+          
+          document.getElementById('ambient-light-slider').value = currentSettings.ambientLightIntensity;
+          document.getElementById('ambient-light-value').textContent = currentSettings.ambientLightIntensity.toFixed(1);
+          
+          document.getElementById('directional-light-slider').value = currentSettings.directionalLightIntensity;
+          document.getElementById('directional-light-value').textContent = currentSettings.directionalLightIntensity.toFixed(1);
+          
+          // 更新主题选择
+          document.querySelectorAll('.theme-option').forEach(option => {
+              option.classList.remove('active');
+          });
+          const activeThemeIndex = Object.keys(colorThemes).indexOf(currentSettings.colorTheme);
+          if (activeThemeIndex >= 0) {
+              document.querySelectorAll('.theme-option')[activeThemeIndex]?.classList.add('active');
+          }
+      }
+
+      // 应用所有设置
+      function applyAllSettings() {
+          updateGeometrySegments(currentSettings.geometrySegments);
+          updateOpacity(currentSettings.structureOpacity);
+          updateConstraintOpacity(currentSettings.constraintOpacity);
+          updateBackgroundColor(currentSettings.backgroundColor);
+          updateAmbientLight(currentSettings.ambientLightIntensity);
+          updateDirectionalLight(currentSettings.directionalLightIntensity);
+          applyColorTheme();
+      }
+
+      // 保存设置（现在设置会自动同步到VS Code配置）
+      function saveSettings() {
+          // 显示提示 - 设置已经自动同步到 VS Code
+          const originalText = event.target.textContent;
+          event.target.textContent = '✅ 已同步';
+          event.target.style.background = '#28a745';
+          setTimeout(() => {
+              event.target.textContent = originalText;
+              event.target.style.background = '';
+          }, 2000);
+          
+          console.log('Settings are automatically synced to VS Code configuration');
+      }
+
+      // 加载设置（现在设置从VS Code配置自动加载）
+      function loadSettings() {
+          // 显示提示 - 设置从 VS Code 配置自动加载
+          const originalText = event.target.textContent;
+          event.target.textContent = '✅ 已同步';
+          event.target.style.background = '#28a745';
+          setTimeout(() => {
+              event.target.textContent = originalText;
+              event.target.style.background = '';
+          }, 2000);
+          
+          console.log('Settings are automatically loaded from VS Code configuration');
+      }
+
+
+
+      // 修改现有的 getStructureColor 函数以支持主题
+      function getStructureColor(structureId) {
+          const currentTheme = colorThemes[currentSettings.colorTheme] || colorThemes.default;
+          const colors = currentTheme.colors;
+
+          // 为每个结构分配一个固定的颜色索引
+          if (!window.structureColorMap) {
+              window.structureColorMap = new Map();
+              window.structureColorIndex = 0;
+          }
+
+          if (!window.structureColorMap.has(structureId)) {
+              window.structureColorMap.set(structureId, colors[window.structureColorIndex % colors.length]);
+              window.structureColorIndex++;
+          }
+
+          return window.structureColorMap.get(structureId);
       }
 
       // 启动初始化

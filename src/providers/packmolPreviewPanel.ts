@@ -73,6 +73,10 @@ export class PackmolPreviewPanel {
           case 'test':
             console.log('🧪 Test message received from panel webview:', message.message);
             break;
+          case 'updateSettings':
+            console.log('⚙️ Panel updating settings:', message.settings);
+            this._handleUpdateSettings(message.settings);
+            break;
           case 'alert':
             vscode.window.showErrorMessage(message.text);
             break;
@@ -151,10 +155,14 @@ export class PackmolPreviewPanel {
       return;
     }
     
+    // 添加配置信息
+    const settings = this._getCurrentSettings();
+    
     const data = {
       type: 'update',
       input: currentInput,
-      structureData: {}
+      structureData: {},
+      settings: settings
     };
     
     console.log('📤 Panel sending data to webview:', data);
@@ -165,5 +173,41 @@ export class PackmolPreviewPanel {
       console.error('❌ Error sending data to panel webview:', error);
       vscode.window.showErrorMessage(`Failed to send data to webview: ${error}`);
     }
+  }
+
+  /**
+   * 处理设置更新
+   */
+  private async _handleUpdateSettings(settings: any): Promise<void> {
+    try {
+      const config = vscode.workspace.getConfiguration('gromacsHelper.packmolPreview');
+      
+      // 更新每个配置项
+      for (const [key, value] of Object.entries(settings)) {
+        await config.update(key, value, vscode.ConfigurationTarget.Global);
+      }
+      
+      console.log('✅ Panel settings updated successfully');
+    } catch (error) {
+      console.error('❌ Failed to update panel settings:', error);
+      vscode.window.showErrorMessage(`Failed to update settings: ${error}`);
+    }
+  }
+
+  /**
+   * 读取当前配置
+   */
+  private _getCurrentSettings(): any {
+    const config = vscode.workspace.getConfiguration('gromacsHelper.packmolPreview');
+    
+    return {
+      geometrySegments: config.get<number>('geometrySegments', 16),
+      structureOpacity: config.get<number>('structureOpacity', 0.6),
+      constraintOpacity: config.get<number>('constraintOpacity', 0.3),
+      backgroundColor: config.get<string>('backgroundColor', '#1e1e1e'),
+      ambientLightIntensity: config.get<number>('ambientLightIntensity', 0.6),
+      directionalLightIntensity: config.get<number>('directionalLightIntensity', 0.8),
+      colorTheme: config.get<string>('colorTheme', 'default')
+    };
   }
 }

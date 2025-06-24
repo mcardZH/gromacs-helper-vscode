@@ -1002,6 +1002,62 @@
           "type": "boolean",
           "default": false,
           "description": "Make Packmol comments bold"
+        },
+        "gromacsHelper.packmolPreview.geometrySegments": {
+          "type": "number",
+          "default": 16,
+          "minimum": 8,
+          "maximum": 64,
+          "description": "Number of segments for geometry rendering in Packmol 3D preview"
+        },
+        "gromacsHelper.packmolPreview.structureOpacity": {
+          "type": "number",
+          "default": 0.6,
+          "minimum": 0.1,
+          "maximum": 1.0,
+          "description": "Opacity for structure rendering in Packmol 3D preview"
+        },
+        "gromacsHelper.packmolPreview.constraintOpacity": {
+          "type": "number",
+          "default": 0.3,
+          "minimum": 0.1,
+          "maximum": 1.0,
+          "description": "Opacity for constraint rendering in Packmol 3D preview"
+        },
+        "gromacsHelper.packmolPreview.backgroundColor": {
+          "type": "string",
+          "default": "#1e1e1e",
+          "format": "color-hex",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "description": "Background color for Packmol 3D preview"
+        },
+        "gromacsHelper.packmolPreview.ambientLightIntensity": {
+          "type": "number",
+          "default": 0.6,
+          "minimum": 0.1,
+          "maximum": 1.5,
+          "description": "Ambient light intensity in Packmol 3D preview"
+        },
+        "gromacsHelper.packmolPreview.directionalLightIntensity": {
+          "type": "number",
+          "default": 0.8,
+          "minimum": 0.1,
+          "maximum": 2.0,
+          "description": "Directional light intensity in Packmol 3D preview"
+        },
+        "gromacsHelper.packmolPreview.colorTheme": {
+          "type": "string",
+          "default": "default",
+          "enum": ["default", "warm", "cool", "pastel", "monochrome", "vibrant"],
+          "enumDescriptions": [
+            "Default color scheme",
+            "Warm color scheme",
+            "Cool color scheme", 
+            "Pastel color scheme",
+            "Monochrome color scheme",
+            "Vibrant color scheme"
+          ],
+          "description": "Color theme for Packmol 3D preview"
         }
       }
     },

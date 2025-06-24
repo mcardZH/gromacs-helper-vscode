@@ -4,6 +4,19 @@ import * as path from 'path';
 import { PackmolStructureParser, PackmolInput, PackmolStructure, PdbAtom } from './packmolStructureParser';
 
 /**
+ * Packmol 预览配置接口
+ */
+interface PackmolPreviewSettings {
+  geometrySegments: number;
+  structureOpacity: number;
+  constraintOpacity: number;
+  backgroundColor: string;
+  ambientLightIntensity: number;
+  directionalLightIntensity: number;
+  colorTheme: string;
+}
+
+/**
  * Packmol 3D 预览提供者
  */
 export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
@@ -61,6 +74,10 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
         case 'resetCamera':
           console.log('📷 Resetting camera');
           this._handleResetCamera();
+          break;
+        case 'updateSettings':
+          console.log('⚙️ Updating settings:', data.settings);
+          this._handleUpdateSettings(data.settings);
           break;
         case 'error':
           console.error('❌ Webview error:', data.message);
@@ -191,7 +208,8 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
           structures: serializedStructures,
           globalBounds: sceneData.globalBounds
         },
-        structureData: {}
+        structureData: {},
+        settings: this._getCurrentSettings()
       };
       
       console.log('📦 Prepared serialized data for webview');
@@ -310,6 +328,42 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
     this._view.webview.postMessage({
       type: 'resetCamera'
     });
+  }
+
+  /**
+   * 处理设置更新
+   */
+  private async _handleUpdateSettings(settings: Partial<PackmolPreviewSettings>): Promise<void> {
+    try {
+      const config = vscode.workspace.getConfiguration('gromacsHelper.packmolPreview');
+      
+      // 更新每个配置项
+      for (const [key, value] of Object.entries(settings)) {
+        await config.update(key, value, vscode.ConfigurationTarget.Global);
+      }
+      
+      console.log('✅ Settings updated successfully');
+    } catch (error) {
+      console.error('❌ Failed to update settings:', error);
+      vscode.window.showErrorMessage(`Failed to update settings: ${error}`);
+    }
+  }
+
+  /**
+   * 读取当前配置
+   */
+  private _getCurrentSettings(): PackmolPreviewSettings {
+    const config = vscode.workspace.getConfiguration('gromacsHelper.packmolPreview');
+    
+    return {
+      geometrySegments: config.get<number>('geometrySegments', 16),
+      structureOpacity: config.get<number>('structureOpacity', 0.6),
+      constraintOpacity: config.get<number>('constraintOpacity', 0.3),
+      backgroundColor: config.get<string>('backgroundColor', '#1e1e1e'),
+      ambientLightIntensity: config.get<number>('ambientLightIntensity', 0.6),
+      directionalLightIntensity: config.get<number>('directionalLightIntensity', 0.8),
+      colorTheme: config.get<string>('colorTheme', 'default')
+    };
   }
   
   /**
