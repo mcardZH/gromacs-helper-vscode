@@ -658,7 +658,6 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
                     // 坐标轴
                     const axesHelper = new THREE.AxesHelper(10);
                     scene.add(axesHelper);
-                    console.log('✅ Axes helper added');
                     
                     // 渲染循环
                     animate();
@@ -1054,55 +1053,8 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
                             }
                         });
                         
-                        // 为结构本身创建一个小的标记
-                        const markerGeometry = new THREE.SphereGeometry(1, 16, 16);
-                        const markerMaterial = new THREE.MeshLambertMaterial({ 
-                            color: getStructureColor(structure.id),
-                            transparent: true,
-                            opacity: 0.8
-                        });
-                        const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-                        console.log('Created structure marker');
-                        
-                        // 如果有 center 属性，使用它
-                        if (structure.center) {
-                            console.log('Using structure center:', structure.center);
-                            marker.position.set(structure.center[0], structure.center[1], structure.center[2]);
-                        } else {
-                            // 否则放在约束的中心
-                            const firstConstraint = structure.constraints[0];
-                            if (firstConstraint.geometry.type === 'sphere' && firstConstraint.geometry.parameters.length >= 3) {
-                                const pos = [
-                                    firstConstraint.geometry.parameters[0],
-                                    firstConstraint.geometry.parameters[1],
-                                    firstConstraint.geometry.parameters[2]
-                                ];
-                                console.log('Using constraint center:', pos);
-                                marker.position.set(pos[0], pos[1], pos[2]);
-                            }
-                        }
-                        
-                        group.add(marker);
-                        
                     } else {
-                        console.log('No constraints found, creating default representation');
-                        
-                        // 如果没有约束，创建一个默认的表示
-                        const defaultGeometry = new THREE.BoxGeometry(3, 3, 3);
-                        const defaultMaterial = new THREE.MeshLambertMaterial({ 
-                            color: getStructureColor(structure.id),
-                            transparent: true,
-                            opacity: 0.7,
-                            wireframe: true
-                        });
-                        const defaultMesh = new THREE.Mesh(defaultGeometry, defaultMaterial);
-                        
-                        if (structure.center) {
-                            console.log('Using structure center for default mesh:', structure.center);
-                            defaultMesh.position.set(structure.center[0], structure.center[1], structure.center[2]);
-                        }
-                        
-                        group.add(defaultMesh);
+                        console.log('No constraints found, structure will be represented by constraints only');
                     }
                     
                     // 添加到场景
@@ -1345,13 +1297,13 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
                         break;
                     case 'ellipsoid':
                         // 椭球体 (目前用球体近似，可以后续改进为真正的椭球体)
-                        if (geometry.parameters.length >= 6) {
-                            const [x, y, z, a, b, c] = geometry.parameters;
-                            console.log(\`Creating ellipsoid at (\${x}, \${y}, \${z}) with semi-axes (\${a}, \${b}, \${c})\`);
+                        if (geometry.parameters.length >= 7) {
+                            const [x, y, z, a, b, c, d] = geometry.parameters;
+                            console.log(\`Creating ellipsoid at (\${x}, \${y}, \${z}) with semi-axes (\${a/d}, \${b/d}, \${c/d})\`);
                             
                             // 创建单位球体然后缩放
                             const ellipsoidGeometry = new THREE.SphereGeometry(1, 32, 32);
-                            ellipsoidGeometry.scale(a, b, c);
+                            ellipsoidGeometry.scale(a/d, b/d, c/d);
                             ellipsoidGeometry.translate(x, y, z);
                             return ellipsoidGeometry;
                         }
