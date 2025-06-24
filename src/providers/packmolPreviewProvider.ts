@@ -27,8 +27,100 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
   private _structureData: Map<string, PdbAtom[]> = new Map();
   private _isWebviewReady = false;
   private _pendingData?: any;
+  private _updateTimeout?: NodeJS.Timeout;
+  private _documentChangeListener?: vscode.Disposable;
+  private _activeEditorChangeListener?: vscode.Disposable;
   
-  constructor(private readonly _extensionUri: vscode.Uri) {}
+  constructor(private readonly _extensionUri: vscode.Uri) {
+    this._setupDocumentListeners();
+  }
+
+  /**
+   * 设置文档监听器，实现自动更新预览
+   */
+  private _setupDocumentListeners(): void {
+    // 监听活动编辑器切换
+    this._activeEditorChangeListener = vscode.window.onDidChangeActiveTextEditor(editor => {
+      if (editor && this._isPackmolFile(editor.document)) {
+        console.log('🔄 Active editor changed to Packmol file:', editor.document.uri.fsPath);
+        this._scheduleUpdate(editor.document.uri);
+      } else if (this._view && this._isWebviewReady) {
+        // 切换到非 Packmol 文件时显示空状态
+        console.log('🔄 Active editor changed to non-Packmol file, showing empty state');
+        this._showEmptyState();
+      }
+    });
+
+    // 监听文档内容变化
+    this._documentChangeListener = vscode.workspace.onDidChangeTextDocument(event => {
+      if (this._isPackmolFile(event.document) && 
+          this._currentPackmolUri && 
+          event.document.uri.fsPath === this._currentPackmolUri.fsPath) {
+        console.log('📝 Packmol file content changed:', event.document.uri.fsPath);
+        this._scheduleUpdate(event.document.uri);
+      }
+    });
+
+    // 检查当前活动编辑器
+    if (vscode.window.activeTextEditor && this._isPackmolFile(vscode.window.activeTextEditor.document)) {
+      this._scheduleUpdate(vscode.window.activeTextEditor.document.uri);
+    }
+  }
+
+  /**
+   * 检查是否为 Packmol 文件
+   */
+  private _isPackmolFile(document: vscode.TextDocument): boolean {
+    const fileName = document.fileName.toLowerCase();
+    return fileName.endsWith('.inp') || fileName.endsWith('.packmol');
+  }
+
+  /**
+   * 计划更新预览（防抖处理）
+   */
+  private _scheduleUpdate(uri: vscode.Uri): void {
+    // 清除之前的定时器
+    if (this._updateTimeout) {
+      clearTimeout(this._updateTimeout);
+    }
+
+    // 设置新的定时器，500ms 后更新
+    this._updateTimeout = setTimeout(() => {
+      this.previewPackmolFile(uri);
+    }, 500);
+  }
+
+  /**
+   * 显示空状态
+   */
+  private _showEmptyState(): void {
+    if (!this._view || !this._isWebviewReady) {
+      return;
+    }
+
+    const emptyStateData = {
+      type: 'empty',
+      message: '📦 Open a Packmol file (.inp or .packmol) to see the 3D preview',
+      suggestions: [
+        'Create a new Packmol input file',
+        'Open an existing .inp or .packmol file',
+        'The preview will update automatically as you edit'
+      ]
+    };
+
+    this._view.webview.postMessage(emptyStateData);
+  }
+
+  /**
+   * 清理资源
+   */
+  public dispose(): void {
+    this._documentChangeListener?.dispose();
+    this._activeEditorChangeListener?.dispose();
+    if (this._updateTimeout) {
+      clearTimeout(this._updateTimeout);
+    }
+  }
   
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -64,7 +156,14 @@ export class PackmolPreviewProvider implements vscode.WebviewViewProvider {
             console.log('🔄 No pending data, triggering update with current input');
             this._updatePreview();
           } else {
-            console.log('ℹ️ Webview ready but no data to send');
+            // 检查当前活动编辑器是否为 Packmol 文件
+            if (vscode.window.activeTextEditor && this._isPackmolFile(vscode.window.activeTextEditor.document)) {
+              console.log('🔄 Webview ready, loading current Packmol file');
+              this.previewPackmolFile(vscode.window.activeTextEditor.document.uri);
+                         } else {
+               console.log('ℹ️ Webview ready but no Packmol file to show');
+               this._showEmptyState();
+             }
           }
           break;
         case 'toggleStructure':

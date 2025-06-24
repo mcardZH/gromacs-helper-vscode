@@ -12,6 +12,7 @@ import { PdbFoldingProvider } from './providers/pdbFoldingProvider';
 import { XvgLanguageSupport } from './languages/xvg';
 import { registerPackmolLanguageSupport } from './languages/packmol';
 import { PackmolPreviewPanel } from './providers/packmolPreviewPanel';
+import { PackmolPreviewProvider } from './providers/packmolPreviewProvider';
 import { SnippetViewProvider } from './providers/snippetTreeProvider';
 import { ResidueHighlightingManager } from './providers/residueHighlightingManager';
 import { UnitConverterPanel } from './providers/unitConverter';
@@ -57,6 +58,13 @@ export function activate(context: vscode.ExtensionContext) {
 	// Initialize Packmol language support
 	registerPackmolLanguageSupport(context);
 
+	// Register Packmol preview provider for the sidebar
+	const packmolPreviewProvider = new PackmolPreviewProvider(context.extensionUri);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(PackmolPreviewProvider.viewType, packmolPreviewProvider),
+		packmolPreviewProvider // 确保在扩展停用时清理资源
+	);
+
 	// Register Packmol preview command
 	const packmolPreviewCommand = vscode.commands.registerCommand('gromacs-helper.previewPackmol', async (uri?: vscode.Uri) => {
 		let targetUri = uri;
@@ -65,7 +73,11 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		
 		if (targetUri) {
-			await PackmolPreviewPanel.createOrShow(context.extensionUri, targetUri);
+			// Update both the panel and the sidebar preview
+			await Promise.all([
+				PackmolPreviewPanel.createOrShow(context.extensionUri, targetUri),
+				packmolPreviewProvider.previewPackmolFile(targetUri)
+			]);
 		} else {
 			vscode.window.showErrorMessage('No Packmol file selected for preview');
 		}
@@ -143,29 +155,11 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	);
 
-	// Register Packmol preview command
-	const previewPackmolCommand = vscode.commands.registerCommand(
-		'gromacs-helper.previewPackmol',
-		async (uri?: vscode.Uri) => {
-			// 如果没有提供 URI，尝试获取当前活动的编辑器
-			if (!uri && vscode.window.activeTextEditor) {
-				uri = vscode.window.activeTextEditor.document.uri;
-			}
-			
-			if (uri) {
-				await PackmolPreviewPanel.createOrShow(context.extensionUri, uri);
-			} else {
-				vscode.window.showErrorMessage('No Packmol file selected');
-			}
-		}
-	);
-
 	context.subscriptions.push(
 		configureResidueColorsCommand,
 		resetResidueColorsCommand,
 		toggleSemanticHighlightingCommand,
 		openUnitConverterCommand,
-		previewPackmolCommand,
 		packmolPreviewCommand
 	);
 

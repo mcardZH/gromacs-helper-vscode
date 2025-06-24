@@ -2,6 +2,16 @@
 
 本文档记录了GROMACS Helper for VS Code扩展的所有重要更改。
 
+## [0.2.1] - 2025-06-24
+
+### 新增
+- 新增 packmol 徽标，会自动跟随当前文件刷新预览
+- 新增 packmol 预览时 xygauss 和 panel 显示 above、below、over 的箭头，可以更加清晰的辨别方向
+- 新增 packmol 背景、主题等个性化设置
+
+### 优化
+- 现在 packmol 预览时可以拖动控制面板和折叠
+
 ## [0.2.0] - 2025-06-24
 
 ### 新增
