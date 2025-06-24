@@ -818,21 +818,13 @@ export class PackmolDiagnosticProvider implements vscode.Disposable {
         break;
         
       case 'ellipsoid':
-        if (tokens.length < 9) {
-          addError('Ellipsoid requires at least 6 parameters: x y z a b c [phi theta psi]');
-        } else if (tokens.length > 11) {
-          addError(`Ellipsoid has too many parameters. Expected 6-9 parameters, got ${tokens.length - 2}`);
+        if (tokens.length != 9) {
+           addError(`Ellipsoid has too many parameters. Expected 7 (a1 b1 c1 a2 b2 c2 d), got ${tokens.length - 2}`);
         } else {
-          for (let i = 2; i < tokens.length; i++) {
+          for (let i = 2; i <= 8; i++) {
             if (isNaN(parseFloat(tokens[i]))) {
               addError(`Ellipsoid parameter ${i-1} must be a number`);
             }
-          }
-          if (tokens.length >= 8) {
-            const [, , , a, b, c] = tokens.slice(2, 8).map(t => parseFloat(t));
-            if (!isNaN(a) && a <= 0) addError('Ellipsoid semi-axis a must be positive');
-            if (!isNaN(b) && b <= 0) addError('Ellipsoid semi-axis b must be positive');
-            if (!isNaN(c) && c <= 0) addError('Ellipsoid semi-axis c must be positive');
           }
         }
         break;

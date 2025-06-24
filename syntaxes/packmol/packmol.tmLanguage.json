@@ -57,7 +57,7 @@
       "patterns": [
         {
           "name": "entity.name.function.constraint.packmol",
-          "match": "\\b(constrain_rotation|atoms|radius|fscale|short_radius|short_radius_scale|over|below|outside|inside)\\b"
+          "match": "\\b(constrain_rotation|atoms|radius|fscale|short_radius|short_radius_scale|over|below|outside|inside|above)\\b"
         }
       ]
     },

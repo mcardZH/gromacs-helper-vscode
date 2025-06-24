@@ -37,7 +37,7 @@ export interface PackmolStructure {
  * Packmol 约束定义
  */
 export interface PackmolConstraint {
-  type: 'inside' | 'outside' | 'over' | 'below';
+  type: 'inside' | 'outside' | 'over' | 'below' | 'above';
   geometry: PackmolGeometry;
 }
 
@@ -45,7 +45,7 @@ export interface PackmolConstraint {
  * Packmol 几何体定义
  */
 export interface PackmolGeometry {
-  type: 'sphere' | 'box' | 'cube' | 'plane' | 'cylinder' | 'ellipsoid' | 'multi_sphere';
+  type: 'sphere' | 'box' | 'cube' | 'plane' | 'cylinder' | 'ellipsoid' | 'multi_sphere' | 'xygauss';
   parameters: number[];
   // 多球拟合时的球体列表
   spheres?: { center: [number, number, number], radius: number }[];
@@ -310,6 +310,7 @@ export class PackmolStructureParser {
       case 'outside':
       case 'over':
       case 'below':
+      case 'above':
         const constraint = this.parseConstraint(key as any, value);
         if (constraint && structure.constraints) {
           structure.constraints.push(constraint);
@@ -321,7 +322,7 @@ export class PackmolStructureParser {
   /**
    * 解析约束
    */
-  private static parseConstraint(type: 'inside' | 'outside' | 'over' | 'below', value: string): PackmolConstraint | null {
+  private static parseConstraint(type: 'inside' | 'outside' | 'over' | 'below' | 'above', value: string): PackmolConstraint | null {
     const parts = value.split(/\s+/);
     if (parts.length === 0) {
       return null;
