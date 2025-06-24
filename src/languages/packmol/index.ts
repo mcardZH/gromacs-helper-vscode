@@ -5,6 +5,7 @@ import { PackmolDiagnosticProvider } from '../../providers/packmolDiagnosticProv
 import { PackmolFoldingProvider } from '../../providers/packmolFoldingProvider';
 import { PackmolSymbolProvider } from '../../providers/packmolSymbolProvider';
 import { PackmolSemanticTokensProvider } from '../../providers/packmolSemanticTokensProvider';
+import { PackmolFormattingProvider } from '../../providers/packmolFormattingProvider';
 
 /**
  * Packmol 语言支持模块
@@ -61,6 +62,19 @@ export class PackmolLanguageSupport {
       new PackmolSymbolProvider()
     );
     this.disposables.push(symbolProvider);
+    
+    // 注册格式化提供者
+    const formattingProvider = vscode.languages.registerDocumentFormattingEditProvider(
+      packmolSelector,
+      new PackmolFormattingProvider()
+    );
+    this.disposables.push(formattingProvider);
+    
+    const rangeFormattingProvider = vscode.languages.registerDocumentRangeFormattingEditProvider(
+      packmolSelector,
+      new PackmolFormattingProvider()
+    );
+    this.disposables.push(rangeFormattingProvider);
     
     // 注册诊断提供者
     this.diagnosticProvider.activate(context);

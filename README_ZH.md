@@ -1,6 +1,30 @@
 # GROMACS Helper for VS Code
 
-[![Version](https://img.shields.io/vscode-marketplace/v/mcardzh.gromacs-helper-vscode.svg?style=flat-square&label=vscode%20marketplace)](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode)
+[![Version](https://img.shields.io/vscode-marketplace/v/mcardzh.gromacs-helper-vscode.svg?style=flat-square&label=vscode%20**用途：**
+1. 在VS Code中打开任何".xvg"文件
+2. 单击图表图标(📊) 在编辑器标题栏中
+3. 在侧面板中查看交互式绘图
+4. 将鼠标悬停在数据点上以查看确切值
+
+### Packmol 文件支持
+- **结构输入文件编辑**：完整支持 Packmol 输入文件的语法高亮
+- **交互式结构预览**：点击预览图标可视化分子排列
+- **智能代码补全**：Packmol 关键字和参数的自动补全
+- **自动格式化**：正确缩进和结构的 Packmol 文件格式化
+- **错误检测**：实时验证 Packmol 语法和参数
+
+**功能特点：**
+- 关键字、结构和约束的语法高亮
+- 文档大纲，快速导航不同部分
+- 代码折叠，更好地组织复杂输入文件
+- 参数说明的悬停提示
+
+### 单位转换工具
+- **访问方式**：按 `Ctrl+Shift+P` 搜索 "GROMACS Helper: Open Unit Converter"
+- **专业计算器**：专为分子动力学模拟设计
+- **多种单位类别**：长度、时间、温度、能量、面积和电势
+- **快速转换**：常用参考表和一键转换按钮
+- **现代界面**：适应您的 VS Code 主题的 WebView 面板tplace)](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode)
 [![Installs](https://img.shields.io/vscode-marketplace/i/mcardzh.gromacs-helper-vscode.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode)
 [![Rating](https://img.shields.io/vscode-marketplace/r/mcardzh.gromacs-helper-vscode.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/mcardzh/gromacs-helper-vscode/build-and-release.yml?branch=master&style=flat-square&label=build)](https://github.com/mcardzh/gromacs-helper-vscode/actions)
@@ -11,10 +35,11 @@
 ## ✨ 主要功能
 
 ### 🎨 语法高亮
-- **MDP 文件** (`.mdp`) - 分子动力学参数文件
+- **MDP 文件** (`.mdp`) - 分子动力学参数文件，支持不同参数的语义着色
 - **TOP 文件** (`.top`, `.itp`) - 拓扑结构文件
-- **GRO 文件** (`.gro`, `.pdb`) - 结构坐标文件
+- **STRUCTURE 文件** (`.gro`, `.pdb`) - 结构坐标文件，支持不同残基的语义着色
 - **NDX 文件** (`.ndx`) - 索引组文件
+- **Packmol 文件** (`.packmol`, `.inp`) - Packmol 输入文件，支持语法高亮和结构预览
 
 ### 💡 智能补全
 - MDP 参数自动补全，包含所有 GROMACS 2025.2 支持的参数
@@ -31,6 +56,18 @@
 - 快速跳转到特定参数
 - 代码折叠支持
 
+### 🧮 单位转换器
+- **专业单位转换计算器** - 专为分子动力学模拟设计
+  - 长度单位：nm、Å、pm、m、cm、mm
+  - 时间单位：fs、ps、ns、μs、ms、s
+  - 温度单位：K、°C（包含温度偏移转换）
+  - 能量单位：J、kJ/mol、kJ/kg、J/g、eV、cal、kcal/mol
+  - 面积单位：nm²、Å²、m²、cm²
+  - 电势单位：V、mV、kV
+  - 提供常用转换参考表和快速转换按钮
+  - 现代化的WebView界面，支持VS Code主题
+  - 通过命令面板 "GROMACS Helper: Open Unit Converter" 访问
+
 ### 📝 代码片段
 - 常用 MDP 配置模板
 - 一键生成标准模拟流程配置
@@ -41,19 +78,21 @@
   - 内置片段管理器，提供可视化界面
 
 ### 🎯 错误检查
-- 参数语法验证
-- 值范围检查
+- MDP 文件参数语法验证
+- 增强的值范围检查
 - 格式错误提示
+- PDB 文件关键标记分析
 
 ## 🚀 支持的文件格式
 
 | 文件类型 | 扩展名 | 描述 | 功能支持 |
 |---------|--------|------|---------|
-| MDP | `.mdp` | 分子动力学参数文件 | 语法高亮、智能补全、悬停提示、错误检查 |
+| MDP | `.mdp` | 分子动力学参数文件 | 语法高亮、智能补全、悬停提示、错误检查、语义着色 |
 | Topology | `.top`, `.itp` | 拓扑结构文件 | 语法高亮、符号导航、代码折叠 |
-| Structure | `.gro`、`.pdb` | 结构坐标文件 | 语法高亮、符号导航 |
+| Structure | `.gro`、`.pdb` | 结构坐标文件 | 语法高亮、符号导航、残基语义着色 |
 | Index | `.ndx` | 索引组文件 | 语法高亮、符号导航、代码折叠 |
 | XVG Data | `.xvg` | 绘图数据文件 | 语法高亮显示、交互式图表预览、数据分析 |
+| Packmol | `.packmol` | Packmol 输入文件 | 语法高亮、结构预览、格式化、智能补全 |
 
 ## 📦 安装
 
@@ -183,7 +222,45 @@ npm run package
 
 ## 🗂️ 更新日志
 
-### [0.0.5] - 2025-06-22
+### [0.2.0] - 2025-06-24
+
+#### ✨ 新增
+- **Packmol 文件支持** - 完整支持 Packmol 输入文件
+  - 关键字、结构和约束的语法高亮
+  - 3D 可视化的交互式结构预览
+  - Packmol 参数的智能代码补全
+  - 自动格式化和错误检测
+- **增强的语义着色** - 改进不同元素的视觉区分
+  - MDP 参数现在具有单独的语义着色
+  - GRO 和 PDB 文件支持残基特定着色
+  - 复杂文件的更好视觉组织
+- **高级错误检查** - 增强的验证和诊断
+  - 全面的 MDP 参数语法验证
+  - 跨参数关系验证
+  - PDB 文件关键标记分析和验证
+- 🧮 **专业单位转换器** - 专为分子动力学模拟设计的工具
+  - 支持长度单位：nm、Å、pm、m、cm、mm
+  - 支持时间单位：fs、ps、ns、μs、ms、s
+  - 支持温度单位：K、°C（包含温度偏移转换）
+  - 支持能量单位：J、kJ/mol、kJ/kg、J/g、eV、cal、kcal/mol
+  - 支持面积单位：nm²、Å²、m²、cm²
+  - 支持电势单位：V、mV、kV
+  - 提供常用转换参考表和快速转换按钮
+  - 现代化的WebView界面，支持VS Code主题
+  - 通过命令面板 "GROMACS Helper: Open Unit Converter" 访问
+
+#### 🐛 修复
+- 修复各种错误和稳定性改进
+
+### [0.1.2] - 2025-06-24
+
+#### 🐛 修复
+- 允许预览 xvg 文件时将标记大小设置为 0
+
+### [0.1.1] - 2025-06-24
+
+#### 🐛 修复
+- 修复项目中各种错误命名的链接
 
 #### ✨ 新增 
 - **XVG文件可视化预览功能** - 为GROMACS数据文件提供交互式图表预览

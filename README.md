@@ -13,10 +13,11 @@ A comprehensive VS Code extension providing full support for GROMACS molecular d
 ## ✨ Key Features
 
 ### 🎨 Syntax Highlighting
-- **MDP Files** (`.mdp`) - Molecular Dynamics Parameter files
-- **TOP Files** (`.top`, `.itp`) - Topology structure files
-- **GRO Files** (`.gro`, `.pdb`) - Structure coordinate files
+- **MDP Files** (`.mdp`) - Molecular Dynamics Parameter files with semantic coloring for different parameters
+- **TOP Files** (`.top`, `.itp`) - Topology structure files  
+- **STRUCTURE Files** (`.gro`, `.pdb`) - Structure coordinate files with semantic coloring for different residues
 - **NDX Files** (`.ndx`) - Index group files
+- **Packmol Files** (`.packmol`, `.inp`) - Packmol input files with syntax highlighting and structure preview
 
 ### 💡 Intelligent Completion
 - Auto-completion for MDP parameters, including all GROMACS 2025.2 supported parameters
@@ -33,6 +34,18 @@ A comprehensive VS Code extension providing full support for GROMACS molecular d
 - Quick jump to specific parameters
 - Code folding support
 
+### 🧮 Unit Converter
+- **Professional Unit Conversion Calculator** - Designed specifically for molecular dynamics simulations
+  - Length units: nm, Å, pm, m, cm, mm
+  - Time units: fs, ps, ns, μs, ms, s
+  - Temperature units: K, °C (including temperature offset conversion)
+  - Energy units: J, kJ/mol, kJ/kg, J/g, eV, cal, kcal/mol
+  - Area units: nm², Å², m², cm²
+  - Electric potential units: V, mV, kV
+  - Common conversion reference tables and quick conversion buttons
+  - Modern WebView interface with VS Code theme support
+  - Access via Command Palette: "GROMACS Helper: Open Unit Converter"
+
 ### 📝 Code Snippets
 - Common MDP configuration templates
 - One-click generation of standard simulation workflow configurations
@@ -43,19 +56,21 @@ A comprehensive VS Code extension providing full support for GROMACS molecular d
   - Built-in snippet manager with visual interface
 
 ### 🎯 Error Checking
-- Parameter syntax validation
-- Value range checking
+- Parameter syntax validation for MDP files
+- Value range checking with enhanced validation
 - Format error notifications
+- PDB file key marker analysis
 
 ## 🚀 Supported File Formats
 
 | File Type | Extensions | Description | Feature Support |
 |-----------|------------|-------------|----------------|
-| MDP | `.mdp` | Molecular Dynamics Parameter files | Syntax highlighting, intelligent completion, hover hints, error checking |
+| MDP | `.mdp` | Molecular Dynamics Parameter files | Syntax highlighting, intelligent completion, hover hints, error checking, semantic coloring |
 | Topology | `.top`, `.itp` | Topology structure files | Syntax highlighting, symbol navigation, code folding |
-| Structure | `.gro`, `.pdb` | Structure coordinate files | Syntax highlighting, symbol navigation |
+| Structure | `.gro`, `.pdb` | Structure coordinate files | Syntax highlighting, symbol navigation, semantic coloring for residues |
 | Index | `.ndx` | Index group files | Syntax highlighting, symbol navigation, code folding |
 | XVG Data | `.xvg` | GROMACS plotting data files | Syntax highlighting, interactive chart preview, data analysis |
+| Packmol | `.packmol`, `.inp` | Packmol input files | Syntax highlighting, structure preview, formatting, completion |
 
 ## 📦 Installation
 
@@ -144,6 +159,26 @@ See [Custom Snippets Guide](CUSTOM_SNIPPETS_GUIDE.md) for detailed usage instruc
 3. View the interactive plot in a side panel
 4. Hover over data points to see exact values
 
+### Packmol File Support
+- **Structure Input File Editing**: Full support for Packmol input files with syntax highlighting
+- **Interactive Structure Preview**: Click the preview icon to visualize molecular arrangements
+- **Intelligent Code Completion**: Auto-completion for Packmol keywords and parameters
+- **Automatic Formatting**: Format Packmol files with proper indentation and structure
+- **Error Detection**: Real-time validation of Packmol syntax and parameters
+
+**Features:**
+- Syntax highlighting for keywords, structures, and constraints
+- Document outline for quick navigation between sections
+- Code folding for better organization of complex input files
+- Hover hints for parameter explanations
+
+### Unit Converter Tool
+- **Access**: Press `Ctrl+Shift+P` and search "GROMACS Helper: Open Unit Converter"
+- **Professional Calculator**: Designed specifically for molecular dynamics simulations
+- **Multiple Unit Categories**: Length, time, temperature, energy, area, and electric potential
+- **Quick Conversions**: Common reference tables and one-click conversion buttons
+- **Modern Interface**: WebView panel that adapts to your VS Code theme
+
 ## ⚙️ Configuration Options
 
 The extension currently uses default configurations. More customization options will be added in future versions.
@@ -185,7 +220,45 @@ If you encounter issues, please report them in [GitHub Issues](https://github.co
 
 ## 🗂️ Changelog
 
-### [0.0.6] - 2025-06-23
+### [0.2.0] - 2025-06-24
+
+#### ✨ Added
+- **Packmol File Support** - Complete support for Packmol input files
+  - Syntax highlighting for keywords, structures, and constraints
+  - Interactive structure preview with 3D visualization
+  - Intelligent code completion for Packmol parameters
+  - Automatic formatting and error detection
+- **Enhanced Semantic Coloring** - Improved visual distinction for different elements
+  - MDP parameters now have individual semantic coloring
+  - GRO and PDB files support residue-specific coloring
+  - Better visual organization for complex files
+- **Advanced Error Checking** - Enhanced validation and diagnostics
+  - Comprehensive MDP parameter syntax validation
+  - Cross-parameter relationship validation
+  - PDB file key marker analysis and validation
+- 🧮 **Professional Unit Converter** - Specialized tool for molecular dynamics simulations
+  - Support for length units: nm, Å, pm, m, cm, mm
+  - Support for time units: fs, ps, ns, μs, ms, s
+  - Support for temperature units: K, °C (including temperature offset conversion)
+  - Support for energy units: J, kJ/mol, kJ/kg, J/g, eV, cal, kcal/mol
+  - Support for area units: nm², Å², m², cm²
+  - Support for electric potential units: V, mV, kV
+  - Common conversion reference tables and quick conversion buttons
+  - Modern WebView interface with VS Code theme support
+  - Access via Command Palette: "GROMACS Helper: Open Unit Converter"
+
+#### 🐛 Fixed
+- Various bug fixes and stability improvements
+
+### [0.1.2] - 2025-06-24
+
+#### 🐛 Fixed
+- Allow setting marker size to 0 when previewing XVG files
+
+### [0.1.1] - 2025-06-24
+
+#### 🐛 Fixed
+- Fixed various incorrectly named links in the project
 
 #### ✨ Added
 - **Custom MDP Snippet Management** - Complete user-defined snippet functionality
