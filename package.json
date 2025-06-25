@@ -1014,14 +1014,14 @@
           "type": "number",
           "default": 0.6,
           "minimum": 0.1,
-          "maximum": 1.0,
+          "maximum": 1,
           "description": "Opacity for structure rendering in Packmol 3D preview"
         },
         "gromacsHelper.packmolPreview.constraintOpacity": {
           "type": "number",
           "default": 0.3,
           "minimum": 0.1,
-          "maximum": 1.0,
+          "maximum": 1,
           "description": "Opacity for constraint rendering in Packmol 3D preview"
         },
         "gromacsHelper.packmolPreview.backgroundColor": {
@@ -1042,17 +1042,24 @@
           "type": "number",
           "default": 0.8,
           "minimum": 0.1,
-          "maximum": 2.0,
+          "maximum": 2,
           "description": "Directional light intensity in Packmol 3D preview"
         },
         "gromacsHelper.packmolPreview.colorTheme": {
           "type": "string",
           "default": "default",
-          "enum": ["default", "warm", "cool", "pastel", "monochrome", "vibrant"],
+          "enum": [
+            "default",
+            "warm",
+            "cool",
+            "pastel",
+            "monochrome",
+            "vibrant"
+          ],
           "enumDescriptions": [
             "Default color scheme",
             "Warm color scheme",
-            "Cool color scheme", 
+            "Cool color scheme",
             "Pastel color scheme",
             "Monochrome color scheme",
             "Vibrant color scheme"
