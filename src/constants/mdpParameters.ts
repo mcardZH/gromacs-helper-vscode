@@ -590,18 +590,14 @@ export const MDP_PARAMETERS: MdpParameter[] = [
   },
   {
     name: 'tau-t',
-    type: 'real',
+    type: 'string',
     description: '[ps] time constant for coupling (one for each group in tc-grps), -1 means no temperature coupling',
-    unit: 'ps',
-    range: { min: 0 },
     category: 'temperature-coupling'
   },
   {
     name: 'ref-t',
-    type: 'real',
+    type: 'string',
     description: '[K] reference temperature for coupling (one for each group in tc-grps)',
-    unit: 'K',
-    range: { min: 0 },
     category: 'temperature-coupling'
   },
 
@@ -631,11 +627,8 @@ export const MDP_PARAMETERS: MdpParameter[] = [
   },
   {
     name: 'tau-p',
-    type: 'real',
+    type: 'string',
     description: 'The time constant for pressure coupling (one value for all directions).',
-    defaultValue: '5',
-    unit: 'ps',
-    range: { min: 0 },
     category: 'pressure-coupling'
   },
   {
