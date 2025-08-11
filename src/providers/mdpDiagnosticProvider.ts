@@ -300,7 +300,7 @@ export class MdpDiagnosticProvider {
     }
 
     // 验证组名参数（应该是有效的组名格式）
-    const groupParams = ['tc-grps', 'tau-t', 'ref-t', 'energygrps'];
+    const groupParams = ['tc-grps', 'energygrps'];
     if (groupParams.includes(parameter.name)) {
       // 检查组名格式
       const groups = value.split(/\s+/);
