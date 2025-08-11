@@ -6,37 +6,7 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/mcardzh/gromacs-helper-vscode/build-and-release.yml?branch=master&style=flat-square&label=build)](https://github.com/mcardzh/gromacs-helper-vscode/actions)
 [![License](https://img.shields.io/github/license/mcardzh/gromacs-helper-vscode.svg?style=flat-square)](https://github.com/mcardzh/gromacs-helper-vscode/blob/main/LICENSE)
 
-**用途：**
-1. 在VS Code中打开任何".xvg"文件
-2. 单击图表图标(📊) 在编辑器标题栏中
-3. 在侧面板中查看交互式绘图
-4. 将鼠标悬停在数据点上以查看确切值
-
-### Packmol 文件支持
-- **结构输入文件编辑**：完整支持 Packmol 输入文件的语法高亮
-- **交互式结构预览**：点击预览图标可视化分子排列
-- **智能代码补全**：Packmol 关键字和参数的自动补全
-- **自动格式化**：正确缩进和结构的 Packmol 文件格式化
-- **错误检测**：实时验证 Packmol 语法和参数
-
-**功能特点：**
-- 关键字、结构和约束的语法高亮
-- 文档大纲，快速导航不同部分
-- 代码折叠，更好地组织复杂输入文件
-- 参数说明的悬停提示
-
-### 单位转换工具
-- **访问方式**：按 `Ctrl+Shift+P` 搜索 "GROMACS Helper: Open Unit Converter"
-- **专业计算器**：专为分子动力学模拟设计
-- **多种单位类别**：长度、时间、温度、能量、面积和电势
-- **快速转换**：常用参考表和一键转换按钮
-- **现代界面**：适应您的 VS Code 主题的 WebView 面板tplace)](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode)
-[![Installs](https://img.shields.io/vscode-marketplace/i/mcardzh.gromacs-helper-vscode.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode)
-[![Rating](https://img.shields.io/vscode-marketplace/r/mcardzh.gromacs-helper-vscode.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/mcardzh/gromacs-helper-vscode/build-and-release.yml?branch=master&style=flat-square&label=build)](https://github.com/mcardzh/gromacs-helper-vscode/actions)
-[![License](https://img.shields.io/github/license/mcardzh/gromacs-helper-vscode.svg?style=flat-square)](https://github.com/mcardzh/gromacs-helper-vscode/blob/main/LICENSE)
-
-一个为 GROMACS 分子动力学模拟提供全面支持的 VS Code 扩展。支持 `.mdp`、`.top`、`.itp`、`.gro`、`.ndx`、`.pdb` 等 GROMACS 文件格式，提供语法高亮、智能补全、参数提示、错误检查等功能。
+一个为 GROMACS 分子动力学模拟提供全面支持的 VS Code 扩展。支持 `.mdp`、`.top`、`.itp`、`.gro`、`.ndx`、`.pdb`、`.pka` 等 GROMACS 文件格式，提供语法高亮、智能补全、参数提示、错误检查等功能。
 
 ## ✨ 主要功能
 
@@ -45,6 +15,7 @@
 - **TOP 文件** (`.top`, `.itp`) - 拓扑结构文件
 - **STRUCTURE 文件** (`.gro`, `.pdb`) - 结构坐标文件，支持不同残基的语义着色
 - **NDX 文件** (`.ndx`) - 索引组文件
+- **PKA 文件** (`.pka`) - PROPKA pKa 预测结果文件，提供全面的分析支持
 - **Packmol 文件** (`.packmol`, `.inp`) - Packmol 输入文件，支持语法高亮和结构预览
 
 ### 💡 智能补全
@@ -98,6 +69,7 @@
 | Structure | `.gro`、`.pdb` | 结构坐标文件 | 语法高亮、符号导航、残基语义着色 |
 | Index | `.ndx` | 索引组文件 | 语法高亮、符号导航、代码折叠 |
 | XVG Data | `.xvg` | 绘图数据文件 | 语法高亮显示、交互式图表预览、数据分析 |
+| PKA Results | `.pka` | PROPKA pKa 预测文件 | 语法高亮、悬停提示、符号导航、代码折叠 |
 | Packmol | `.packmol` | Packmol 输入文件 | 语法高亮、结构预览、格式化、智能补全 |
 
 ## 📦 安装
@@ -187,6 +159,19 @@ nstlog = 100
 3. 在侧面板中查看交互式绘图
 4. 将鼠标悬停在数据点上以查看确切值
 
+### PKA 文件支持
+- **PROPKA 结果分析**：完整支持 PROPKA pKa 预测输出文件
+- **智能解析**：自动识别不同部分（文件头、残基表格、摘要、能量分析）
+- **智能悬停信息**：残基类型、pKa 值、相互作用贡献的详细说明
+- **符号导航**：快速跳转到特定残基、分析部分和关键发现
+- **代码折叠**：通过折叠部分（文件头、参考文献、残基条目、摘要）来组织复杂的 pKa 文件
+
+**功能特点：**
+- 残基名称、pKa 值、相互作用数据和节区标题的语法高亮
+- 文档大纲，快速导航不同分析部分
+- 悬停提示解释残基属性、pKa 意义和相互作用类型
+- 代码折叠，更好地组织复杂的 PROPKA 输出文件
+
 ## ⚙️ 配置选项
 
 目前扩展使用默认配置，未来版本将添加更多自定义选项。
@@ -227,6 +212,21 @@ npm run package
 如发现问题，请在 [GitHub Issues](https://github.com/mcardzh/gromacs-helper-vscode/issues) 中报告。
 
 ## 🗂️ 更新日志
+
+### [0.2.3] - 2025-08-11
+
+#### ✨ 新增
+- **PROPKA pKa 结果文件支持** - 完整支持 PROPKA 程序输出文件
+  - 支持 `.pka` 文件扩展名和文件名模式匹配
+  - 详细的语法高亮，包括残基类型、pKa 值、相互作用数据、节区标题等
+  - 智能悬停提示：残基信息、参数说明、数值含义解释
+  - 文档符号导航：快速跳转到特定残基、摘要部分、能量分析等
+  - 代码折叠支持：可折叠文件头部、参考文献、残基表格、摘要、能量和电荷分析等节区
+  - 完整的语言支持集成到扩展主系统中
+
+#### 🔧 改进
+- 增强了扩展对生物信息学文件格式的支持范围
+- 优化了语言支持系统的可扩展性
 
 ### [0.2.0] - 2025-06-24
 

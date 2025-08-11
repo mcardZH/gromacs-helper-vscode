@@ -1,0 +1,281 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "PROPKA pKa Results",
+    "scopeName": "source.pka",
+    "patterns": [
+        {
+            "include": "#header-section"
+        },
+        {
+            "include": "#references-section"
+        },
+        {
+            "include": "#residue-table"
+        },
+        {
+            "include": "#summary-section"
+        },
+        {
+            "include": "#energy-section"
+        },
+        {
+            "include": "#charge-section"
+        },
+        {
+            "include": "#separators"
+        },
+        {
+            "include": "#comments"
+        },
+        {
+            "include": "#numbers"
+        }
+    ],
+    "repository": {
+        "header-section": {
+            "name": "meta.header.pka",
+            "begin": "^(propka\\d+\\.\\d+)",
+            "beginCaptures": {
+                "1": {
+                    "name": "keyword.control.propka.version"
+                }
+            },
+            "end": "^-{10,}$",
+            "patterns": [
+                {
+                    "name": "string.quoted.double.pka",
+                    "match": "PROPKA: A PROTEIN PKA PREDICTOR"
+                },
+                {
+                    "name": "constant.numeric.date.pka",
+                    "match": "\\d{4}-\\d{2}-\\d{2}"
+                },
+                {
+                    "name": "string.unquoted.version.pka",
+                    "match": "VERSION \\d+\\.\\d+"
+                },
+                {
+                    "name": "string.unquoted.location.pka", 
+                    "match": "(IOWA CITY|COPENHAGEN|PLANET EARTH)"
+                },
+                {
+                    "name": "entity.name.type.author.pka",
+                    "match": "BY [A-Z][A-Z\\s\\.]+"
+                }
+            ]
+        },
+        "references-section": {
+            "name": "meta.references.pka",
+            "begin": "^References:",
+            "beginCaptures": {
+                "0": {
+                    "name": "keyword.control.section.references"
+                }
+            },
+            "end": "^-{10,}$",
+            "patterns": [
+                {
+                    "name": "entity.name.type.journal.pka",
+                    "match": "(PROTEINS|Journal of Chemical Theory and Computation).*"
+                },
+                {
+                    "name": "entity.name.function.author.pka",
+                    "match": "^[A-Z][a-z]+(\\s[A-Z]\\.[A-Z])?[a-z]*"
+                },
+                {
+                    "name": "constant.numeric.year.pka",
+                    "match": "\\(\\d{4}\\)"
+                }
+            ]
+        },
+        "residue-table": {
+            "name": "meta.residue-table.pka",
+            "begin": "^-{9}\\s+-{5}\\s+-{6}\\s+-{21}\\s+-{14}\\s+-{14}\\s+-{14}$",
+            "end": "^$|^SUMMARY OF THIS PREDICTION",
+            "patterns": [
+                {
+                    "include": "#table-header"
+                },
+                {
+                    "include": "#residue-entry"
+                }
+            ]
+        },
+        "table-header": {
+            "name": "markup.heading.table-header.pka",
+            "match": "^\\s*(DESOLVATION EFFECTS|SIDECHAIN|BACKBONE|COULOMBIC).*$"
+        },
+        "residue-entry": {
+            "name": "meta.residue.pka",
+            "match": "^([A-Z]{3})\\s+(\\d+)\\s+([A-Z])\\s+([+-]?\\d+\\.\\d+)\\s+(\\d+)\\s*%\\s*([+-]?\\d+\\.\\d+)\\s+(\\d+)\\s+([+-]?\\d+\\.\\d+)\\s+(\\d+)\\s+([-+]?\\d+\\.\\d+)\\s+(\\w+|XXX)\\s+(\\d+|X)\\s+[A-Z]?\\s*([-+]?\\d+\\.\\d+)\\s+(\\w+|XXX)\\s+(\\d+|X)\\s+[A-Z]?\\s*([-+]?\\d+\\.\\d+)\\s+(\\w+|N\\+?)\\s+(\\d+)\\s+[A-Z]?",
+            "captures": {
+                "1": {
+                    "name": "entity.name.type.residue.pka"
+                },
+                "2": {
+                    "name": "constant.numeric.residue-number.pka"
+                },
+                "3": {
+                    "name": "entity.name.tag.chain.pka"
+                },
+                "4": {
+                    "name": "constant.numeric.pka-value.pka"
+                },
+                "5": {
+                    "name": "constant.numeric.percentage.pka"
+                },
+                "6": {
+                    "name": "constant.numeric.desolvation.pka"
+                },
+                "7": {
+                    "name": "constant.numeric.parameter.pka"
+                },
+                "8": {
+                    "name": "constant.numeric.re-value.pka"
+                },
+                "9": {
+                    "name": "constant.numeric.parameter.pka"
+                },
+                "10": {
+                    "name": "constant.numeric.interaction.pka"
+                },
+                "11": {
+                    "name": "entity.name.type.interaction-residue.pka"
+                },
+                "12": {
+                    "name": "constant.numeric.residue-number.pka"
+                },
+                "13": {
+                    "name": "constant.numeric.interaction.pka"
+                },
+                "14": {
+                    "name": "entity.name.type.interaction-residue.pka"
+                },
+                "15": {
+                    "name": "constant.numeric.residue-number.pka"
+                },
+                "16": {
+                    "name": "constant.numeric.interaction.pka"
+                },
+                "17": {
+                    "name": "entity.name.type.interaction-residue.pka"
+                },
+                "18": {
+                    "name": "constant.numeric.residue-number.pka"
+                }
+            }
+        },
+        "summary-section": {
+            "name": "meta.summary.pka",
+            "begin": "^SUMMARY OF THIS PREDICTION",
+            "beginCaptures": {
+                "0": {
+                    "name": "keyword.control.section.summary"
+                }
+            },
+            "end": "^-{40,}$",
+            "patterns": [
+                {
+                    "name": "markup.heading.table-header.pka",
+                    "match": "^\\s*(Group|pKa|model-pKa|ligand atom-type).*$"
+                },
+                {
+                    "name": "meta.summary-entry.pka",
+                    "match": "^\\s*([A-Z]{3})\\s+(\\d+)\\s+([A-Z])\\s+([+-]?\\d+\\.\\d+)\\s+([+-]?\\d+\\.\\d+).*$",
+                    "captures": {
+                        "1": {
+                            "name": "entity.name.type.residue.pka"
+                        },
+                        "2": {
+                            "name": "constant.numeric.residue-number.pka"
+                        },
+                        "3": {
+                            "name": "entity.name.tag.chain.pka"
+                        },
+                        "4": {
+                            "name": "constant.numeric.pka-value.pka"
+                        },
+                        "5": {
+                            "name": "constant.numeric.model-pka.pka"
+                        }
+                    }
+                }
+            ]
+        },
+        "energy-section": {
+            "name": "meta.energy.pka",
+            "begin": "^Free energy of\\s+folding",
+            "beginCaptures": {
+                "0": {
+                    "name": "keyword.control.section.energy"
+                }
+            },
+            "end": "^Protein charge of",
+            "patterns": [
+                {
+                    "name": "meta.energy-entry.pka",
+                    "match": "^\\s*([+-]?\\d+\\.\\d+)\\s+([+-]?\\d+\\.\\d+)$",
+                    "captures": {
+                        "1": {
+                            "name": "constant.numeric.ph-value.pka"
+                        },
+                        "2": {
+                            "name": "constant.numeric.energy.pka"
+                        }
+                    }
+                },
+                {
+                    "name": "string.unquoted.energy-info.pka",
+                    "match": "The pH of optimum stability.*"
+                },
+                {
+                    "name": "string.unquoted.energy-info.pka",
+                    "match": "Could not determine.*"
+                }
+            ]
+        },
+        "charge-section": {
+            "name": "meta.charge.pka",
+            "begin": "^Protein charge of folded and unfolded state",
+            "beginCaptures": {
+                "0": {
+                    "name": "keyword.control.section.charge"
+                }
+            },
+            "end": "^The pI is",
+            "patterns": [
+                {
+                    "name": "markup.heading.table-header.pka",
+                    "match": "^\\s*(pH|unfolded|folded).*$"
+                },
+                {
+                    "name": "meta.charge-entry.pka",
+                    "match": "^\\s*([+-]?\\d+\\.\\d+)\\s+([+-]?\\d+\\.\\d+)\\s+([+-]?\\d+\\.\\d+)$",
+                    "captures": {
+                        "1": {
+                            "name": "constant.numeric.ph-value.pka"
+                        },
+                        "2": {
+                            "name": "constant.numeric.charge-unfolded.pka"
+                        },
+                        "3": {
+                            "name": "constant.numeric.charge-folded.pka"
+                        }
+                    }
+                }
+            ]
+        },
+        "separators": {
+            "name": "markup.heading.separator.pka",
+            "match": "^-{10,}.*$"
+        },
+        "comments": {
+            "name": "comment.line.pka",
+            "match": "//.*$"
+        },
+        "numbers": {
+            "name": "constant.numeric.pka",
+            "match": "[-+]?\\d*\\.?\\d+([eE][-+]?\\d+)?"
+        }
+    }
+}

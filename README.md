@@ -6,7 +6,7 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/mcardzh/gromacs-helper-vscode/build-and-release.yml?branch=master&style=flat-square&label=build)](https://github.com/mcardzh/gromacs-helper-vscode/actions)
 [![License](https://img.shields.io/github/license/mcardzh/gromacs-helper-vscode.svg?style=flat-square)](https://github.com/mcardzh/gromacs-helper-vscode/blob/main/LICENSE)
 
-A comprehensive VS Code extension providing full support for GROMACS molecular dynamics simulation files. Supports `.mdp`, `.top`, `.itp`, `.gro`, `.ndx`, `.pdb` and other GROMACS file formats with syntax highlighting, intelligent completion, parameter hints, error checking and more.
+A comprehensive VS Code extension providing full support for GROMACS molecular dynamics simulation files. Supports `.mdp`, `.top`, `.itp`, `.gro`, `.ndx`, `.pdb`, `.pka` and other GROMACS file formats with syntax highlighting, intelligent completion, parameter hints, error checking and more.
 
 > [中文文档](README_ZH.md) | [English Documentation](README.md)
 
@@ -17,6 +17,7 @@ A comprehensive VS Code extension providing full support for GROMACS molecular d
 - **TOP Files** (`.top`, `.itp`) - Topology structure files  
 - **STRUCTURE Files** (`.gro`, `.pdb`) - Structure coordinate files with semantic coloring for different residues
 - **NDX Files** (`.ndx`) - Index group files
+- **PKA Files** (`.pka`) - PROPKA pKa prediction result files with comprehensive analysis support
 - **Packmol Files** (`.packmol`, `.inp`) - Packmol input files with syntax highlighting and structure preview
 
 ### 💡 Intelligent Completion
@@ -70,6 +71,7 @@ A comprehensive VS Code extension providing full support for GROMACS molecular d
 | Structure | `.gro`, `.pdb` | Structure coordinate files | Syntax highlighting, symbol navigation, semantic coloring for residues |
 | Index | `.ndx` | Index group files | Syntax highlighting, symbol navigation, code folding |
 | XVG Data | `.xvg` | GROMACS plotting data files | Syntax highlighting, interactive chart preview, data analysis |
+| PKA Results | `.pka` | PROPKA pKa prediction files | Syntax highlighting, hover hints, symbol navigation, code folding |
 | Packmol | `.packmol`, `.inp` | Packmol input files | Syntax highlighting, structure preview, formatting, completion |
 
 ## 📦 Installation
@@ -172,6 +174,19 @@ See [Custom Snippets Guide](CUSTOM_SNIPPETS_GUIDE.md) for detailed usage instruc
 - Code folding for better organization of complex input files
 - Hover hints for parameter explanations
 
+### PKA File Support
+- **PROPKA Results Analysis**: Complete support for PROPKA pKa prediction output files
+- **Intelligent Parsing**: Automatic recognition of different sections (header, residue table, summary, energy analysis)
+- **Smart Hover Information**: Detailed explanations for residue types, pKa values, interaction contributions
+- **Symbol Navigation**: Quick jump to specific residues, analysis sections, and key findings
+- **Code Folding**: Organize complex pKa files by folding sections (header, references, residue entries, summary)
+
+**Features:**
+- Syntax highlighting for residue names, pKa values, interaction data, and section headers
+- Document outline for quick navigation between analysis sections
+- Hover hints explaining residue properties, pKa significance, and interaction types
+- Code folding for better organization of complex PROPKA output files
+
 ### Unit Converter Tool
 - **Access**: Press `Ctrl+Shift+P` and search "GROMACS Helper: Open Unit Converter"
 - **Professional Calculator**: Designed specifically for molecular dynamics simulations
@@ -219,6 +234,22 @@ npm run package
 If you encounter issues, please report them in [GitHub Issues](https://github.com/mcardzh/gromacs-helper-vscode/issues).
 
 ## 🗂️ Changelog
+
+### [0.2.3] - 2025-08-11
+
+#### ✨ Added
+- **PROPKA pKa Results File Support** - Complete support for PROPKA program output files
+  - Support for `.pka` file extension and filename pattern matching
+  - Comprehensive syntax highlighting including residue types, pKa values, interaction data, section headers
+  - Intelligent hover hints: residue information, parameter explanations, numerical value meanings
+  - Document symbol navigation: quick jump to specific residues, summary sections, energy analysis
+  - Code folding support: collapsible file header, references, residue tables, summary, energy and charge analysis sections
+  - Code snippet templates: provides PROPKA header, residue entries, summary entries and other common templates
+  - Full language support integration into the main extension system
+
+#### 🔧 Improved
+- Enhanced extension support for bioinformatics file formats
+- Optimized language support system extensibility
 
 ### [0.2.0] - 2025-06-24
 

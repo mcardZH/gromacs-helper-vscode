@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { MdpLanguageSupport } from './languages/mdp';
 import { registerTopLanguageSupport } from './languages/top';
 import { GroLanguageSupport } from './languages/gro';
+import { PkaLanguageSupport } from './languages/pka';
 import { NdxSymbolProvider } from './providers/ndxSymbolProvider';
 import { NdxHoverProvider } from './providers/ndxHoverProvider';
 import { NdxFoldingProvider } from './providers/ndxFoldingProvider';
@@ -35,6 +36,10 @@ export function activate(context: vscode.ExtensionContext) {
 	// Initialize GRO language support
 	const groLanguageSupport = new GroLanguageSupport();
 	groLanguageSupport.activate(context);
+
+	// Initialize PKA language support
+	const pkaLanguageSupport = new PkaLanguageSupport();
+	pkaLanguageSupport.activate(context);
 
 	// Initialize NDX language support
 	context.subscriptions.push(
