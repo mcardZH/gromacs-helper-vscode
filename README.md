@@ -235,6 +235,32 @@ If you encounter issues, please report them in [GitHub Issues](https://github.co
 
 ## 🗂️ Changelog
 
+### [0.3.0] - 2025-12-23
+
+#### ✨ Added
+- 🎉 **Smart Welcome and Update Notification System**
+  - Automatic welcome notification on first install with links to language-specific README documentation
+  - Automatic update notification on version updates with changelog access
+  - Adaptive language support: automatically selects Chinese or English documentation based on VS Code locale
+  - Smart deduplication: notifications only show once per version
+  - Configurable disable option: "Don't show again" button available
+  - Configuration setting: `gromacsHelper.disableWelcomeNotifications` for manual control
+- 🔍 **GROMACS Process Monitor** - Real-time monitoring of GROMACS execution status in VS Code status bar
+  - Local process monitoring: automatically detects local `gmx` processes (pgrep + lsof)
+  - Remote SSH monitoring: connects to remote servers via SSH with automatic script deployment
+  - Intelligent log parsing: automatically analyzes mdrun logs to extract remaining time, simulation time, current step, etc.
+  - Multi-target management: unified configuration for local and remote monitoring targets with custom names
+  - Merged display mode: multiple targets auto-rotate with configurable intervals (pauses on mouse hover)
+  - Independent display mode: create dedicated status bar items for important targets
+  - Error handling: displays error icon with detailed error messages on connection or parsing failures
+  - Click interaction: local monitoring allows clicking status bar to open working directory
+  - Flexible configuration: customizable refresh intervals, rotation intervals, SSH port/key settings, etc.
+  - 10-second timeout control: prevents SSH connection blocking with automatic timeout handling
+  - 🆕 **Default Local Monitoring Enabled**: works out-of-the-box, automatically monitors local GROMACS processes
+  - 🆕 **Interactive Configuration Wizard**: quickly add and manage monitoring targets via Command Palette
+    - "GROMACS Helper: Add GROMACS Monitor Target" - interactive wizard for adding new monitors
+    - "GROMACS Helper: Manage GROMACS Monitor Targets" - manage existing monitoring targets
+
 ### [0.2.3] - 2025-08-11
 
 #### ✨ Added
