@@ -45,6 +45,27 @@
   - 现代化的WebView界面，支持VS Code主题
   - 通过命令面板 "GROMACS Helper: Open Unit Converter" 访问
 
+### 🔍 GROMACS 进程监控
+- **实时监控运行状态** - VS Code 状态栏显示 GROMACS 进程信息
+  - 🖥️ **本地监控**：自动检测本地运行的 `gmx` 进程
+  - 🌐 **远程监控**：通过 SSH 监控远程服务器上的 GROMACS 任务
+  - 📊 **智能进度显示**：
+    - mdrun 剩余时间倒计时（精确到秒）
+    - 当前模拟时间（ns/μs）
+    - 当前步数和进度百分比
+  - 🔄 **多目标管理**：
+    - 统一配置本地和远程监控目标
+    - 支持多个目标自动轮转显示
+    - 可为重要任务创建独立状态栏项
+  - 💡 **智能交互**：
+    - 鼠标悬浮显示详细信息（工作目录、日志文件、完整命令等）
+    - 本地监控支持点击打开工作目录
+    - 自动轮转时鼠标悬浮可暂停切换
+  - ⚠️ **错误处理**：连接失败或解析错误时显示错误图标和详细原因
+  - ⚙️ **灵活配置**：自定义刷新间隔、轮转间隔、SSH 连接参数等
+  - 🚀 **开箱即用**：默认启用本地监控，无需配置即可使用
+  - 🛠️ **交互式向导**：通过命令面板快速添加和管理监控目标
+
 ### 📝 代码片段
 - 常用 MDP 配置模板
 - 一键生成标准模拟流程配置
@@ -174,7 +195,120 @@ nstlog = 100
 
 ## ⚙️ 配置选项
 
-目前扩展使用默认配置，未来版本将添加更多自定义选项。
+### GROMACS 进程监控配置
+
+#### 快速开始（推荐）
+
+监控功能**默认已启用**并配置了本地监控，无需手动配置即可使用！
+
+**使用交互式向导添加监控目标：**
+
+1. 按 `Ctrl+Shift+P` 打开命令面板
+2. 搜索 "GROMACS Helper: Add GROMACS Monitor Target"
+3. 根据提示选择监控类型（本地/远程）
+4. 输入名称和连接信息
+5. 完成！监控将自动开始
+
+**管理现有监控目标：**
+
+1. 按 `Ctrl+Shift+P` 打开命令面板
+2. 搜索 "GROMACS Helper: Manage GROMACS Monitor Targets"
+3. 选择要管理的目标，可以删除、切换显示模式或编辑配置
+
+#### 手动配置（高级用户）
+
+在 VS Code 设置中（`settings.json`）配置 GROMACS 监控：
+
+```json
+{
+  // 启用 GROMACS 监控
+  "gromacsHelper.monitor.enabled": true,
+  
+  // 刷新间隔（毫秒）
+  "gromacsHelper.monitor.refreshInterval": 5000,
+  
+  // 多目标轮转间隔（毫秒）
+  "gromacsHelper.monitor.rotateInterval": 10000,
+  
+  // 监控目标配置
+  "gromacsHelper.monitor.targets": [
+    {
+      // 默认本地监控（已预配置）
+      "id": "local-default",
+      "name": "Local",
+      "type": "local",
+      "independent": false
+    },
+    {
+      // 本地监控示例
+      "id": "local-1",
+      "name": "本地GPU1",
+      "type": "local",
+      "independent": false  // false=合并显示，true=独立状态栏
+    },
+    {
+      // 远程 SSH 监控示例
+      "id": "remote-server1",
+      "name": "服务器A",
+      "type": "remote",
+      "independent": false,
+      "sshHost": "user@server.example.com",
+      "sshPort": 22,  // 可选，默认 22
+      "sshKey": "/home/user/.ssh/id_rsa",  // 可选，SSH 私钥路径
+      "scriptPath": "~/.vscode/gromacs_monitor.sh"  // 可选，默认值
+    },
+    {
+      // 重要任务使用独立状态栏
+      "id": "important-job",
+      "name": "关键任务",
+      "type": "remote",
+      "independent": true,  // 创建独立的状态栏项
+      "sshHost": "user@hpc.example.com"
+    }
+  ]
+}
+```
+
+**配置说明：**
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `enabled` | boolean | `false` | 是否启用监控功能 |
+| `refreshInterval` | number | `5000` | 刷新间隔（毫秒），范围 1000-60000 |
+| `rotateInterval` | number | `10000` | 多目标轮转间隔（毫秒），范围 2000-60000 |
+| `targets` | array | `[]` | 监控目标配置数组 |
+
+**监控目标字段：**
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `id` | string | ✅ | 唯一标识符 |
+| `name` | string | ✅ | 显示名称 |
+| `type` | string | ✅ | 监控类型：`"local"` 或 `"remote"` |
+| `independent` | boolean | ❌ | 是否独立显示（默认 `false`，合并显示） |
+| `sshHost` | string | ⚠️ | SSH 主机（格式：`user@hostname`，remote 类型必填） |
+| `sshPort` | number | ❌ | SSH 端口（默认 22） |
+| `sshKey` | string | ❌ | SSH 私钥路径（可选） |
+| `scriptPath` | string | ❌ | 远程监控脚本路径（默认 `~/.vscode/gromacs_monitor.sh`） |
+
+**使用提示：**
+
+1. **本地监控**：设置 `type: "local"`，无需其他配置，点击状态栏可打开工作目录
+2. **远程监控**：设置 `type: "remote"` 和 `sshHost`，首次连接时会自动部署监控脚本
+3. **合并显示**：多个 `independent: false` 的目标会合并到一个状态栏项，自动轮转
+4. **独立显示**：设置 `independent: true` 为重要任务创建专属状态栏项
+5. **SSH 认证**：支持密钥认证（推荐）或密码认证（需配置 SSH 免密登录）
+
+**状态栏显示格式：**
+
+- 运行中：`$(sync~spin) 服务器A: 2h15m` - 剩余时间
+- 运行中：`$(sync~spin) 服务器A: 123.5ns` - 当前模拟时间
+- 空闲：`$(circle-outline) 服务器A: Idle` - 无进程
+- 错误：`$(error) 服务器A: Error` - 连接或解析错误
+
+### 其他配置选项
+
+更多配置选项请参考 VS Code 设置界面或 `package.json`。
 
 ## 🔧 开发和贡献
 

@@ -18,6 +18,7 @@ import { SnippetViewProvider } from './providers/snippetTreeProvider';
 import { ResidueHighlightingManager } from './providers/residueHighlightingManager';
 import { UnitConverterPanel } from './providers/unitConverter';
 import { ColorManager } from './providers/colorManager';
+import { GromacsMonitorSupport } from './languages/monitor';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "gromacs-helper-vscode" is now active!');
@@ -167,6 +168,10 @@ export function activate(context: vscode.ExtensionContext) {
 		openUnitConverterCommand,
 		packmolPreviewCommand
 	);
+
+	// Initialize GROMACS monitor
+	const monitorSupport = new GromacsMonitorSupport();
+	monitorSupport.activate(context);
 
 }
 

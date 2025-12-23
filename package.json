@@ -2,7 +2,7 @@
   "name": "gromacs-helper-vscode",
   "displayName": "GROMACS Helper for VS Code",
   "description": "Complete language support for GROMACS molecular dynamics simulation files including MDP, TOP, GRO, NDX, PDB formats and PROPKA pKa results",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "publisher": "mcardzh",
   "author": {
     "name": "mcardzh"
@@ -40,7 +40,9 @@
     "Snippets"
   ],
   "icon": "imgs/icon.png",
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "semanticTokenTypes": [
@@ -1129,6 +1131,79 @@
             "Vibrant color scheme"
           ],
           "description": "Color theme for Packmol 3D preview"
+        },
+        "gromacsHelper.monitor.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable GROMACS process monitoring in status bar"
+        },
+        "gromacsHelper.monitor.refreshInterval": {
+          "type": "number",
+          "default": 5000,
+          "minimum": 1000,
+          "maximum": 60000,
+          "description": "Monitor refresh interval in milliseconds (default: 5000ms)"
+        },
+        "gromacsHelper.monitor.rotateInterval": {
+          "type": "number",
+          "default": 10000,
+          "minimum": 2000,
+          "maximum": 60000,
+          "description": "Interval for rotating between merged monitor targets in milliseconds (default: 10000ms)"
+        },
+        "gromacsHelper.monitor.targets": {
+          "type": "array",
+          "default": [
+            {
+              "id": "local-default",
+              "name": "Local",
+              "type": "local",
+              "independent": false
+            }
+          ],
+          "description": "Monitor target configurations (local or remote SSH)",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier for this monitor target"
+              },
+              "name": {
+                "type": "string",
+                "description": "Display name for this monitor target"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["local", "remote"],
+                "description": "Monitor type: 'local' for local processes, 'remote' for SSH"
+              },
+              "independent": {
+                "type": "boolean",
+                "default": false,
+                "description": "Show this monitor in a separate status bar item (default: false, merged with others)"
+              },
+              "sshHost": {
+                "type": "string",
+                "description": "SSH host for remote monitoring (format: user@hostname)"
+              },
+              "sshPort": {
+                "type": "number",
+                "default": 22,
+                "description": "SSH port for remote monitoring (default: 22)"
+              },
+              "sshKey": {
+                "type": "string",
+                "description": "Path to SSH private key file (optional)"
+              },
+              "scriptPath": {
+                "type": "string",
+                "default": "~/.vscode/gromacs_monitor.sh",
+                "description": "Path to monitor script on remote server (default: ~/.vscode/gromacs_monitor.sh)"
+              }
+            },
+            "required": ["id", "name", "type"]
+          }
         }
       }
     },
@@ -1227,6 +1302,18 @@
         "command": "gromacs-helper.openUnitConverter",
         "title": "Open Unit Converter",
         "icon": "$(calculator)",
+        "category": "GROMACS Helper"
+      },
+      {
+        "command": "gromacs-helper.addMonitorTarget",
+        "title": "Add GROMACS Monitor Target",
+        "icon": "$(add)",
+        "category": "GROMACS Helper"
+      },
+      {
+        "command": "gromacs-helper.manageMonitorTargets",
+        "title": "Manage GROMACS Monitor Targets",
+        "icon": "$(settings-gear)",
         "category": "GROMACS Helper"
       },
       {
