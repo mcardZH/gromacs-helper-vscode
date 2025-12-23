@@ -23,6 +23,9 @@ import { GromacsMonitorSupport } from './languages/monitor';
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "gromacs-helper-vscode" is now active!');
 
+	// 检查并显示欢迎/更新通知
+	showWelcomeOrUpdateNotification(context);
+
 	// 初始化颜色管理器并应用语言特定的颜色
 	const colorManager = ColorManager.getInstance();
 	colorManager.applyLanguageSpecificColors();
@@ -173,6 +176,103 @@ export function activate(context: vscode.ExtensionContext) {
 	const monitorSupport = new GromacsMonitorSupport();
 	monitorSupport.activate(context);
 
+}
+
+/**
+ * 检测语言环境并返回对应的通知文案
+ */
+function getLocalizedMessages(isChinese: boolean) {
+	if (isChinese) {
+		return {
+			welcome: '欢迎使用 GROMACS Helper！',
+			update: 'GROMACS Helper 已更新',
+			viewWelcome: '查看欢迎文档',
+			viewChangelog: '查看更新日志',
+			dontShowAgain: '不再显示'
+		};
+	} else {
+		return {
+			welcome: 'Welcome to GROMACS Helper!',
+			update: 'GROMACS Helper has been updated',
+			viewWelcome: 'View Welcome',
+			viewChangelog: 'View Changelog',
+			dontShowAgain: "Don't Show Again"
+		};
+	}
+}
+
+/**
+ * 显示欢迎或更新通知
+ */
+async function showWelcomeOrUpdateNotification(context: vscode.ExtensionContext) {
+	// 检查用户是否禁用了通知
+	const config = vscode.workspace.getConfiguration('gromacsHelper');
+	const disableNotifications = config.get<boolean>('disableWelcomeNotifications', false);
+	
+	if (disableNotifications) {
+		return;
+	}
+
+	// 获取当前版本和上次通知的版本
+	const currentVersion = context.extension.packageJSON.version;
+	const previousVersion = context.globalState.get<string>('extensionVersion');
+	const lastNotificationVersion = context.globalState.get<string>('lastNotificationVersion');
+
+	// 检测语言环境（模糊匹配中文）
+	const isChinese = vscode.env.language.toLowerCase().startsWith('zh');
+	const messages = getLocalizedMessages(isChinese);
+
+	// 确定文档文件名
+	const readmeFile = isChinese ? 'README_ZH.md' : 'README.md';
+	const changelogFile = 'CHANGELOG.md';
+
+	let shouldShowNotification = false;
+	let isFirstInstall = false;
+
+	if (!previousVersion) {
+		// 首次安装
+		shouldShowNotification = true;
+		isFirstInstall = true;
+	} else if (previousVersion !== currentVersion && lastNotificationVersion !== currentVersion) {
+		// 版本更新且未显示过当前版本的通知
+		shouldShowNotification = true;
+		isFirstInstall = false;
+	}
+
+	if (shouldShowNotification) {
+		const message = isFirstInstall ? messages.welcome : messages.update;
+		const primaryButton = isFirstInstall ? messages.viewWelcome : messages.viewChangelog;
+		
+		// GitHub 文档链接
+		const githubUrl = isFirstInstall
+			? (isChinese 
+				? 'https://github.com/mcardZH/gromacs-helper-vscode/blob/master/README_ZH.md'
+				: 'https://github.com/mcardZH/gromacs-helper-vscode/blob/master/README.md')
+			: 'https://github.com/mcardZH/gromacs-helper-vscode/blob/master/CHANGELOG.md';
+
+		// 显示通知
+		const result = await vscode.window.showInformationMessage(
+			message,
+			primaryButton,
+			messages.dontShowAgain
+		);
+
+		// 处理用户选择
+		if (result === primaryButton) {
+			// 在浏览器中打开 GitHub 链接
+			await vscode.env.openExternal(vscode.Uri.parse(githubUrl));
+		} else if (result === messages.dontShowAgain) {
+			// 用户选择不再显示
+			await config.update('disableWelcomeNotifications', true, vscode.ConfigurationTarget.Global);
+		}
+
+		// 更新版本信息（无论用户是否点击按钮）
+		await context.globalState.update('extensionVersion', currentVersion);
+		await context.globalState.update('lastNotificationVersion', currentVersion);
+	} else if (previousVersion !== currentVersion) {
+		// 版本更新了但已经显示过通知，只更新 extensionVersion
+		await context.globalState.update('extensionVersion', currentVersion);
+	}
 }
 
 // This method is called when your extension is deactivated

@@ -717,6 +717,11 @@
       "type": "object",
       "title": "GROMACS Helper",
       "properties": {
+        "gromacsHelper.disableWelcomeNotifications": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disable welcome and update notifications / 禁用欢迎和更新通知"
+        },
         "gromacsHelper.semanticHighlighting.enabled": {
           "type": "boolean",
           "default": true,
