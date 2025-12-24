@@ -41,7 +41,7 @@ export interface ProcessInfo {
  * 监控器基类 - 实现日志解析逻辑
  */
 abstract class BaseMonitor {
-    constructor(protected target: IMonitorTarget) {}
+    constructor(protected target: IMonitorTarget) { }
 
     /**
      * 检查进程状态（由子类实现）
@@ -66,7 +66,7 @@ abstract class BaseMonitor {
         const recentLines = lines.slice(-50);
 
         let lastLine = '';
-        
+
         for (let i = recentLines.length - 1; i >= 0; i--) {
             const line = recentLines[i].trim();
 
@@ -79,7 +79,7 @@ abstract class BaseMonitor {
                         const finishTime = new Date(timeStr);
                         const now = new Date();
                         const remaining = (finishTime.getTime() - now.getTime()) / 1000;
-                        
+
                         if (remaining > 0) {
                             result.remainingTime = remaining;
                             break;
@@ -100,20 +100,20 @@ abstract class BaseMonitor {
             }
 
             // 格式3: md.log 中的 "Step           Time" 格式
-            if (line.toLowerCase().includes('step') && 
-                line.toLowerCase().includes('time') && 
+            if (line.toLowerCase().includes('step') &&
+                line.toLowerCase().includes('time') &&
                 line.split(/\s+/).length <= 3) {
                 const parts = lastLine.split(/\s+/).filter(p => p.length > 0);
                 if (parts.length >= 2) {
                     try {
                         const step = parseInt(parts[0], 10);
                         const timePs = parseFloat(parts[1]);
-                        
+
                         if (!isNaN(step) && !isNaN(timePs) && step > 0 && timePs > 0) {
                             result.currentStep = step;
                             result.currentTimeNs = timePs / 1000.0; // ps -> ns
                         }
-                        
+
                         foundStepHeader = false;
                     } catch (e) {
                         // 解析失败
@@ -122,7 +122,7 @@ abstract class BaseMonitor {
             }
 
             // 格式4: "Remaining: xxx"
-            if (line.toLowerCase().includes('remaining') && 
+            if (line.toLowerCase().includes('remaining') &&
                 !line.toLowerCase().includes('wall clock')) {
                 const match = line.match(/remaining[:\s]+(\d+\.?\d*)/i);
                 if (match) {
@@ -188,14 +188,14 @@ export class LocalMonitor extends BaseMonitor {
         try {
             // 查找 gmx 进程
             const { stdout } = await execAsync('pgrep -x gmx', { timeout: 10000 });
-            
+
             if (!stdout.trim()) {
                 return info;
             }
 
             const pids = stdout.trim().split('\n');
             const pid = parseInt(pids[0]);
-            
+
             if (isNaN(pid)) {
                 return info;
             }
@@ -245,11 +245,11 @@ export class LocalMonitor extends BaseMonitor {
     private async findLogFile(pid: number, info: ProcessInfo): Promise<void> {
         try {
             const { stdout } = await execAsync(`lsof -p ${pid}`, { timeout: 10000 });
-            
+
             // 查找 .log 文件（写入模式）
             const lines = stdout.split('\n');
             const logFiles: string[] = [];
-            
+
             for (const line of lines) {
                 if (line.includes('.log') && (line.includes('w') || line.includes('u'))) {
                     const parts = line.split(/\s+/);
@@ -332,16 +332,16 @@ export class LocalMonitor extends BaseMonitor {
         try {
             const stat = await fs.promises.stat(logPath);
             const fileSize = stat.size;
-            
+
             // 读取最后 10KB
             const readSize = Math.min(10240, fileSize);
             const buffer = Buffer.alloc(readSize);
             const fd = await fs.promises.open(logPath, 'r');
-            
+
             try {
                 await fd.read(buffer, 0, readSize, Math.max(0, fileSize - readSize));
                 const content = buffer.toString('utf-8', 0, readSize);
-                
+
                 const parsed = this.parseLogContent(content);
                 Object.assign(info, parsed);
             } finally {
@@ -379,11 +379,11 @@ export class RemoteMonitor extends BaseMonitor {
         try {
             const scriptPath = this.target.scriptPath || '~/.vscode/gromacs_monitor.sh';
             const { stdout } = await this.executeSSH(`bash ${scriptPath}`, 15000);
-            
+
             // 解析 JSON 输出
             const data = JSON.parse(stdout);
             const processes = data.processes || [];
-            
+
             if (processes.length === 0) {
                 return info;
             }
@@ -427,10 +427,11 @@ export class RemoteMonitor extends BaseMonitor {
     private async deployScript(): Promise<void> {
         try {
             const scriptPath = this.target.scriptPath || '~/.vscode/gromacs_monitor.sh';
-            
+
             // 获取本地脚本路径
-            const localScript = path.join(__dirname, '../../gromacs_monitor.sh');
-            
+            // In webpack build, __dirname is the dist folder, and we copy scripts to dist/scripts
+            const localScript = path.join(__dirname, 'scripts', 'gromacs_monitor.sh');
+
             if (!fs.existsSync(localScript)) {
                 this.deploymentError = 'Local script not found';
                 return;
@@ -439,12 +440,12 @@ export class RemoteMonitor extends BaseMonitor {
             // 使用 scp 上传
             const scpArgs = this.buildScpArgs(localScript, scriptPath);
             const scpCmd = scpArgs.join(' ');
-            
+
             await execAsync(scpCmd, { timeout: 10000 });
-            
+
             // 设置执行权限
             await this.executeSSH(`chmod +x ${scriptPath}`, 5000);
-            
+
             this.scriptDeployed = true;
         } catch (error: any) {
             this.deploymentError = `Deploy failed: ${error.message?.substring(0, 30) || 'Unknown'}`;
@@ -456,15 +457,15 @@ export class RemoteMonitor extends BaseMonitor {
      */
     private buildScpArgs(localPath: string, remotePath: string): string[] {
         const args = ['scp'];
-        
+
         if (this.target.sshPort && this.target.sshPort !== 22) {
             args.push('-P', this.target.sshPort.toString());
         }
-        
+
         if (this.target.sshKey) {
             args.push('-i', this.target.sshKey);
         }
-        
+
         args.push(
             '-o', 'StrictHostKeyChecking=no',
             '-o', 'UserKnownHostsFile=/dev/null',
@@ -473,7 +474,7 @@ export class RemoteMonitor extends BaseMonitor {
             localPath,
             `${this.target.sshHost}:${remotePath}`
         );
-        
+
         return args;
     }
 
@@ -483,7 +484,7 @@ export class RemoteMonitor extends BaseMonitor {
     private async executeSSH(command: string, timeout: number): Promise<{ stdout: string; stderr: string }> {
         const args = this.buildSshArgs(command);
         const sshCmd = args.join(' ');
-        
+
         return execAsync(sshCmd, { timeout });
     }
 
@@ -492,15 +493,15 @@ export class RemoteMonitor extends BaseMonitor {
      */
     private buildSshArgs(command: string): string[] {
         const args = ['ssh'];
-        
+
         if (this.target.sshPort && this.target.sshPort !== 22) {
             args.push('-p', this.target.sshPort.toString());
         }
-        
+
         if (this.target.sshKey) {
             args.push('-i', this.target.sshKey);
         }
-        
+
         args.push(
             '-o', 'StrictHostKeyChecking=no',
             '-o', 'UserKnownHostsFile=/dev/null',
@@ -510,7 +511,7 @@ export class RemoteMonitor extends BaseMonitor {
             this.target.sshHost!,
             command
         );
-        
+
         return args;
     }
 }
@@ -604,7 +605,7 @@ export class GromacsMonitorOrchestrator implements vscode.Disposable {
         });
 
         await Promise.all(promises);
-        
+
         // 通知更新
         this.onUpdate(this.monitorInfo);
     }
@@ -628,7 +629,7 @@ export class GromacsMonitorOrchestrator implements vscode.Disposable {
         for (const monitor of this.monitors.values()) {
             monitor.dispose();
         }
-        
+
         this.monitors.clear();
         this.monitorInfo.clear();
 

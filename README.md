@@ -235,6 +235,18 @@ If you encounter issues, please report them in [GitHub Issues](https://github.co
 
 ## 🗂️ Changelog
 
+### [0.3.3] - 2025-12-24
+
+#### 🚀 Features & Fixes
+- **Optimized TOP Parsing**: Significantly improved performance for large topology files (O(N) single-pass algorithm).
+- **Fixed SSH Monitor**: Corrected the deployment path for the remote monitoring script.
+
+### [0.3.2] - 2025-12-24
+
+#### 🔧 Improvements
+- Improved MDP formatting with smarter alignment and indentation.
+- Added translations for MDP parameter hints.
+
 ### [0.3.0] - 2025-12-23
 
 #### ✨ Added

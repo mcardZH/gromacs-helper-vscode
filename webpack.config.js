@@ -47,6 +47,10 @@ const extensionConfig = {
         {
           from: 'media',
           to: 'media'
+        },
+        {
+          from: 'scripts',
+          to: 'scripts'
         }
       ]
     })
