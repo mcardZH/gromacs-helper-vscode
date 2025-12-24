@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "module": "ESNext",
+        "target": "ES2022",
+        "lib": [
+            "ES2022",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "jsx": "react-jsx",
+        "moduleResolution": "bundler",
+        "sourceMap": true,
+        "rootDir": "src",
+        "outDir": "dist/viewer",
+        "strict": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true
+    },
+    "include": [
+        "src/viewer/**/*"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

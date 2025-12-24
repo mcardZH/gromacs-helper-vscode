@@ -20,6 +20,7 @@ import { UnitConverterPanel } from './providers/unitConverter';
 import { ColorManager } from './providers/colorManager';
 import { GromacsMonitorSupport } from './languages/monitor';
 import { CommandsViewProvider } from './providers/commandsViewProvider';
+import { MolstarViewerPanel, MolstarViewerSerializer } from './providers/molstarViewerPanel';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "gromacs-helper-vscode" is now active!');
@@ -179,6 +180,32 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Initialize GROMACS Commands View
 	new CommandsViewProvider(context);
+
+	// Register Mol* Viewer command
+	const openMolstarViewerCommand = vscode.commands.registerCommand(
+		'gromacs-helper.openMolstarViewer',
+		async (uri?: vscode.Uri) => {
+			let targetUri = uri;
+			if (!targetUri && vscode.window.activeTextEditor) {
+				targetUri = vscode.window.activeTextEditor.document.uri;
+			}
+
+			if (targetUri) {
+				await MolstarViewerPanel.createOrShow(context.extensionUri, targetUri);
+			} else {
+				vscode.window.showErrorMessage('No molecular structure file selected');
+			}
+		}
+	);
+
+	// Register Mol* Viewer panel serializer for persistence
+	context.subscriptions.push(
+		openMolstarViewerCommand,
+		vscode.window.registerWebviewPanelSerializer(
+			MolstarViewerPanel.viewType,
+			new MolstarViewerSerializer(context.extensionUri)
+		)
+	);
 
 }
 
