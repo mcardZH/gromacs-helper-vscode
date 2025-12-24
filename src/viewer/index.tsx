@@ -117,6 +117,11 @@ function handleMessage(event: MessageEvent): void {
                 molstarFormat = 'mmcif';
             }
 
+            // Persist state immediately for panel serialization
+            if (message.fileUri) {
+                vscode.setState({ fileUri: message.fileUri });
+            }
+
             loadStructure(message.data, molstarFormat, message.filename)
                 .then(() => {
                     vscode.postMessage({ type: 'structureLoaded', filename: message.filename });

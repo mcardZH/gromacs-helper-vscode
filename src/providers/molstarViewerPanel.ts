@@ -8,14 +8,16 @@ import * as fs from 'fs';
  * Manages the webview panel for the Mol* molecular viewer.
  */
 export class MolstarViewerPanel {
-    public static currentPanel: MolstarViewerPanel | undefined;
+    // private static currentPanel: MolstarViewerPanel | undefined; // Removed singleton
+    private static readonly _panels: Map<string, MolstarViewerPanel> = new Map();
     public static readonly viewType = 'gromacs-helper.molstarViewer';
 
     private readonly _panel: vscode.WebviewPanel;
     private readonly _extensionUri: vscode.Uri;
+    private readonly _resourceUri?: vscode.Uri; // Keep track of the file this panel is for
     private _disposables: vscode.Disposable[] = [];
     private _isWebviewReady = false;
-    private _pendingStructure: { data: string; format: string; filename: string } | undefined;
+    private _pendingStructure: { data: string; format: string; filename: string; fileUri: string } | undefined;
 
     /**
      * Create or show the Mol* viewer panel
@@ -25,19 +27,24 @@ export class MolstarViewerPanel {
             ? vscode.window.activeTextEditor.viewColumn
             : undefined;
 
-        // If we already have a panel, reveal it
-        if (MolstarViewerPanel.currentPanel) {
-            MolstarViewerPanel.currentPanel._panel.reveal(column);
-            if (fileUri) {
-                await MolstarViewerPanel.currentPanel._loadFile(fileUri);
+        // If we have a fileUri, check if a panel already exists for it
+        if (fileUri) {
+            const existingPanel = MolstarViewerPanel._panels.get(fileUri.toString());
+            if (existingPanel) {
+                existingPanel._panel.reveal(column);
+                // Reload the file just in case content changed (optional, but consistent with previous behavior)
+                // await existingPanel._loadFile(fileUri); 
+                // Actually, duplicate load might be redundant if it's already open, but let's just reveal for now.
+                // If user wants to reload, they can close and open, or we can force reload.
+                // For now, let's just reveal to avoid flickering.
+                return;
             }
-            return;
         }
 
         // Create a new panel
         const panel = vscode.window.createWebviewPanel(
             MolstarViewerPanel.viewType,
-            'Mol* Viewer',
+            fileUri ? `Mol* - ${path.basename(fileUri.fsPath)}` : 'Mol* Viewer',
             column || vscode.ViewColumn.One,
             {
                 enableScripts: true,
@@ -49,23 +56,40 @@ export class MolstarViewerPanel {
             }
         );
 
-        MolstarViewerPanel.currentPanel = new MolstarViewerPanel(panel, extensionUri);
+        const viewerPanel = new MolstarViewerPanel(panel, extensionUri, fileUri);
 
         if (fileUri) {
-            await MolstarViewerPanel.currentPanel._loadFile(fileUri);
+            MolstarViewerPanel._panels.set(fileUri.toString(), viewerPanel);
+            await viewerPanel._loadFile(fileUri);
+        } else {
+            // Should we track panels without fileUri? maybe by a unique key or just don't track?
+            // If they are not tracked, they can't be found again by createOrShow, which is fine for "untitled" or generic usage.
+            // But we need to make sure they are disposed correctly.
         }
     }
 
     /**
      * Revive a panel from serialization
      */
-    public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri): void {
-        MolstarViewerPanel.currentPanel = new MolstarViewerPanel(panel, extensionUri);
+    public static async revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, fileUriString?: string): Promise<void> {
+        let fileUri: vscode.Uri | undefined;
+        if (fileUriString) {
+            fileUri = vscode.Uri.parse(fileUriString);
+        }
+
+        const viewerPanel = new MolstarViewerPanel(panel, extensionUri, fileUri);
+
+        if (fileUri) {
+            MolstarViewerPanel._panels.set(fileUri.toString(), viewerPanel);
+            // Reload the file to restore the structure
+            await viewerPanel._loadFile(fileUri);
+        }
     }
 
-    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, resourceUri?: vscode.Uri) {
         this._panel = panel;
         this._extensionUri = extensionUri;
+        this._resourceUri = resourceUri;
 
         // Set the webview HTML content
         this._panel.webview.html = this._getHtmlForWebview();
@@ -81,11 +105,17 @@ export class MolstarViewerPanel {
         );
     }
 
+    // Note: state is now set directly in webview when loadStructure is received
+
     /**
      * Dispose the panel
      */
     public dispose(): void {
-        MolstarViewerPanel.currentPanel = undefined;
+        // MolstarViewerPanel.currentPanel = undefined; // Removed singleton
+
+        if (this._resourceUri) {
+            MolstarViewerPanel._panels.delete(this._resourceUri.toString());
+        }
 
         this._panel.dispose();
 
@@ -125,16 +155,17 @@ export class MolstarViewerPanel {
 
             // Store pending structure if webview isn't ready
             if (!this._isWebviewReady) {
-                this._pendingStructure = { data, format, filename };
+                this._pendingStructure = { data, format, filename, fileUri: fileUri.toString() };
                 return;
             }
 
-            // Send to webview
+            // Send to webview (include fileUri for state persistence)
             this._panel.webview.postMessage({
                 type: 'loadStructure',
                 data,
                 format,
-                filename
+                filename,
+                fileUri: fileUri.toString()
             });
 
             // Update panel title
@@ -245,7 +276,7 @@ export class MolstarViewerPanel {
 export class MolstarViewerSerializer implements vscode.WebviewPanelSerializer {
     constructor(private readonly _extensionUri: vscode.Uri) { }
 
-    async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, _state: unknown): Promise<void> {
+    async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: { fileUri?: string } | unknown): Promise<void> {
         // Reconfigure webview options for the restored panel
         webviewPanel.webview.options = {
             enableScripts: true,
@@ -255,6 +286,8 @@ export class MolstarViewerSerializer implements vscode.WebviewPanelSerializer {
             ]
         };
 
-        MolstarViewerPanel.revive(webviewPanel, this._extensionUri);
+        // Extract fileUri from persisted state
+        const fileUriString = (state as { fileUri?: string })?.fileUri;
+        await MolstarViewerPanel.revive(webviewPanel, this._extensionUri, fileUriString);
     }
 }
