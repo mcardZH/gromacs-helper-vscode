@@ -16,14 +16,14 @@
             "@ legend 0.78, 0.8",
             "@ legend length 2",
             "@ s0 legend \"${4:Series 1}\"",
-            "$0"
+            "${0}"
         ],
         "description": "Insert XVG file header template"
     },
     "XVG Data Point": {
         "prefix": "xvg-data",
         "body": [
-            "${1:0.000}    ${2:0.000}$0"
+            "${1:0.000}    ${2:0.000}${0}"
         ],
         "description": "Insert XVG data point"
     },
@@ -33,7 +33,7 @@
             "@ s0 legend \"${1:Series 1}\"",
             "@ s1 legend \"${2:Series 2}\"",
             "@ s2 legend \"${3:Series 3}\"",
-            "$0"
+            "${0}"
         ],
         "description": "Insert multiple data series legends"
     }

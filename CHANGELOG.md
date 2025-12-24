@@ -2,6 +2,28 @@
 
 本文档记录了GROMACS Helper for VS Code扩展的所有重要更改。
 
+## [0.3.4] - 2025-12-24
+
+### 新增
+
+- 🎯 **GROMACS 命令视图** - 全新的命令管理和执行系统
+  - 新增 Activity Bar 中的 "GROMACS Commands" 视图容器
+  - 支持命令分组管理（Structure Preparation、Simulation、Analysis 等）
+  - 智能占位符系统：
+    - `{pdb|gro}` - 自动搜索并选择 .pdb 或 .gro 文件
+    - `{output.gro}` - 提示输入输出文件名
+    - `{basename}` - 提示输入基本名称（不含扩展名）
+  - 文件选择自动使用相对路径，避免路径错误
+  - 命令执行后自动发送到专用 "GROMACS" 终端
+  - 支持添加、编辑、删除自定义命令和命令组
+  - 内置常用 GROMACS 命令模板（pdb2gmx、editconf、solvate、grompp、mdrun 等）
+  - 右键菜单和内联按钮快速执行命令
+
+### 改进
+
+- 优化命令执行体验，支持多种占位符类型
+- 改进文件搜索和选择流程，支持手动输入文件名
+
 ## [0.3.3] - 2025-12-24
 
 ### 优化

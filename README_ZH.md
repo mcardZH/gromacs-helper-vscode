@@ -66,6 +66,19 @@
   - 🚀 **开箱即用**：默认启用本地监控，无需配置即可使用
   - 🛠️ **交互式向导**：通过命令面板快速添加和管理监控目标
 
+### 🎯 GROMACS 命令视图
+- **可视化命令管理** - 在侧边栏管理和执行 GROMACS 命令
+  - 📂 **分组管理**：命令按类别组织（Structure Preparation、Simulation、Analysis 等）
+  - 🔍 **智能占位符**：
+    - `{pdb|gro}` - 自动搜索工作区中的 .pdb 或 .gro 文件供选择
+    - `{output.gro}` - 提示输入输出文件名
+    - `{basename}` - 提示输入基本名称（不含扩展名）
+  - 📁 **相对路径**：文件选择自动使用相对路径，避免路径错误
+  - 💻 **终端执行**：命令自动发送到专用 "GROMACS" 终端
+  - ✏️ **自定义命令**：支持添加、编辑、删除自定义命令和命令组
+  - 🚀 **快速执行**：点击命令或使用内联按钮快速执行
+  - 📋 **内置模板**：预置常用命令（pdb2gmx、editconf、solvate、grompp、mdrun、energy、rms 等）
+
 ### 📝 代码片段
 - 常用 MDP 配置模板
 - 一键生成标准模拟流程配置
@@ -348,6 +361,18 @@ npm run package
 如发现问题，请在 [GitHub Issues](https://github.com/mcardzh/gromacs-helper-vscode/issues) 中报告。
 
 ## 🗂️ 更新日志
+
+### [0.3.4] - 2025-12-24
+
+#### ✨ 新增
+- 🎯 **GROMACS 命令视图** - 全新的命令管理和执行系统
+  - 新增 Activity Bar 中的 "GROMACS Commands" 视图容器
+  - 支持命令分组管理（Structure Preparation、Simulation、Analysis 等）
+  - 智能占位符系统（`{pdb|gro}`, `{output.gro}`, `{basename}`）
+  - 文件选择自动使用相对路径
+  - 命令执行后自动发送到专用 "GROMACS" 终端
+  - 支持添加、编辑、删除自定义命令和命令组
+  - 内置常用 GROMACS 命令模板
 
 ### [0.3.3] - 2025-12-24
 

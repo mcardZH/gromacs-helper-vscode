@@ -12,7 +12,7 @@
       "  number ${6:100}",
       "  inside ${7:sphere 0. 0. 0. 20.}",
       "end structure",
-      "$0"
+      "${0}"
     ],
     "description": "Basic Packmol input file template"
   },
@@ -23,7 +23,7 @@
       "  number ${2:100}",
       "  ${3:inside sphere 0. 0. 0. 20.}",
       "end structure",
-      "$0"
+      "${0}"
     ],
     "description": "Packmol structure block"
   },
@@ -110,7 +110,7 @@
       "  number ${6:1000}",
       "  inside box ${7:0.} ${8:0.} ${9:0.} ${10:30.} ${11:30.} ${12:30.}",
       "end structure",
-      "$0"
+      "${0}"
     ],
     "description": "Water box setup template"
   },
@@ -140,7 +140,7 @@
       "  number ${22:2000}",
       "  inside box ${23:0.} ${24:0.} ${25:30.} ${26:64.} ${27:64.} ${28:80.}",
       "end structure",
-      "$0"
+      "${0}"
     ],
     "description": "Membrane system template"
   },
@@ -174,7 +174,7 @@
       "  outside sphere ${29:0.} ${30:0.} ${31:0.} ${32:15.}",
       "  mindistance ${33:5.0}",
       "end structure",
-      "$0"
+      "${0}"
     ],
     "description": "Protein in water template"
   }

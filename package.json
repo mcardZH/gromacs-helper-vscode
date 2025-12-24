@@ -2,7 +2,7 @@
   "name": "gromacs-helper-vscode",
   "displayName": "GROMACS Helper for VS Code",
   "description": "Complete language support for GROMACS molecular dynamics simulation files including MDP, TOP, GRO, NDX, PDB formats and PROPKA pKa results",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "publisher": "mcardzh",
   "author": {
     "name": "mcardzh"
@@ -1216,6 +1216,100 @@
               "type"
             ]
           }
+        },
+        "gromacsHelper.commands.groups": {
+          "type": "array",
+          "default": [
+            {
+              "name": "Structure Preparation",
+              "commands": [
+                {
+                  "name": "pdb2gmx",
+                  "command": "gmx pdb2gmx -f {pdb|gro} -o {output.gro} -water tip3p"
+                },
+                {
+                  "name": "editconf",
+                  "command": "gmx editconf -f {gro} -o {output.gro} -c -d 1.0 -bt cubic"
+                },
+                {
+                  "name": "solvate",
+                  "command": "gmx solvate -cp {gro} -cs spc216.gro -o {output.gro} -p {top}"
+                },
+                {
+                  "name": "genion",
+                  "command": "gmx genion -s {tpr} -o {output.gro} -p {top} -pname NA -nname CL -neutral"
+                }
+              ]
+            },
+            {
+              "name": "Simulation",
+              "commands": [
+                {
+                  "name": "grompp",
+                  "command": "gmx grompp -f {mdp} -c {gro} -p {top} -o {output.tpr}"
+                },
+                {
+                  "name": "mdrun",
+                  "command": "gmx mdrun -v -deffnm {basename}"
+                }
+              ]
+            },
+            {
+              "name": "Analysis",
+              "commands": [
+                {
+                  "name": "energy",
+                  "command": "gmx energy -f {edr} -o {output.xvg}"
+                },
+                {
+                  "name": "rms",
+                  "command": "gmx rms -s {tpr} -f {xtc|trr} -o {output.xvg}"
+                },
+                {
+                  "name": "rmsf",
+                  "command": "gmx rmsf -s {tpr} -f {xtc|trr} -o {output.xvg}"
+                },
+                {
+                  "name": "gyrate",
+                  "command": "gmx gyrate -s {tpr} -f {xtc|trr} -o {output.xvg}"
+                }
+              ]
+            }
+          ],
+          "description": "GROMACS command groups with placeholder support. Placeholders: {ext} for file selection, {ext1|ext2} for multiple extensions, {output.ext} for output file input, {basename} for base name input.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Group name"
+              },
+              "commands": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Command display name"
+                    },
+                    "command": {
+                      "type": "string",
+                      "description": "Command template with placeholders"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "command"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "name",
+              "commands"
+            ]
+          }
         }
       }
     },
@@ -1243,10 +1337,6 @@
       {
         "language": "packmol",
         "path": "./snippets/packmol.json"
-      },
-      {
-        "language": "gromacs_pka_file",
-        "path": "./snippets/pka.json"
       },
       {
         "language": "gromacs_pka_file",
@@ -1333,6 +1423,42 @@
         "title": "Toggle Semantic Highlighting",
         "icon": "$(eye)",
         "category": "GROMACS Helper"
+      },
+      {
+        "command": "gromacs-helper.executeCommand",
+        "title": "Execute Command",
+        "icon": "$(play)",
+        "category": "GROMACS Helper"
+      },
+      {
+        "command": "gromacs-helper.refreshCommands",
+        "title": "Refresh Commands",
+        "icon": "$(refresh)",
+        "category": "GROMACS Helper"
+      },
+      {
+        "command": "gromacs-helper.addCommandGroup",
+        "title": "Add Command Group",
+        "icon": "$(add)",
+        "category": "GROMACS Helper"
+      },
+      {
+        "command": "gromacs-helper.addCommand",
+        "title": "Add Command",
+        "icon": "$(add)",
+        "category": "GROMACS Helper"
+      },
+      {
+        "command": "gromacs-helper.editCommand",
+        "title": "Edit Command",
+        "icon": "$(edit)",
+        "category": "GROMACS Helper"
+      },
+      {
+        "command": "gromacs-helper.deleteCommand",
+        "title": "Delete",
+        "icon": "$(trash)",
+        "category": "GROMACS Helper"
       }
     ],
     "views": {
@@ -1352,6 +1478,13 @@
           "icon": "$(symbol-structure)",
           "when": "true"
         }
+      ],
+      "gromacs-commands": [
+        {
+          "id": "gromacsCommandsView",
+          "name": "Commands",
+          "icon": "$(terminal)"
+        }
       ]
     },
     "viewsContainers": {
@@ -1360,6 +1493,11 @@
           "id": "gromacs-preview",
           "title": "GROMACS Preview",
           "icon": "$(symbol-structure)"
+        },
+        {
+          "id": "gromacs-commands",
+          "title": "GROMACS Commands",
+          "icon": "$(terminal)"
         }
       ]
     },
@@ -1431,6 +1569,16 @@
           "command": "gromacs-helper.refreshSnippets",
           "when": "view == gromacsSnippets",
           "group": "navigation"
+        },
+        {
+          "command": "gromacs-helper.refreshCommands",
+          "when": "view == gromacsCommandsView",
+          "group": "navigation"
+        },
+        {
+          "command": "gromacs-helper.addCommandGroup",
+          "when": "view == gromacsCommandsView",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -1447,6 +1595,26 @@
         {
           "command": "gromacs-helper.deleteSnippetFromTree",
           "when": "view == gromacsSnippets && viewItem == snippet",
+          "group": "edit"
+        },
+        {
+          "command": "gromacs-helper.executeCommand",
+          "when": "view == gromacsCommandsView && viewItem == command",
+          "group": "inline"
+        },
+        {
+          "command": "gromacs-helper.addCommand",
+          "when": "view == gromacsCommandsView && viewItem == commandGroup",
+          "group": "inline"
+        },
+        {
+          "command": "gromacs-helper.editCommand",
+          "when": "view == gromacsCommandsView && viewItem == command",
+          "group": "edit"
+        },
+        {
+          "command": "gromacs-helper.deleteCommand",
+          "when": "view == gromacsCommandsView && (viewItem == command || viewItem == commandGroup)",
           "group": "edit"
         }
       ]

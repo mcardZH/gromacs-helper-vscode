@@ -19,6 +19,7 @@ import { ResidueHighlightingManager } from './providers/residueHighlightingManag
 import { UnitConverterPanel } from './providers/unitConverter';
 import { ColorManager } from './providers/colorManager';
 import { GromacsMonitorSupport } from './languages/monitor';
+import { CommandsViewProvider } from './providers/commandsViewProvider';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "gromacs-helper-vscode" is now active!');
@@ -80,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!targetUri && vscode.window.activeTextEditor) {
 			targetUri = vscode.window.activeTextEditor.document.uri;
 		}
-		
+
 		if (targetUri) {
 			// Update both the panel and the sidebar preview
 			await Promise.all([
@@ -109,7 +110,7 @@ export function activate(context: vscode.ExtensionContext) {
 			const selectedType = await vscode.window.showQuickPick(residueTypes, {
 				placeHolder: 'Select residue type to configure color'
 			});
-			
+
 			if (selectedType) {
 				const color = await vscode.window.showInputBox({
 					prompt: `Enter hex color for ${selectedType} (e.g., #FF6B6B)`,
@@ -120,7 +121,7 @@ export function activate(context: vscode.ExtensionContext) {
 						return null;
 					}
 				});
-				
+
 				if (color) {
 					await colorManager.setColor(selectedType as any, color);
 					vscode.window.showInformationMessage(`Color updated for ${selectedType}`);
@@ -136,7 +137,7 @@ export function activate(context: vscode.ExtensionContext) {
 				'Are you sure you want to reset all colors to default?',
 				'Yes', 'No'
 			);
-			
+
 			if (result === 'Yes') {
 				await colorManager.resetColorsToDefault();
 				vscode.window.showInformationMessage('Colors reset to default');
@@ -176,6 +177,9 @@ export function activate(context: vscode.ExtensionContext) {
 	const monitorSupport = new GromacsMonitorSupport();
 	monitorSupport.activate(context);
 
+	// Initialize GROMACS Commands View
+	new CommandsViewProvider(context);
+
 }
 
 /**
@@ -208,7 +212,7 @@ async function showWelcomeOrUpdateNotification(context: vscode.ExtensionContext)
 	// 检查用户是否禁用了通知
 	const config = vscode.workspace.getConfiguration('gromacsHelper');
 	const disableNotifications = config.get<boolean>('disableWelcomeNotifications', false);
-	
+
 	if (disableNotifications) {
 		return;
 	}
@@ -242,10 +246,10 @@ async function showWelcomeOrUpdateNotification(context: vscode.ExtensionContext)
 	if (shouldShowNotification) {
 		const message = isFirstInstall ? messages.welcome : messages.update;
 		const primaryButton = isFirstInstall ? messages.viewWelcome : messages.viewChangelog;
-		
+
 		// GitHub 文档链接
 		const githubUrl = isFirstInstall
-			? (isChinese 
+			? (isChinese
 				? 'https://github.com/mcardZH/gromacs-helper-vscode/blob/master/README_ZH.md'
 				: 'https://github.com/mcardZH/gromacs-helper-vscode/blob/master/README.md')
 			: 'https://github.com/mcardZH/gromacs-helper-vscode/blob/master/CHANGELOG.md';
@@ -276,4 +280,4 @@ async function showWelcomeOrUpdateNotification(context: vscode.ExtensionContext)
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }

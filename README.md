@@ -56,6 +56,19 @@ A comprehensive VS Code extension providing full support for GROMACS molecular d
   - Quick insertion from sidebar view or auto-completion
   - Built-in snippet manager with visual interface
 
+### 🎯 GROMACS Commands View
+- **Visual Command Management** - Manage and execute GROMACS commands from the sidebar
+  - 📂 **Grouped Organization**: Commands organized by category (Structure Preparation, Simulation, Analysis, etc.)
+  - 🔍 **Smart Placeholders**:
+    - `{pdb|gro}` - Auto-search and select .pdb or .gro files in workspace
+    - `{output.gro}` - Prompt for output filename
+    - `{basename}` - Prompt for base name (without extension)
+  - 📁 **Relative Paths**: File selection automatically uses relative paths to avoid path errors
+  - 💻 **Terminal Execution**: Commands automatically sent to dedicated "GROMACS" terminal
+  - ✏️ **Custom Commands**: Add, edit, delete custom commands and command groups
+  - 🚀 **Quick Execution**: Click commands or use inline buttons for fast execution
+  - 📋 **Built-in Templates**: Pre-configured common commands (pdb2gmx, editconf, solvate, grompp, mdrun, energy, rms, etc.)
+
 ### 🎯 Error Checking
 - Parameter syntax validation for MDP files
 - Value range checking with enhanced validation
@@ -234,6 +247,18 @@ npm run package
 If you encounter issues, please report them in [GitHub Issues](https://github.com/mcardzh/gromacs-helper-vscode/issues).
 
 ## 🗂️ Changelog
+
+### [0.3.4] - 2025-12-24
+
+#### ✨ Added
+- 🎯 **GROMACS Commands View** - New command management and execution system
+  - Added "GROMACS Commands" view container in Activity Bar
+  - Support for grouped command management (Structure Preparation, Simulation, Analysis, etc.)
+  - Smart placeholder system (`{pdb|gro}`, `{output.gro}`, `{basename}`)
+  - File selection automatically uses relative paths
+  - Commands automatically sent to dedicated "GROMACS" terminal
+  - Support for adding, editing, deleting custom commands and command groups
+  - Built-in common GROMACS command templates
 
 ### [0.3.3] - 2025-12-24
 
