@@ -1648,5 +1648,8 @@
     "typescript": "^5.4.5",
     "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "molstar": "^5.5.0"
   }
 }
