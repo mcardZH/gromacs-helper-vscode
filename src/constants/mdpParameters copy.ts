@@ -1133,8 +1133,7 @@ export const MDP_PARAMETERS: MdpParameter[] = [
   {
     name: 'pull-coord1-expression',
     type: 'real',
-    description: 'Mathematical expression to transform pull coordinates of lower indices to a new one. The pull coordinates are referred to as variables in the equation so that pull-coord1\s value becomes \'x1\', pull-coord2 value becomes \'x2\' etc. Time can also be used a variable, becoming \'t\'. Note that angular coordinates use units of radians in the expression. The mathematical expression are evaluated using muParser. Only relevant if pull-coord1-geometry=transformation.',
-    descriptionZh: '变换较低索引拉动坐标到新坐标的数学表达式。拉动坐标在方程中作为变量引用，因此 pull-coord1 的值变为 \'x1\'，pull-coord2 的值变为 \'x2\' 等。时间也可以用作变量，成为 \'t\'。注意角度坐标在表达式中使用弧度单位。数学表达式使用 muParser 评估。仅在 pull-coord1-geometry=transformation 时相关。',
+    description: 'Mathematical expression to transform pull coordinates of lower indices to a new one. The pull coordinates are referred to as variables in the equation so that pull-coord1\'s value becomes \'x1\', pull-coord2 value becomes \'x2\' etc. Time can also be used a variable, becoming \'t\'. Note that angular coordinates use units of radians in the expression. The mathematical expression are evaluated using muParser. Only relevant if pull-coord1-geometry=transformation.',
     unit: 'radian',
     category: 'com-pulling'
   },
@@ -1142,7 +1141,6 @@ export const MDP_PARAMETERS: MdpParameter[] = [
     name: 'pull-coord1-dx',
     type: 'string',
     description: 'Size of finite difference to use in numerical derivation of the pull coordinate with respect to other pull coordinates. The current implementation uses a simple first order finite difference method to perform derivation so that f\'(x) = (f(x+dx)-f(x))/dx Only relevant if pull-coord1-geometry=transformation.',
-    descriptionZh: '用于相对于其他拉动坐标的拉动坐标数值导数中使用的有限差分大小。当前实现使用简单的一阶有限差分方法进行导数，使得 f\'(x) = (f(x+dx)-f(x))/dx 仅在 pull-coord1-geometry=transformation 时相关。',
     defaultValue: '1e-9',
     category: 'com-pulling'
   },
@@ -1282,7 +1280,6 @@ export const MDP_PARAMETERS: MdpParameter[] = [
     name: 'awh-nbias',
     type: 'integer',
     description: 'The number of biases, each acting on its own coordinate. The following options should be specified for each bias although below only the options for bias number 1 is shown. Options for other bias indices are  obtained by replacing \'1\' by the bias index.',
-    descriptionZh: '偏差的数量，每个作用于自己的坐标。下面仅给出偏差 1 的选项，虽然对于其他偏差索引获得选项只需替换',
     defaultValue: '1',
     category: 'awh-adaptive-biasing'
   },
@@ -1382,7 +1379,6 @@ export const MDP_PARAMETERS: MdpParameter[] = [
     name: 'awh1-ndim',
     type: 'integer',
     description: 'Number of dimensions of the coordinate, each dimension maps to 1 pull coordinate. The following options should be specified for each such dimension. Below only the options for dimension number 1 is shown. Options for other dimension indices are obtained by replacing \'1\' by the dimension index.',
-    descriptionZh: '坐标的维度数量，每个维度映射到 1 个拉动坐标。下面仅给出维度 1 的选项。其他维度索引的选项通过替换获得',
     defaultValue: '1',
     unit: 'integer',
     category: 'awh-adaptive-biasing'
@@ -1913,7 +1909,6 @@ export const MDP_PARAMETERS: MdpParameter[] = [
     name: 'dhdl-print-energy',
     type: 'boolean',
     description: 'Include either the total or the potential energy in the dhdl file. Options are \'no\', \'potential\', or \'total\'. This information is needed for later free energy analysis if the states of interest are at different temperatures. If all states are at the same temperature, this information is not needed. \'potential\' is useful in case one is using mdrun -rerun to generate the dhdl.xvg file. When rerunning from an existing trajectory, the kinetic energy will often not be correct, and thus one must compute the residual free energy from the potential alone, with the kinetic energy component computed analytically.',
-    descriptionZh: '在 dhdl 文件中包括总能量还是势能。选项是',
     defaultValue: 'no',
     category: 'free-energy-calculations'
   },
@@ -2644,7 +2639,7 @@ export function getMdpParameter(name: string): MdpParameter | undefined {
   if (locale.startsWith('zh') && param.descriptionZh) {
     return {
       ...param,
-      description: param.descriptionZh + '\n\n' + param.description, // 同时保留英文描述以供参考
+      description: param.descriptionZh
     };
   }
   
