@@ -79,6 +79,11 @@ const viewerConfig = {
         hints: false,
         maxEntrypointSize: 5120000,
         maxAssetSize: 5120000
+    },
+    watchOptions: {
+        ignored: /node_modules/,
+        aggregateTimeout: 300,
+        poll: false
     }
 };
 
