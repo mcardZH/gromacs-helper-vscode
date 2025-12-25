@@ -1,0 +1,114 @@
+name: Scheduled Merge Prerelease to Master
+
+on:
+  # 每周一北京时间下午5点 (UTC 09:00) 自动触发
+  schedule:
+    - cron: '0 9 * * 1'
+  # 支持手动触发
+  workflow_dispatch:
+    inputs:
+      force_merge:
+        description: '强制创建PR（即使没有新提交）'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-and-merge:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 检查分支状态
+        id: check
+        run: |
+          # 确保两个分支都存在
+          git fetch origin master prerelease || true
+          
+          if ! git show-ref --verify --quiet refs/remotes/origin/prerelease; then
+            echo "⚠️ prerelease 分支不存在，跳过合并"
+            echo "should_merge=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # 获取分支间的差异提交数
+          AHEAD=$(git rev-list --count origin/master..origin/prerelease 2>/dev/null || echo "0")
+          echo "prerelease 分支领先 master $AHEAD 个提交"
+          
+          if [ "$AHEAD" = "0" ] && [ "${{ github.event.inputs.force_merge }}" != "true" ]; then
+            echo "ℹ️ prerelease 分支没有新提交，跳过合并"
+            echo "should_merge=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ 检测到需要合并的提交"
+            echo "should_merge=true" >> $GITHUB_OUTPUT
+            echo "commits_ahead=$AHEAD" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 检查是否可以自动合并
+        id: merge_check
+        if: steps.check.outputs.should_merge == 'true'
+        run: |
+          # 检查是否有冲突
+          git checkout master
+          if git merge --no-commit --no-ff origin/prerelease 2>/dev/null; then
+            echo "✅ 可以自动合并，无冲突"
+            echo "can_auto_merge=true" >> $GITHUB_OUTPUT
+            git merge --abort 2>/dev/null || true
+          else
+            echo "⚠️ 存在合并冲突，需要创建 PR 手动解决"
+            echo "can_auto_merge=false" >> $GITHUB_OUTPUT
+            git merge --abort 2>/dev/null || true
+          fi
+
+      - name: 创建 Pull Request
+        if: steps.check.outputs.should_merge == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: auto-merge/prerelease-to-master
+          base: master
+          title: "🔄 定时合并: prerelease → master"
+          body: |
+            ## 自动合并请求
+            
+            此 PR 由定时任务自动创建，将 `prerelease` 分支的更改合并到 `master` 分支。
+            
+            ### 📊 合并信息
+            - **触发时间**: ${{ github.event.schedule && '每周一 17:00 北京时间' || '手动触发' }}
+            - **提交数量**: ${{ steps.check.outputs.commits_ahead }} 个新提交
+            - **自动合并**: ${{ steps.merge_check.outputs.can_auto_merge == 'true' && '✅ 可以' || '⚠️ 存在冲突' }}
+            
+            ### 📋 变更内容
+            请查看下方的文件变更列表。
+            
+            ---
+            
+            ${{ steps.merge_check.outputs.can_auto_merge == 'true' && '> ✅ 此 PR 可以安全合并，请审核后点击合并按钮。' || '> ⚠️ 此 PR 存在合并冲突，请先解决冲突后再合并。' }}
+          labels: |
+            automated
+            merge
+          draft: ${{ steps.merge_check.outputs.can_auto_merge != 'true' }}
+
+      - name: 输出结果
+        run: |
+          echo "## 🔄 定时合并任务完成" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check.outputs.should_merge }}" = "true" ]; then
+            echo "✅ 已创建 Pull Request，等待审核合并" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ steps.merge_check.outputs.can_auto_merge }}" = "true" ]; then
+              echo "- 状态: 可以安全合并" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- 状态: ⚠️ 存在冲突，需要手动解决" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "ℹ️ prerelease 分支没有新提交，跳过本次合并" >> $GITHUB_STEP_SUMMARY
+          fi

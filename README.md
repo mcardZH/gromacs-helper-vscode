@@ -19,6 +19,7 @@ A comprehensive VS Code extension providing full support for GROMACS molecular d
 - **NDX Files** (`.ndx`) - Index group files
 - **PKA Files** (`.pka`) - PROPKA pKa prediction result files with comprehensive analysis support
 - **Packmol Files** (`.packmol`, `.inp`) - Packmol input files with syntax highlighting and structure preview
+- **Trajectory Files** (`.xtc`, `.trr`) - GROMACS trajectory files with Mol* 3D viewer and streaming support
 
 ### 💡 Intelligent Completion
 - Auto-completion for MDP parameters, including all GROMACS 2025.2 supported parameters
@@ -86,6 +87,7 @@ A comprehensive VS Code extension providing full support for GROMACS molecular d
 | XVG Data | `.xvg` | GROMACS plotting data files | Syntax highlighting, interactive chart preview, data analysis |
 | PKA Results | `.pka` | PROPKA pKa prediction files | Syntax highlighting, hover hints, symbol navigation, code folding |
 | Packmol | `.packmol`, `.inp` | Packmol input files | Syntax highlighting, structure preview, formatting, completion |
+| Trajectory | `.xtc`, `.trr` | GROMACS trajectory files | Mol* 3D viewer, streaming loading, multi-frame playback |
 
 ## 📦 Installation
 
@@ -207,6 +209,22 @@ See [Custom Snippets Guide](CUSTOM_SNIPPETS_GUIDE.md) for detailed usage instruc
 - **Quick Conversions**: Common reference tables and one-click conversion buttons
 - **Modern Interface**: WebView panel that adapts to your VS Code theme
 
+### 🎬 Mol* Trajectory Viewer
+- **3D Molecular Visualization**: Preview XTC and TRR trajectory files directly in VS Code using the Mol* library
+- **Streaming Trajectory Loading**: Efficiently load extra-large trajectory files with on-demand frame loading
+  - Significantly reduced memory usage by loading frames as needed
+  - Support for streaming remote trajectory files
+  - Automatic frame indexing for fast frame navigation
+  - Suitable for GB-level long-term simulation trajectories
+- **Multi-Panel Support**: Open multiple Mol* viewers simultaneously, each managed independently by file path
+- **State Persistence**: Viewer state is preserved across VS Code restarts
+
+**Usage:**
+1. Right-click on an `.xtc` or `.trr` file in the Explorer
+2. Select "Open with Mol* Viewer"
+3. Select or confirm the topology file (`.gro` or `.pdb`)
+4. Use the playback controls to navigate through trajectory frames
+
 ## ⚙️ Configuration Options
 
 The extension currently uses default configurations. More customization options will be added in future versions.
@@ -247,6 +265,24 @@ npm run package
 If you encounter issues, please report them in [GitHub Issues](https://github.com/mcardzh/gromacs-helper-vscode/issues).
 
 ## 🗂️ Changelog
+
+### [0.4.0] - 2025-12-25
+
+#### ✨ Added
+- 🎬 **Mol* Trajectory Viewer** - New molecular trajectory visualization system
+  - Support for previewing XTC and TRR trajectory files directly in VS Code
+  - Integrated Mol* molecular visualization library for professional 3D rendering
+  - Support for loading topology files (GRO, PDB) with trajectory files
+  - **Streaming Trajectory Loader** - Efficiently load extra-large trajectory files
+    - On-demand frame data loading to significantly reduce memory usage
+    - Support for streaming remote trajectory files
+    - Automatic frame indexing for fast frame navigation
+    - Suitable for GB-level long-term simulation trajectories
+  - Support for multiple Mol* viewers open simultaneously, independently managed by file path
+  - Viewer state persistence, automatically restored after restart
+
+#### 🔧 Improved
+- Optimized Webpack build configuration with watch mode for better development experience
 
 ### [0.3.4] - 2025-12-24
 

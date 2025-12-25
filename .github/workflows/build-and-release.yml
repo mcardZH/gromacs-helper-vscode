@@ -1,64 +1,52 @@
 name: Build and Release VS Code Extension
 
 on:
-  # 手动触发 - 支持版本号更新
+  # 手动触发 - 支持完整控制
   workflow_dispatch:
     inputs:
       version:
-        description: '版本号 (例如: 0.0.3, 0.1.0, 1.0.0-beta.1) - 可选，留空则使用当前版本号'
+        description: '版本号 (例如: 0.0.3, 0.1.0) - 留空则自动递增patch版本'
         required: false
         type: string
       release_type:
         description: '发布类型'
         required: true
-        default: 'prerelease'
+        default: 'auto'
         type: choice
         options:
-          - 'release'
-          - 'prerelease'
-          - 'draft'
-      update_version:
-        description: '是否更新版本号 (如果指定了新版本号)'
+          - 'auto'       # 根据分支自动判断
+          - 'release'    # 强制正式发布
+          - 'prerelease' # 强制预发布
+          - 'draft'      # 草稿
+      publish_marketplace:
+        description: '发布到VS Code Marketplace'
         required: true
         default: false
-        type: boolean
-      create_release:
-        description: '是否创建GitHub Release'
-        required: true
-        default: true
         type: boolean
       custom_release_notes:
-        description: '自定义发布说明 (可选，留空则自动从CHANGELOG.md读取)'
+        description: '自定义发布说明 (可选)'
         required: false
         type: string
-      auto_changelog:
-        description: '自动生成变更日志'
-        required: true
-        default: true
-        type: boolean
-      publish_marketplace:
-        description: '发布到VS Code Marketplace (仅在release类型时生效)'
-        required: true
-        default: false
-        type: boolean
 
-  # 自动触发 - 推送到main分支时自动构建（不更新版本号）
+  # 自动触发 - 推送到分支时
   push:
     branches:
-      - main
       - master
+      - main
+      - prerelease
     paths-ignore:
       - '**.md'
       - '.gitignore'
       - 'LICENSE'
+      - '.github/workflows/scheduled-merge.yml'
+      - '.github/workflows/pr-check.yml'
 
-  # Pull Request触发
+  # Pull Request 检查
   pull_request:
     branches:
-      - main
       - master
+      - main
 
-# 添加权限配置，确保可以创建 Release 和写入内容
 permissions:
   contents: write
   pull-requests: read
@@ -69,14 +57,19 @@ env:
   NODE_VERSION: '20'
 
 jobs:
+  # ============================================
+  # 构建任务
+  # ============================================
   build:
     runs-on: ubuntu-latest
     
     outputs:
       version: ${{ steps.version.outputs.version }}
-      vsix-name: ${{ steps.build.outputs.vsix-name }}
+      vsix_name: ${{ steps.build.outputs.vsix_name }}
       should_release: ${{ steps.version.outputs.should_release }}
-      version_updated: ${{ steps.version.outputs.version_updated }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+      publish_marketplace: ${{ steps.version.outputs.publish_marketplace }}
+      version_bumped: ${{ steps.version.outputs.version_bumped }}
       
     steps:
       - name: 检出代码
@@ -97,175 +90,190 @@ jobs:
       - name: 代码检查
         run: npm run lint
 
-      - name: 处理版本号
+      - name: 处理版本号和发布策略
         id: version
         run: |
+          set -e
+          
+          # 获取当前分支
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CURRENT_BRANCH="${{ github.base_ref }}"
+            echo "PR 目标分支: $CURRENT_BRANCH"
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "publish_marketplace=false" >> $GITHUB_OUTPUT
+            echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+            echo "version_bumped=false" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            CURRENT_BRANCH="${{ github.ref_name }}"
+          fi
+          
+          echo "当前分支: $CURRENT_BRANCH"
+          
+          # 读取当前版本
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "当前 package.json 版本: $CURRENT_VERSION"
+          
+          # 判断发布类型
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # 手动触发
-            CURRENT_VERSION=$(node -p "require('./package.json').version")
-            echo "当前package.json版本号: $CURRENT_VERSION"
-            
-            if [ -n "${{ github.event.inputs.version }}" ] && [ "${{ github.event.inputs.update_version }}" = "true" ]; then
-              # 用户提供了新版本号且选择更新
-              NEW_VERSION="${{ github.event.inputs.version }}"
-              echo "更新版本号到: $NEW_VERSION"
-              npm version $NEW_VERSION --no-git-tag-version
-              
-              # 配置git用户信息
-              git config --local user.email "action@github.com"
-              git config --local user.name "GitHub Action"
-              
-              # 提交版本更改
-              git add package.json
-              git commit -m "chore: bump version to $NEW_VERSION" || echo "No changes to commit"
-              git push origin ${{ github.ref_name }} || echo "No changes to push"
-              
-              echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-              echo "version_updated=true" >> $GITHUB_OUTPUT
-            elif [ -n "${{ github.event.inputs.version }}" ]; then
-              # 用户提供了版本号但不更新package.json (仅用于发布)
-              RELEASE_VERSION="${{ github.event.inputs.version }}"
-              echo "使用指定版本号进行发布 (不更新package.json): $RELEASE_VERSION"
-              echo "version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
-              echo "version_updated=false" >> $GITHUB_OUTPUT
-            else
-              # 使用当前版本号
-              echo "使用当前版本号进行发布: $CURRENT_VERSION"
-              echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-              echo "version_updated=false" >> $GITHUB_OUTPUT
-            fi
-            
-            echo "is_manual=true" >> $GITHUB_OUTPUT
-            echo "should_release=true" >> $GITHUB_OUTPUT
-          else
-            # 自动触发 - 检查版本号变化
-            CURRENT_VERSION=$(node -p "require('./package.json').version")
-            
-            # 获取上一次的版本号
-            PREVIOUS_VERSION=""
-            if [ "${{ github.event_name }}" = "push" ]; then
-              # 尝试从上一个提交获取版本号
-              git fetch origin ${{ github.ref_name }}
-              if git show HEAD~1:package.json > /dev/null 2>&1; then
-                PREVIOUS_VERSION=$(git show HEAD~1:package.json | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version" 2>/dev/null || echo "")
+            RELEASE_TYPE="${{ github.event.inputs.release_type }}"
+            if [ "$RELEASE_TYPE" = "auto" ]; then
+              if [ "$CURRENT_BRANCH" = "prerelease" ]; then
+                IS_PRERELEASE=true
+              else
+                IS_PRERELEASE=false
               fi
+            elif [ "$RELEASE_TYPE" = "prerelease" ]; then
+              IS_PRERELEASE=true
+            else
+              IS_PRERELEASE=false
+            fi
+            SHOULD_RELEASE=true
+            
+            # 检查是否发布到 Marketplace
+            if [ "${{ github.event.inputs.publish_marketplace }}" = "true" ] && [ "$IS_PRERELEASE" = "false" ]; then
+              PUBLISH_MARKETPLACE=true
+            else
+              PUBLISH_MARKETPLACE=false
+            fi
+          else
+            # 自动触发 - 根据分支判断
+            if [ "$CURRENT_BRANCH" = "prerelease" ]; then
+              IS_PRERELEASE=true
+              PUBLISH_MARKETPLACE=false
+            else
+              IS_PRERELEASE=false
+              PUBLISH_MARKETPLACE=true  # master 分支自动发布到 Marketplace
+            fi
+            SHOULD_RELEASE=true
+          fi
+          
+          echo "发布类型: $([ "$IS_PRERELEASE" = "true" ] && echo "预发布" || echo "正式发布")"
+          echo "发布到 Marketplace: $PUBLISH_MARKETPLACE"
+          
+          # 处理版本号
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            # 手动指定版本号
+            NEW_VERSION="${{ github.event.inputs.version }}"
+            VERSION_BUMPED=true
+            echo "使用手动指定的版本号: $NEW_VERSION"
+          else
+            # 检查版本号是否已经更新
+            PREVIOUS_VERSION=""
+            if git show HEAD~1:package.json > /dev/null 2>&1; then
+              PREVIOUS_VERSION=$(git show HEAD~1:package.json | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version" 2>/dev/null || echo "")
             fi
             
-            echo "当前版本: $CURRENT_VERSION"
-            echo "上一个版本: $PREVIOUS_VERSION"
+            echo "上一个版本: ${PREVIOUS_VERSION:-'无法获取'}"
             
-            # 检查版本是否变化
             if [ -n "$PREVIOUS_VERSION" ] && [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
-              echo "✅ 检测到版本号变化: $PREVIOUS_VERSION → $CURRENT_VERSION"
-              echo "将执行完整的发布流程..."
-              echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-              echo "is_manual=false" >> $GITHUB_OUTPUT
-              echo "should_release=true" >> $GITHUB_OUTPUT
-              echo "version_changed=true" >> $GITHUB_OUTPUT
-              echo "version_updated=false" >> $GITHUB_OUTPUT
+              # 版本已更新
+              NEW_VERSION="$CURRENT_VERSION"
+              VERSION_BUMPED=false
+              echo "✅ 检测到版本已更新: $PREVIOUS_VERSION → $CURRENT_VERSION"
             else
-              echo "ℹ️  版本号未变化，执行普通构建..."
-              BUILD_NUMBER=${{ github.run_number }}
-              VERSION_WITH_BUILD="${CURRENT_VERSION}+build.${BUILD_NUMBER}"
-              echo "构建版本: $VERSION_WITH_BUILD"
-              echo "version=$VERSION_WITH_BUILD" >> $GITHUB_OUTPUT
-              echo "is_manual=false" >> $GITHUB_OUTPUT
-              echo "should_release=false" >> $GITHUB_OUTPUT
-              echo "version_changed=false" >> $GITHUB_OUTPUT
-              echo "version_updated=false" >> $GITHUB_OUTPUT
+              # 版本未更新，自动递增 patch
+              echo "⚠️ 版本未更新，自动递增 patch 版本..."
+              
+              # 解析版本号
+              MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+              MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+              PATCH=$(echo $CURRENT_VERSION | cut -d. -f3 | cut -d- -f1)
+              
+              # 递增 patch
+              NEW_PATCH=$((PATCH + 1))
+              
+              if [ "$IS_PRERELEASE" = "true" ]; then
+                # 预发布版本添加后缀
+                NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}-pre.${{ github.run_number }}"
+              else
+                NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+              fi
+              
+              VERSION_BUMPED=true
+              echo "自动递增版本: $CURRENT_VERSION → $NEW_VERSION"
             fi
           fi
+          
+          # 如果需要更新版本号，提交到仓库
+          if [ "$VERSION_BUMPED" = "true" ]; then
+            echo "📝 更新 package.json 版本号..."
+            npm version $NEW_VERSION --no-git-tag-version
+            
+            # 配置 git
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            
+            # 提交版本更新
+            git add package.json package-lock.json
+            git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+            git push origin $CURRENT_BRANCH
+            
+            echo "✅ 版本号已更新并推送"
+          fi
+          
+          # 输出变量
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "should_release=$SHOULD_RELEASE" >> $GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+          echo "publish_marketplace=$PUBLISH_MARKETPLACE" >> $GITHUB_OUTPUT
+          echo "version_bumped=$VERSION_BUMPED" >> $GITHUB_OUTPUT
 
       - name: 编译项目
         run: npm run compile
 
-      - name: 运行测试
+      - name: 验证构建
         run: |
-          if [ -f "package.json" ] && npm run | grep -q "test"; then
-            echo "验证构建产物..."
-            # 基本构建验证 - 不需要启动 VS Code
-            node -e "
-              const assert = require('assert');
-              const fs = require('fs');
-              
-              console.log('🔍 验证 package.json...');
-              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-              assert.ok(pkg.name, 'Package name should exist');
-              assert.ok(pkg.version, 'Package version should exist');
-              assert.ok(pkg.engines.vscode, 'VS Code engine should be specified');
-              
-              console.log('🔍 验证编译产物...');
-              assert.ok(fs.existsSync('dist/extension.js'), 'Compiled extension should exist');
-              
-              console.log('🔍 验证语言配置文件...');
-              const languageFiles = [
-                'syntaxes/mdp/mdp.tmLanguage.json',
-                'syntaxes/gro/gro.tmLanguage.json', 
-                'syntaxes/top/top.tmLanguage.json',
-                'syntaxes/ndx/ndx.tmLanguage.json'
-              ];
-              languageFiles.forEach(file => {
-                assert.ok(fs.existsSync(file), \`Language file \${file} should exist\`);
-              });
-              
-              console.log('🔍 验证代码片段文件...');
-              const snippetFiles = ['snippets/mdp.json', 'snippets/gro.json', 'snippets/ndx.json'];
-              snippetFiles.forEach(file => {
-                assert.ok(fs.existsSync(file), \`Snippet file \${file} should exist\`);
-                JSON.parse(fs.readFileSync(file, 'utf8')); // 验证 JSON 格式
-              });
-              
-              console.log('✅ 所有构建验证通过！');
-            "
+          echo "🔍 验证构建产物..."
+          node -e "
+            const assert = require('assert');
+            const fs = require('fs');
             
-            echo "注意: VS Code 扩展功能测试在 CI 环境中被跳过"
-            echo "完整的扩展测试请在本地开发环境中运行: npm test"
-          else
-            echo "跳过测试 - 未配置测试命令"
-          fi
+            console.log('验证 package.json...');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            assert.ok(pkg.name, 'Package name should exist');
+            assert.ok(pkg.version, 'Package version should exist');
+            assert.ok(pkg.engines.vscode, 'VS Code engine should be specified');
+            
+            console.log('验证编译产物...');
+            assert.ok(fs.existsSync('dist/extension.js'), 'Compiled extension should exist');
+            
+            console.log('验证语言配置文件...');
+            const languageFiles = [
+              'syntaxes/mdp/mdp.tmLanguage.json',
+              'syntaxes/gro/gro.tmLanguage.json', 
+              'syntaxes/top/top.tmLanguage.json',
+              'syntaxes/ndx/ndx.tmLanguage.json'
+            ];
+            languageFiles.forEach(file => {
+              assert.ok(fs.existsSync(file), \`Language file \${file} should exist\`);
+            });
+            
+            console.log('✅ 所有构建验证通过！');
+          "
 
       - name: 打包扩展
         id: build
         run: |
-          # 安装vsce如果没有
-          if ! command -v vsce &> /dev/null; then
-            npm install -g @vscode/vsce
-          fi
+          # 安装 vsce
+          npm install -g @vscode/vsce
           
-          # 获取要使用的版本号
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          TARGET_VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "打包版本: $VERSION"
           
-          echo "Package.json版本: $PACKAGE_VERSION"
-          echo "目标发布版本: $TARGET_VERSION"
-          
-          # 打包扩展
-          if [ "${{ steps.version.outputs.should_release }}" = "true" ]; then
-            if [ "$PACKAGE_VERSION" = "$TARGET_VERSION" ]; then
-              # 版本号一致，直接使用package.json版本
-              vsce package
-              VSIX_FILE=$(ls *.vsix | head -n 1)
-            else
-              # 版本号不一致，使用指定版本号打包
-              vsce package --out "gromacs-helper-vscode-${TARGET_VERSION}.vsix"
-              VSIX_FILE="gromacs-helper-vscode-${TARGET_VERSION}.vsix"
-            fi
+          # 打包
+          if [ "${{ steps.version.outputs.is_prerelease }}" = "true" ]; then
+            vsce package --pre-release --out "gromacs-helper-vscode-${VERSION}.vsix"
           else
-            # 普通构建 - 使用带构建号的版本
-            vsce package --out "gromacs-helper-vscode-${{ steps.version.outputs.version }}.vsix"
-            VSIX_FILE="gromacs-helper-vscode-${{ steps.version.outputs.version }}.vsix"
+            vsce package --out "gromacs-helper-vscode-${VERSION}.vsix"
           fi
           
-          echo "生成的VSIX文件: $VSIX_FILE"
-          echo "vsix-name=$VSIX_FILE" >> $GITHUB_OUTPUT
+          VSIX_FILE="gromacs-helper-vscode-${VERSION}.vsix"
+          echo "生成的 VSIX 文件: $VSIX_FILE"
+          echo "vsix_name=$VSIX_FILE" >> $GITHUB_OUTPUT
           
-          # 验证文件存在
-          if [ ! -f "$VSIX_FILE" ]; then
-            echo "错误: VSIX文件未生成"
-            exit 1
-          fi
-          
-          # 显示文件信息
           ls -la *.vsix
 
       - name: 上传构建产物
@@ -275,10 +283,13 @@ jobs:
           path: "*.vsix"
           retention-days: 30
 
+  # ============================================
+  # 发布任务
+  # ============================================
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: needs.build.outputs.should_release == 'true'
+    if: needs.build.outputs.should_release == 'true' && github.event_name != 'pull_request'
     
     steps:
       - name: 检出代码
@@ -293,188 +304,101 @@ jobs:
         id: release_notes
         run: |
           VERSION="${{ needs.build.outputs.version }}"
-          VSIX_FILE="${{ needs.build.outputs.vsix-name }}"
+          VSIX_FILE="${{ needs.build.outputs.vsix_name }}"
+          IS_PRERELEASE="${{ needs.build.outputs.is_prerelease }}"
           
-          # 生成基础发布说明模板
-          cat > release_notes_template.md << 'EOF'
+          # 生成发布说明模板
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            RELEASE_BADGE="🧪 **预发布版本** - 此版本用于测试，可能包含未完成的功能"
+          else
+            RELEASE_BADGE="🎉 **正式发布版本**"
+          fi
+          
+          cat > release_notes.md << EOF
           # GROMACS Helper for VS Code v${VERSION}
           
+          ${RELEASE_BADGE}
+          
           ## 📦 安装方式
-
+          
           ### 方式一：通过VS Code扩展市场安装
           1. 打开 VS Code
-          2. 按 `Ctrl+Shift+X` (macOS: `Cmd+Shift+X`)
-          3. 搜索 "GROMACS Helper for VS Code"（[市场链接](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode)）
+          2. 按 \`Ctrl+Shift+X\` (macOS: \`Cmd+Shift+X\`)
+          3. 搜索 "GROMACS Helper for VS Code"
           4. 点击安装按钮
           
           ### 方法二：从VSIX文件安装
-          1. 下载附件中的 `${VSIX_FILE}` 文件
-          2. 在VS Code中按 `Ctrl+Shift+P` (macOS: `Cmd+Shift+P`)
+          1. 下载附件中的 \`${VSIX_FILE}\` 文件
+          2. 在VS Code中按 \`Ctrl+Shift+P\` (macOS: \`Cmd+Shift+P\`)
           3. 输入 "Extensions: Install from VSIX..."
           4. 选择下载的VSIX文件进行安装
           
           ### 方法三：命令行安装
-          ```bash
+          \`\`\`bash
           code --install-extension ${VSIX_FILE}
-          ```
+          \`\`\`
           
-          ## 🚀 功能特性
-          
-          - 📝 **语法高亮**: 完整支持MDP、TOP、GRO、NDX、PDB、XVG文件格式
-          - 🔍 **智能提示**: 参数自动补全和悬停帮助
-          - 📋 **代码片段**: 常用模板快速插入
-          - 🎯 **符号导航**: 快速跳转和大纲视图
-          - 📐 **代码格式化**: 自动格式化支持
-          - 🔧 **诊断功能**: 实时错误检查和建议
-          
-          ## 🔧 支持的文件类型
-          
-          - **MDP文件** (.mdp) - 分子动力学参数文件
-          - **TOP文件** (.top, .itp) - 拓扑文件
-          - **GRO、PDB文件** (.gro, .pdb) - 结构坐标文件  
-          - **XVG文件** (.xvg) - 数据图标文件  
-          - **NDX文件** (.ndx) - 索引文件
           EOF
           
-          # 替换模板中的变量
-          sed -i "s/\${VERSION}/$VERSION/g" release_notes_template.md
-          sed -i "s/\${VSIX_FILE}/$VSIX_FILE/g" release_notes_template.md
-          
-          # 处理发布说明内容
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.custom_release_notes }}" ]; then
-            echo "使用自定义发布说明..."
-            echo "${{ github.event.inputs.custom_release_notes }}" > custom_notes.md
-            echo "" >> custom_notes.md
-            cat release_notes_template.md >> custom_notes.md
-            cp custom_notes.md release_notes.md
-          elif [ -f "CHANGELOG.md" ] && ([ "${{ github.event_name }}" != "workflow_dispatch" ] || [ "${{ github.event.inputs.auto_changelog }}" = "true" ]); then
-            echo "从 CHANGELOG.md 提取发布说明..."
+          # 尝试从 CHANGELOG.md 提取内容
+          if [ -f "CHANGELOG.md" ]; then
+            VERSION_CLEAN=$(echo "$VERSION" | sed 's/^v//' | sed 's/-pre\..*//')
+            echo "查找版本: $VERSION_CLEAN"
             
-            # 尝试提取当前版本的变更日志
-            VERSION_CLEAN=$(echo "$VERSION" | sed 's/^v//')
-            echo "正在查找版本: $VERSION_CLEAN"
+            CHANGELOG_CONTENT=$(awk "
+              /^## \\[${VERSION_CLEAN}\\]/ { found=1; next }
+              found && /^## \\[/ { exit }
+              found { print }
+            " CHANGELOG.md | head -50)
             
-            # 显示CHANGELOG.md中存在的版本号，用于调试
-            echo "CHANGELOG.md中的版本号:"
-            grep -E "^## \[" CHANGELOG.md | head -5 || echo "未找到版本号格式"
-            
-            # 查找版本标题的多种格式，使用更精确的匹配
-            CHANGELOG_CONTENT=""
-            
-            # 检查不同的版本号格式
-            if grep -q "^## \[${VERSION_CLEAN}\]" CHANGELOG.md; then
-              echo "找到格式: ## [${VERSION_CLEAN}]"
-              # 格式: ## [0.0.3] - 2024-01-01
-              CHANGELOG_CONTENT=$(awk "
-                /^## \[${VERSION_CLEAN}\]/ { found=1; print; next }
-                found && /^## \[/ { exit }
-                found { print }
-              " CHANGELOG.md)
-            elif grep -q "^## ${VERSION_CLEAN}" CHANGELOG.md; then
-              echo "找到格式: ## ${VERSION_CLEAN}"
-              # 格式: ## 0.0.3
-              CHANGELOG_CONTENT=$(awk "
-                /^## ${VERSION_CLEAN}/ { found=1; print; next }
-                found && /^## / { exit }
-                found { print }
-              " CHANGELOG.md)
-            elif grep -q "^# v${VERSION_CLEAN}" CHANGELOG.md; then
-              echo "找到格式: # v${VERSION_CLEAN}"
-              # 格式: # v0.0.3
-              CHANGELOG_CONTENT=$(awk "
-                /^# v${VERSION_CLEAN}/ { found=1; print; next }
-                found && /^# v/ { exit }
-                found { print }
-              " CHANGELOG.md)
-            elif grep -q "^### ${VERSION_CLEAN}" CHANGELOG.md; then
-              echo "找到格式: ### ${VERSION_CLEAN}"
-              # 格式: ### 0.0.3
-              CHANGELOG_CONTENT=$(awk "
-                /^### ${VERSION_CLEAN}/ { found=1; print; next }
-                found && /^### / { exit }
-                found { print }
-              " CHANGELOG.md)
-            fi
-            
-            # 清理内容，移除空行开头和结尾
             if [ -n "$CHANGELOG_CONTENT" ]; then
-              echo "成功提取到 $VERSION_CLEAN 的变更日志内容:"
-              echo "---内容预览---"
-              echo "$CHANGELOG_CONTENT" | head -10
-              echo "---预览结束---"
-              
-              # 保存变更日志内容
-              echo "## 📝 本版本更新" > version_changes.md
-              echo "" >> version_changes.md
-              # 跳过标题行，直接输出内容
-              echo "$CHANGELOG_CONTENT" | tail -n +2 | sed '/^$/d' >> version_changes.md
-              echo "" >> version_changes.md
-              cat version_changes.md release_notes_template.md > release_notes.md
-            else
-              echo "⚠️ 未找到版本 $VERSION_CLEAN 的变更日志"
-              echo "尝试的匹配模式:"
-              echo "  - ## [$VERSION_CLEAN]"
-              echo "  - ## $VERSION_CLEAN"
-              echo "  - # v$VERSION_CLEAN"
-              echo "  - ### $VERSION_CLEAN"
-              echo "使用默认模板"
-              cp release_notes_template.md release_notes.md
+              echo "" >> release_notes.md
+              echo "## 📝 本版本更新" >> release_notes.md
+              echo "" >> release_notes.md
+              echo "$CHANGELOG_CONTENT" >> release_notes.md
             fi
-          else
-            echo "使用默认发布说明模板..."
-            cp release_notes_template.md release_notes.md
           fi
           
-          # 添加结尾信息
+          # 添加自定义发布说明
+          if [ -n "${{ github.event.inputs.custom_release_notes }}" ]; then
+            echo "" >> release_notes.md
+            echo "## 📋 附加说明" >> release_notes.md
+            echo "" >> release_notes.md
+            echo "${{ github.event.inputs.custom_release_notes }}" >> release_notes.md
+          fi
+          
+          # 添加链接
           cat >> release_notes.md << 'EOF'
-          
-          ## 📝 完整更新日志
-          
-          请查看项目的 [更新日志](https://github.com/mcardzh/gromacs-helper-vscode/blob/master/CHANGELOG.md) 了解详细变更。
           
           ---
           
-          🐛 **问题反馈**: [GitHub Issues](https://github.com/mcardzh/gromacs-helper-vscode/issues)
-          📖 **使用文档**: [README](https://github.com/mcardzh/gromacs-helper-vscode#readme)
+          📖 [使用文档](https://github.com/mcardzh/gromacs-helper-vscode#readme) | 🐛 [问题反馈](https://github.com/mcardzh/gromacs-helper-vscode/issues) | 📝 [完整更新日志](https://github.com/mcardzh/gromacs-helper-vscode/blob/master/CHANGELOG.md)
           EOF
           
-          # 为自动发布添加特殊标记
-          if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
-            sed -i '1s/^/🤖 **自动发布** - 检测到版本号变化自动触发\n\n/' release_notes.md
-          fi
-          
           echo "生成的发布说明："
-          echo "=========================="
           cat release_notes.md
-          echo "=========================="
 
-      - name: 预览发布说明
-        run: |
-          echo "## 📋 发布说明预览" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```markdown' >> $GITHUB_STEP_SUMMARY
-          cat release_notes.md >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: 创建GitHub Release
+      - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.build.outputs.version }}
           name: "GROMACS Helper v${{ needs.build.outputs.version }}"
           body_path: release_notes.md
           files: "*.vsix"
-          draft: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_type == 'draft' }}
-          prerelease: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_type == 'prerelease' || github.event_name != 'workflow_dispatch' }}
+          draft: ${{ github.event.inputs.release_type == 'draft' }}
+          prerelease: ${{ needs.build.outputs.is_prerelease == 'true' }}
           generate_release_notes: true
           fail_on_unmatched_files: false
-          make_latest: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_type == 'release' || github.event_name != 'workflow_dispatch' }}
+          make_latest: ${{ needs.build.outputs.is_prerelease != 'true' }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  # 发布到VS Code Marketplace
+  # ============================================
+  # 发布到 VS Code Marketplace
+  # ============================================
   marketplace:
     needs: [build, release]
     runs-on: ubuntu-latest
-    if: needs.build.outputs.should_release == 'true' && (github.event_name != 'workflow_dispatch' || (github.event.inputs.publish_marketplace == 'true' && github.event.inputs.release_type == 'release'))
+    if: needs.build.outputs.publish_marketplace == 'true' && needs.build.outputs.is_prerelease != 'true'
     
     steps:
       - name: 检出代码
@@ -494,29 +418,23 @@ jobs:
         with:
           name: vsix-package-${{ needs.build.outputs.version }}
 
-      - name: 验证Marketplace Token
+      - name: 验证 Marketplace Token
         run: |
           if [ -z "${{ secrets.VSCE_PAT }}" ]; then
             echo "❌ 错误: 未配置 VSCE_PAT secret"
             echo "请在 GitHub 仓库设置中添加 VS Code Marketplace Personal Access Token"
-            echo "设置路径: Settings -> Secrets and variables -> Actions -> Repository secrets"
-            echo "Secret 名称: VSCE_PAT"
             exit 1
-          else
-            echo "✅ VSCE_PAT secret 已配置"
           fi
+          echo "✅ VSCE_PAT secret 已配置"
 
-      - name: 发布到Marketplace
+      - name: 发布到 Marketplace
         run: |
-          # 安装vsce
           npm install -g @vscode/vsce
           
-          echo "🚀 开始发布到 VS Code Marketplace..."
+          echo "🚀 发布到 VS Code Marketplace..."
           echo "版本: ${{ needs.build.outputs.version }}"
-          echo "VSIX文件: ${{ needs.build.outputs.vsix-name }}"
           
-          # 使用VSIX文件发布到marketplace
-          vsce publish --packagePath "${{ needs.build.outputs.vsix-name }}" --pat "${{ secrets.VSCE_PAT }}"
+          vsce publish --packagePath "${{ needs.build.outputs.vsix_name }}" --pat "${{ secrets.VSCE_PAT }}"
           
           echo "✅ 成功发布到 VS Code Marketplace!"
         env:
@@ -526,28 +444,14 @@ jobs:
         run: |
           echo "## 🎉 VS Code Marketplace 发布成功" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📋 发布信息" >> $GITHUB_STEP_SUMMARY
           echo "- **版本**: ${{ needs.build.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **VSIX文件**: ${{ needs.build.outputs.vsix-name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **发布时间**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔗 相关链接" >> $GITHUB_STEP_SUMMARY
-          echo "- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=$(node -p 'require(\"./package.json\").publisher').$(node -p 'require(\"./package.json\").name'))" >> $GITHUB_STEP_SUMMARY
-          echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/v${{ needs.build.outputs.version }})" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📥 用户安装方式" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "# 通过 VS Code 扩展市场安装" >> $GITHUB_STEP_SUMMARY
-          echo "# 1. 打开 VS Code" >> $GITHUB_STEP_SUMMARY
-          echo "# 2. 按 Ctrl+Shift+X (macOS: Cmd+Shift+X)" >> $GITHUB_STEP_SUMMARY
-          echo "# 3. 搜索 \"GROMACS Helper\"" >> $GITHUB_STEP_SUMMARY
-          echo "# 4. 点击安装" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "# 或通过命令行安装" >> $GITHUB_STEP_SUMMARY
-          echo "code --install-extension $(node -p 'require(\"./package.json\").publisher').$(node -p 'require(\"./package.json\").name')" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode)" >> $GITHUB_STEP_SUMMARY
 
-  # 自动构建总结
+  # ============================================
+  # 构建总结
+  # ============================================
   summary:
     needs: [build, release, marketplace]
     runs-on: ubuntu-latest
@@ -563,34 +467,8 @@ jobs:
           echo "| 触发方式 | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 分支 | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 版本 | ${{ needs.build.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| VSIX文件 | ${{ needs.build.outputs.vsix-name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 版本自动递增 | ${{ needs.build.outputs.version_bumped }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 预发布 | ${{ needs.build.outputs.is_prerelease }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 构建状态 | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Release状态 | ${{ needs.release.result || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Marketplace状态 | ${{ needs.marketplace.result || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 版本变化 | ${{ needs.build.outputs.version_updated || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 执行发布 | ${{ needs.build.outputs.should_release || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "### 📋 手动构建参数" >> $GITHUB_STEP_SUMMARY
-            echo "- **版本号**: ${{ github.event.inputs.version || '未指定 (使用当前版本)' }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **更新版本**: ${{ github.event.inputs.update_version }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **发布类型**: ${{ github.event.inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **创建Release**: ${{ github.event.inputs.create_release }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **自动变更日志**: ${{ github.event.inputs.auto_changelog }}" >> $GITHUB_STEP_SUMMARY
-            if [ -n "${{ github.event.inputs.custom_release_notes }}" ]; then
-              echo "- **自定义发布说明**: 是" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "- **自定义发布说明**: 否" >> $GITHUB_STEP_SUMMARY
-            fi
-            echo "- **发布到Marketplace**: ${{ github.event.inputs.publish_marketplace }}" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "### 🤖 自动构建信息" >> $GITHUB_STEP_SUMMARY
-            echo "- **构建号**: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **提交**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-            if [ "${{ needs.build.outputs.version_changed }}" = "true" ]; then
-              echo "- **版本变化**: ✅ 检测到版本号变化，自动执行发布流程" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "- **版本变化**: ❌ 未检测到版本号变化，仅执行构建" >> $GITHUB_STEP_SUMMARY
-            fi
-          fi
+          echo "| Release状态 | ${{ needs.release.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Marketplace状态 | ${{ needs.marketplace.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
