@@ -67,3 +67,88 @@ export async function loadTrajectory(ui: PluginUIContext, params: LoadTrajectory
 
     return { model, coords, preset };
 }
+
+export async function loadStreamingTrajectory(
+    ui: PluginUIContext,
+    params: {
+        topologyUrl: string;
+        topologyFormat: BuiltInTopologyFormat | BuiltInTrajectoryFormat;
+        topologyLabel?: string;
+        frameCount: number;
+        duration: number;
+        vscode: { postMessage(message: unknown): void; };
+    }
+) {
+    console.log('[loadStreamingTrajectory] Starting with params:', {
+        topologyFormat: params.topologyFormat,
+        frameCount: params.frameCount,
+        duration: params.duration
+    });
+
+    const plugin = ui;
+
+    // 1. Set global VS Code API for StreamingTrajectory
+    console.log('[loadStreamingTrajectory] Setting global VS Code API...');
+    const { setGlobalVsCodeApi, StreamingTrajectoryFromTopology } = await import('./trajectory');
+    setGlobalVsCodeApi(params.vscode);
+
+    // 2. Load and parse topology file
+    console.log('[loadStreamingTrajectory] Downloading topology file...');
+    const topologyData = await plugin.builders.data.download({
+        url: params.topologyUrl,
+        isBinary: false,
+        label: params.topologyLabel
+    });
+
+    let model: StateObjectSelector;
+
+    // Try as trajectory format first (GRO, PDB, etc.)
+    const trajectoryFormats: BuiltInTrajectoryFormat[] = ['gro', 'pdb', 'mmcif', 'mol', 'mol2', 'sdf'];
+    if (trajectoryFormats.includes(params.topologyFormat as BuiltInTrajectoryFormat)) {
+        console.log('[loadStreamingTrajectory] Parsing as trajectory format:', params.topologyFormat);
+        const trajectory = await plugin.builders.structure.parseTrajectory(
+            topologyData,
+            params.topologyFormat as BuiltInTrajectoryFormat
+        );
+        model = await plugin.builders.structure.createModel(trajectory);
+    } else {
+        console.log('[loadStreamingTrajectory] Parsing as topology format:', params.topologyFormat);
+        // Try as topology format (PSF, TOP, PRMTOP)
+        const provider = plugin.dataFormats.get(params.topologyFormat);
+        if (!provider) {
+            throw new Error(`Unsupported topology format: ${params.topologyFormat}`);
+        }
+        const parsed = await provider.parse(plugin, topologyData);
+        model = parsed.topology;
+    }
+
+    // 3. Get the representative Model from the topology (for logging)
+    console.log('[loadStreamingTrajectory] Getting representative model...');
+    const modelObj = model.data;
+    if (!modelObj) {
+        throw new Error('Failed to load topology model');
+    }
+    console.log('[loadStreamingTrajectory] Model loaded, atom count:', modelObj.atomicHierarchy.atoms._rowCount);
+
+    // 4. Create StreamingTrajectory using StateTransformer with dependsOn
+    console.log('[loadStreamingTrajectory] Creating streaming trajectory via StateTransformer...');
+    const trajectory = await plugin.build().toRoot()
+        .apply(StreamingTrajectoryFromTopology, {
+            modelRef: model.ref,
+            frameCount: params.frameCount,
+            duration: params.duration,
+        }, { dependsOn: [model.ref] })
+        .commit();
+
+    console.log('[loadStreamingTrajectory] Trajectory StateObject created');
+
+    // 5. Apply trajectory hierarchy preset (this creates Model -> Structure -> Representations)
+    console.log('[loadStreamingTrajectory] Applying trajectory hierarchy preset...');
+    const preset = await plugin.builders.structure.hierarchy.applyPreset(
+        trajectory,
+        'default'
+    );
+
+    console.log('[loadStreamingTrajectory] Complete!');
+    return { model, trajectory, preset };
+}

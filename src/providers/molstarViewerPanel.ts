@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { StreamingTrajectoryProvider } from '../util/stream_provider';
 
 /**
  * Mol* Viewer Panel Manager
@@ -28,6 +29,9 @@ export class MolstarViewerPanel {
         coordinatesFilename: string;
         fileUri: string;
     } | undefined;
+
+    // Streaming trajectory provider (for on-demand frame loading)
+    private _streamingProvider: StreamingTrajectoryProvider | undefined;
 
     // Trajectory file extensions
     private static readonly _trajectoryExtensions = ['.xtc', '.trr'];
@@ -254,6 +258,11 @@ export class MolstarViewerPanel {
             const trajectoryExt = path.extname(trajectoryUri.fsPath).toLowerCase();
             const trajectoryDir = path.dirname(trajectoryUri.fsPath);
 
+            // Check file size
+            const stats = await fs.promises.stat(trajectoryUri.fsPath);
+            const fileSizeMB = stats.size / (1024 * 1024);
+            const useStreaming = fileSizeMB > 50;
+
             // Ask user to select a topology file
             const topologyUri = await vscode.window.showOpenDialog({
                 canSelectFiles: true,
@@ -286,6 +295,26 @@ export class MolstarViewerPanel {
             if (!topologyFormat) {
                 vscode.window.showErrorMessage(`Unsupported topology format: ${topologyExt}. Please select a .gro or .pdb file.`);
                 return;
+            }
+
+            // If file is large, ask user whether to use streaming
+            if (useStreaming) {
+                const choice = await vscode.window.showInformationMessage(
+                    `Trajectory file is ${fileSizeMB.toFixed(1)} MB. Use streaming mode for better performance?`,
+                    { modal: true },
+                    'Use Streaming (Recommended)',
+                    'Load Normally'
+                );
+
+                if (choice === 'Use Streaming (Recommended)') {
+                    // Use streaming trajectory loader
+                    await this._loadStreamingTrajectory(trajectoryUri, selectedTopologyUri);
+                    return;
+                } else if (choice === undefined) {
+                    // User cancelled
+                    return;
+                }
+                // Otherwise, continue with normal loading
             }
 
             // Determine coordinates format
@@ -361,6 +390,11 @@ export class MolstarViewerPanel {
             const topologyFilename = path.basename(topologyUri.fsPath);
             const topologyExt = path.extname(topologyUri.fsPath).toLowerCase();
 
+            // Check file size
+            const stats = await fs.promises.stat(trajectoryUri.fsPath);
+            const fileSizeMB = stats.size / (1024 * 1024);
+            const useStreaming = fileSizeMB > 50;
+
             // Validate topology file format
             const topologyFormatMap: { [key: string]: string } = {
                 '.pdb': 'pdb',
@@ -371,6 +405,26 @@ export class MolstarViewerPanel {
             if (!topologyFormat) {
                 vscode.window.showErrorMessage(`Unsupported topology format: ${topologyExt}`);
                 return;
+            }
+
+            // If file is large, ask user whether to use streaming
+            if (useStreaming) {
+                const choice = await vscode.window.showInformationMessage(
+                    `Trajectory file is ${fileSizeMB.toFixed(1)} MB. Use streaming mode for better performance?`,
+                    { modal: true },
+                    'Use Streaming (Recommended)',
+                    'Load Normally'
+                );
+
+                if (choice === 'Use Streaming (Recommended)') {
+                    // Use streaming trajectory loader
+                    await this._loadStreamingTrajectory(trajectoryUri, topologyUri);
+                    return;
+                } else if (choice === undefined) {
+                    // User cancelled
+                    return;
+                }
+                // Otherwise, continue with normal loading
             }
 
             // Determine coordinates format
@@ -427,6 +481,82 @@ export class MolstarViewerPanel {
     }
 
     /**
+     * Load a streaming trajectory file (alternative to full trajectory loading)
+     */
+    private async _loadStreamingTrajectory(trajectoryUri: vscode.Uri, topologyUri: vscode.Uri): Promise<void> {
+        console.log('[StreamingTrajectory] Starting streaming trajectory load');
+        console.log('[StreamingTrajectory] Topology:', topologyUri.fsPath);
+        console.log('[StreamingTrajectory] Trajectory:', trajectoryUri.fsPath);
+
+        try {
+            const trajectoryFilename = path.basename(trajectoryUri.fsPath);
+            const topologyFilename = path.basename(topologyUri.fsPath);
+            const topologyExt = path.extname(topologyUri.fsPath).toLowerCase();
+
+            // Validate topology file format
+            const topologyFormatMap: { [key: string]: string } = {
+                '.pdb': 'pdb',
+                '.gro': 'gro'
+            };
+
+            const topologyFormat = topologyFormatMap[topologyExt];
+            if (!topologyFormat) {
+                vscode.window.showErrorMessage(`Unsupported topology format: ${topologyExt}`);
+                return;
+            }
+
+            // Initialize streaming provider
+            console.log('[StreamingTrajectory] Initializing StreamingTrajectoryProvider...');
+            this._streamingProvider = new StreamingTrajectoryProvider(
+                topologyUri.fsPath,
+                trajectoryUri.fsPath
+            );
+
+            await this._streamingProvider.initialize();
+            console.log('[StreamingTrajectory] Provider initialized successfully');
+
+            // Get trajectory info
+            const info = await this._streamingProvider.getInfo();
+            console.log('[StreamingTrajectory] Trajectory info:', {
+                frameCount: info.frameCount,
+                atomCount: info.atomCount,
+                deltaTime: info.deltaTime
+            });
+
+            // Convert topology file URI to webview URI
+            const topologyWebviewUri = this._panel.webview.asWebviewUri(topologyUri).toString();
+
+            // Store or send message to webview
+            if (!this._isWebviewReady) {
+                // If webview not ready, we could store pending streaming trajectory
+                // For now, just wait
+                return;
+            }
+
+            console.log('[StreamingTrajectory] Sending loadStreamingTrajectory message to webview');
+            this._panel.webview.postMessage({
+                type: 'loadStreamingTrajectory',
+                topologyUrl: topologyWebviewUri,
+                topologyFormat,
+                topologyFilename,
+                topologyFileUri: topologyUri.toString(),
+                coordinatesFilename: trajectoryFilename,
+                fileUri: trajectoryUri.toString(),
+                frameCount: info.frameCount,
+                duration: info.deltaTime * info.frameCount
+            });
+
+            // Update panel title
+            this._panel.title = `Mol* - ${trajectoryFilename} (Streaming)`;
+            console.log('[StreamingTrajectory] Streaming trajectory setup complete');
+
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            vscode.window.showErrorMessage(`Failed to load streaming trajectory: ${message}`);
+        }
+    }
+
+    /**
      * Handle messages from the webview
      */
     private _handleMessage(message: { type: string;[key: string]: unknown }): void {
@@ -469,9 +599,70 @@ export class MolstarViewerPanel {
                 console.log(`Trajectory loaded: ${message.filename}`);
                 break;
 
+            case 'streamingTrajectoryLoaded':
+                console.log(`Streaming trajectory loaded: ${message.filename}`);
+                break;
+
+            case 'requestFrame':
+                this._handleFrameRequest(message as { type: string; frameIndex: unknown; requestId: unknown });
+                break;
+
             case 'error':
                 vscode.window.showErrorMessage(`Mol* Viewer Error: ${message.message}`);
                 break;
+        }
+    }
+
+    /**
+     * Handle frame request from streaming trajectory
+     */
+    private async _handleFrameRequest(message: {
+        type: string;
+        frameIndex: unknown;
+        requestId: unknown;
+    }): Promise<void> {
+        const frameIndex = message.frameIndex as number;
+        const requestId = message.requestId as string;
+
+        console.log(`[FrameRequest] Received request for frame ${frameIndex}, requestId: ${requestId}`);
+
+        try {
+            if (!this._streamingProvider) {
+                throw new Error('Streaming provider not initialized');
+            }
+
+            // Get frame data from streaming provider
+            const startTime = Date.now();
+            const frameData = await this._streamingProvider.getFrame(frameIndex);
+            const elapsed = Date.now() - startTime;
+
+            console.log(`[FrameRequest] Frame ${frameIndex} fetched in ${elapsed}ms, atoms: ${frameData.count}`);
+
+            // Send frame data back to webview
+            this._panel.webview.postMessage({
+                type: 'frameResponse',
+                requestId,
+                frameData: {
+                    frameNumber: frameData.frameNumber,
+                    count: frameData.count,
+                    x: Array.from(frameData.x),  // Convert Float32Array to regular array for JSON
+                    y: Array.from(frameData.y),
+                    z: Array.from(frameData.z),
+                    box: Array.from(frameData.box),
+                    time: frameData.time
+                }
+            });
+            console.log(`[FrameRequest] Response sent for frame ${frameIndex}`);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error(`[FrameRequest] Error fetching frame ${frameIndex}:`, errorMessage);
+
+            // Send error response
+            this._panel.webview.postMessage({
+                type: 'frameResponse',
+                requestId,
+                error: errorMessage
+            });
         }
     }
 

@@ -1,0 +1,25 @@
+/**
+ * Copyright (c) 2022 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ *
+ * Adapted from NGL.
+ *
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
+import { Task } from '../../../mol-task/index.js';
+import { ReaderResult as Result } from '../result.js';
+export interface TrrFile {
+    frames: {
+        count: number;
+        x: Float32Array;
+        y: Float32Array;
+        z: Float32Array;
+    }[];
+    boxes: number[][];
+    times: number[];
+    timeOffset: number;
+    deltaTime: number;
+}
+export declare function parseTrr(data: Uint8Array): Task<Result<TrrFile>>;
+
+// Export streaming reader
+export { TrrStreamReader } from './stream-reader';

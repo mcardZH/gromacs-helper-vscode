@@ -12,6 +12,7 @@ import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spe
 import { PluginConfig } from 'molstar/lib/mol-plugin/config';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 import { BuiltInCoordinatesFormat } from 'molstar/lib/mol-plugin-state/formats/coordinates';
+import { BuiltInTopologyFormat } from 'molstar/lib/mol-plugin-state/formats/topology';
 import { loadTrajectory as loadTrajectoryFromCore } from './util/core';
 
 import 'molstar/lib/mol-plugin-ui/skin/light.scss';
@@ -180,6 +181,56 @@ function handleMessage(event: MessageEvent): void {
             }).then(() => {
                 vscode.postMessage({ type: 'trajectoryLoaded', filename: message.coordinatesFilename });
             }).catch((error: Error) => {
+                vscode.postMessage({ type: 'error', message: error.message });
+            });
+            break;
+        }
+
+        case 'loadStreamingTrajectory': {
+            console.log('[Viewer] Received loadStreamingTrajectory message:', {
+                topologyFormat: message.topologyFormat,
+                frameCount: message.frameCount,
+                duration: message.duration
+            });
+
+            if (!plugin) {
+                vscode.postMessage({ type: 'error', message: 'Plugin not initialized' });
+                break;
+            }
+
+            // Persist state for panel serialization
+            if (message.fileUri) {
+                vscode.setState({
+                    fileUri: message.fileUri,
+                    topologyFileUri: message.topologyFileUri,
+                    isStreamingTrajectory: true
+                });
+            }
+
+            // Import the streaming trajectory loader
+            console.log('[Viewer] Importing loadStreamingTrajectory function...');
+            import('./util/core').then(({ loadStreamingTrajectory }) => {
+                console.log('[Viewer] Clearing existing structures...');
+                // Clear existing structures
+                return plugin!.clear().then(() => {
+                    console.log('[Viewer] Calling loadStreamingTrajectory...');
+                    return loadStreamingTrajectory(plugin!, {
+                        topologyUrl: message.topologyUrl as string,
+                        topologyFormat: message.topologyFormat as (BuiltInTopologyFormat | BuiltInTrajectoryFormat),
+                        topologyLabel: message.topologyFilename as string,
+                        frameCount: message.frameCount as number,
+                        duration: message.duration as number,
+                        vscode: vscode
+                    });
+                });
+            }).then(() => {
+                console.log('[Viewer] Streaming trajectory loaded successfully');
+                vscode.postMessage({
+                    type: 'streamingTrajectoryLoaded',
+                    filename: message.coordinatesFilename
+                });
+            }).catch((error: Error) => {
+                console.error('[Viewer] Error loading streaming trajectory:', error);
                 vscode.postMessage({ type: 'error', message: error.message });
             });
             break;
