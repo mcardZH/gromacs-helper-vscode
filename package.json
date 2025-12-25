@@ -1521,7 +1521,7 @@
         },
         {
           "command": "gromacs-helper.openMolstarViewer",
-          "when": "resourceExtname == .pdb || resourceExtname == .gro || resourceExtname == .mol || resourceExtname == .mol2 || resourceExtname == .sdf || resourceExtname == .cif",
+          "when": "resourceExtname == .pdb || resourceExtname == .gro || resourceExtname == .mol || resourceExtname == .mol2 || resourceExtname == .sdf || resourceExtname == .cif || resourceExtname == .xtc || resourceExtname == .trr",
           "group": "gromacs-helper"
         }
       ],
@@ -1538,7 +1538,7 @@
         },
         {
           "command": "gromacs-helper.openMolstarViewer",
-          "when": "resourceExtname == .pdb || resourceExtname == .gro || resourceExtname == .mol || resourceExtname == .mol2 || resourceExtname == .sdf || resourceExtname == .cif",
+          "when": "resourceExtname == .pdb || resourceExtname == .gro || resourceExtname == .mol || resourceExtname == .mol2 || resourceExtname == .sdf || resourceExtname == .cif || resourceExtname == .xtc || resourceExtname == .trr",
           "group": "navigation"
         }
       ],

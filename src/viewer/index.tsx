@@ -10,8 +10,17 @@ import { renderReact18 } from 'molstar/lib/mol-plugin-ui/react18';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginConfig } from 'molstar/lib/mol-plugin/config';
+import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
+import { BuiltInCoordinatesFormat } from 'molstar/lib/mol-plugin-state/formats/coordinates';
+import { loadTrajectory as loadTrajectoryFromCore } from './util/core';
 
 import 'molstar/lib/mol-plugin-ui/skin/light.scss';
+
+declare global {
+    interface Window {
+        molstar?: PluginUIContext;
+    }
+}
 
 // Declare VS Code API
 declare function acquireVsCodeApi(): {
@@ -76,6 +85,9 @@ async function initViewer(): Promise<PluginUIContext> {
         render: renderReact18
     });
 
+    // Mount to global window object for debugging and external access
+    window.molstar = plugin;
+
     return plugin;
 }
 
@@ -129,6 +141,47 @@ function handleMessage(event: MessageEvent): void {
                 .catch((error: Error) => {
                     vscode.postMessage({ type: 'error', message: error.message });
                 });
+            break;
+        }
+        case "loadTrajectory": {
+            if (!plugin) {
+                vscode.postMessage({ type: 'error', message: 'Plugin not initialized' });
+                break;
+            }
+
+            // Persist state immediately for panel serialization
+            // Include topologyFileUri for trajectory deserialization
+            if (message.fileUri) {
+                vscode.setState({
+                    fileUri: message.fileUri,
+                    topologyFileUri: message.topologyFileUri,
+                    isTrajectory: true
+                });
+            }
+
+            // Clear existing structures before loading trajectory
+            plugin.clear().then(() => {
+                return loadTrajectoryFromCore(plugin!, {
+                    model: {
+                        kind: 'model-url',
+                        url: message.topologyUrl as string,
+                        format: message.topologyFormat as BuiltInTrajectoryFormat
+                    },
+                    coordinates: {
+                        kind: 'coordinates-url',
+                        url: message.coordinatesUrl as string,
+                        format: message.coordinatesFormat as BuiltInCoordinatesFormat,
+                        isBinary: true
+                    },
+                    modelLabel: message.topologyFilename as string,
+                    coordinatesLabel: message.coordinatesFilename as string,
+                    preset: 'default'
+                });
+            }).then(() => {
+                vscode.postMessage({ type: 'trajectoryLoaded', filename: message.coordinatesFilename });
+            }).catch((error: Error) => {
+                vscode.postMessage({ type: 'error', message: error.message });
+            });
             break;
         }
 

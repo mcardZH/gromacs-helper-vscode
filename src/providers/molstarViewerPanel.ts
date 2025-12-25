@@ -18,6 +18,21 @@ export class MolstarViewerPanel {
     private _disposables: vscode.Disposable[] = [];
     private _isWebviewReady = false;
     private _pendingStructure: { data: string; format: string; filename: string; fileUri: string } | undefined;
+    private _pendingTrajectory: {
+        topologyUrl: string;
+        topologyFormat: string;
+        topologyFilename: string;
+        topologyFileUri: string;  // Original file URI for serialization
+        coordinatesUrl: string;
+        coordinatesFormat: string;
+        coordinatesFilename: string;
+        fileUri: string;
+    } | undefined;
+
+    // Trajectory file extensions
+    private static readonly _trajectoryExtensions = ['.xtc', '.trr'];
+    // Topology/coordinate file extensions for trajectory loading
+    private static readonly _topologyExtensions = ['.gro', '.pdb'];
 
     /**
      * Create or show the Mol* viewer panel
@@ -32,13 +47,20 @@ export class MolstarViewerPanel {
             const existingPanel = MolstarViewerPanel._panels.get(fileUri.toString());
             if (existingPanel) {
                 existingPanel._panel.reveal(column);
-                // Reload the file just in case content changed (optional, but consistent with previous behavior)
-                // await existingPanel._loadFile(fileUri); 
-                // Actually, duplicate load might be redundant if it's already open, but let's just reveal for now.
-                // If user wants to reload, they can close and open, or we can force reload.
-                // For now, let's just reveal to avoid flickering.
                 return;
             }
+        }
+
+        // Build localResourceRoots including file directory if provided
+        const localResourceRoots: vscode.Uri[] = [
+            vscode.Uri.joinPath(extensionUri, 'dist', 'viewer'),
+            vscode.Uri.joinPath(extensionUri, 'media')
+        ];
+
+        // Add file's parent directory to allow webview access to local files
+        if (fileUri) {
+            const fileDir = vscode.Uri.file(path.dirname(fileUri.fsPath));
+            localResourceRoots.push(fileDir);
         }
 
         // Create a new panel
@@ -49,10 +71,7 @@ export class MolstarViewerPanel {
             {
                 enableScripts: true,
                 retainContextWhenHidden: true,
-                localResourceRoots: [
-                    vscode.Uri.joinPath(extensionUri, 'dist', 'viewer'),
-                    vscode.Uri.joinPath(extensionUri, 'media')
-                ]
+                localResourceRoots
             }
         );
 
@@ -71,18 +90,53 @@ export class MolstarViewerPanel {
     /**
      * Revive a panel from serialization
      */
-    public static async revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, fileUriString?: string): Promise<void> {
+    public static async revive(
+        panel: vscode.WebviewPanel,
+        extensionUri: vscode.Uri,
+        fileUriString?: string,
+        topologyFileUriString?: string,
+        isTrajectory?: boolean
+    ): Promise<void> {
         let fileUri: vscode.Uri | undefined;
         if (fileUriString) {
             fileUri = vscode.Uri.parse(fileUriString);
+        }
+
+        // Update webview options to include file directories for trajectory files
+        if (fileUri) {
+            const localResourceRoots: vscode.Uri[] = [
+                vscode.Uri.joinPath(extensionUri, 'dist', 'viewer'),
+                vscode.Uri.joinPath(extensionUri, 'media'),
+                vscode.Uri.file(path.dirname(fileUri.fsPath))
+            ];
+
+            // Add topology directory if different
+            if (topologyFileUriString) {
+                const topologyUri = vscode.Uri.parse(topologyFileUriString);
+                const topologyDir = path.dirname(topologyUri.fsPath);
+                if (!localResourceRoots.some(r => r.fsPath === topologyDir)) {
+                    localResourceRoots.push(vscode.Uri.file(topologyDir));
+                }
+            }
+
+            panel.webview.options = {
+                enableScripts: true,
+                localResourceRoots
+            };
         }
 
         const viewerPanel = new MolstarViewerPanel(panel, extensionUri, fileUri);
 
         if (fileUri) {
             MolstarViewerPanel._panels.set(fileUri.toString(), viewerPanel);
-            // Reload the file to restore the structure
-            await viewerPanel._loadFile(fileUri);
+
+            // For trajectory files, we need to load with the saved topology file
+            if (isTrajectory && topologyFileUriString) {
+                await viewerPanel._loadTrajectoryWithTopology(fileUri, vscode.Uri.parse(topologyFileUriString));
+            } else {
+                // Reload the file to restore the structure
+                await viewerPanel._loadFile(fileUri);
+            }
         }
     }
 
@@ -128,13 +182,27 @@ export class MolstarViewerPanel {
     }
 
     /**
+     * Check if a file is a trajectory file
+     */
+    private _isTrajectoryFile(ext: string): boolean {
+        return MolstarViewerPanel._trajectoryExtensions.includes(ext);
+    }
+
+    /**
      * Load a molecular structure file
      */
     private async _loadFile(fileUri: vscode.Uri): Promise<void> {
         try {
-            const data = await fs.promises.readFile(fileUri.fsPath, 'utf-8');
             const filename = path.basename(fileUri.fsPath);
             const ext = path.extname(fileUri.fsPath).toLowerCase();
+
+            // Check if this is a trajectory file
+            if (this._isTrajectoryFile(ext)) {
+                await this._loadTrajectoryFile(fileUri);
+                return;
+            }
+
+            const data = await fs.promises.readFile(fileUri.fsPath, 'utf-8');
 
             // Determine format from extension
             const formatMap: { [key: string]: string } = {
@@ -178,6 +246,187 @@ export class MolstarViewerPanel {
     }
 
     /**
+     * Load a trajectory file with topology selection
+     */
+    private async _loadTrajectoryFile(trajectoryUri: vscode.Uri): Promise<void> {
+        try {
+            const trajectoryFilename = path.basename(trajectoryUri.fsPath);
+            const trajectoryExt = path.extname(trajectoryUri.fsPath).toLowerCase();
+            const trajectoryDir = path.dirname(trajectoryUri.fsPath);
+
+            // Ask user to select a topology file
+            const topologyUri = await vscode.window.showOpenDialog({
+                canSelectFiles: true,
+                canSelectFolders: false,
+                canSelectMany: false,
+                defaultUri: vscode.Uri.file(trajectoryDir),
+                filters: {
+                    'Topology Files': ['gro', 'pdb'],
+                    'All Files': ['*']
+                },
+                title: 'Select Topology/Coordinate File for Trajectory'
+            });
+
+            if (!topologyUri || topologyUri.length === 0) {
+                vscode.window.showWarningMessage('Trajectory loading cancelled: No topology file selected');
+                return;
+            }
+
+            const selectedTopologyUri = topologyUri[0];
+            const topologyFilename = path.basename(selectedTopologyUri.fsPath);
+            const topologyExt = path.extname(selectedTopologyUri.fsPath).toLowerCase();
+
+            // Validate topology file format
+            const topologyFormatMap: { [key: string]: string } = {
+                '.pdb': 'pdb',
+                '.gro': 'gro'
+            };
+
+            const topologyFormat = topologyFormatMap[topologyExt];
+            if (!topologyFormat) {
+                vscode.window.showErrorMessage(`Unsupported topology format: ${topologyExt}. Please select a .gro or .pdb file.`);
+                return;
+            }
+
+            // Determine coordinates format
+            const coordinatesFormatMap: { [key: string]: string } = {
+                '.xtc': 'xtc',
+                '.trr': 'trr'
+            };
+
+            const coordinatesFormat = coordinatesFormatMap[trajectoryExt];
+            if (!coordinatesFormat) {
+                vscode.window.showErrorMessage(`Unsupported trajectory format: ${trajectoryExt}`);
+                return;
+            }
+
+            // Need to add topology directory to webview options if different from trajectory directory
+            const topologyDir = path.dirname(selectedTopologyUri.fsPath);
+            if (topologyDir !== trajectoryDir) {
+                // Update webview options to include topology directory
+                // NOTE: webview.options is readonly after creation, so we need to ensure
+                // the user selects files from accessible directories
+                // For now, we'll read the topology file directly as it's text-based
+            }
+
+            // Convert file URIs to webview URIs for URL-based loading
+            const topologyWebviewUri = this._panel.webview.asWebviewUri(selectedTopologyUri).toString();
+            const coordinatesWebviewUri = this._panel.webview.asWebviewUri(trajectoryUri).toString();
+
+            // Store pending trajectory if webview isn't ready
+            if (!this._isWebviewReady) {
+                this._pendingTrajectory = {
+                    topologyUrl: topologyWebviewUri,
+                    topologyFormat,
+                    topologyFilename,
+                    topologyFileUri: selectedTopologyUri.toString(),
+                    coordinatesUrl: coordinatesWebviewUri,
+                    coordinatesFormat,
+                    coordinatesFilename: trajectoryFilename,
+                    fileUri: trajectoryUri.toString()
+                };
+                return;
+            }
+
+            // Send to webview using URL-based loading
+            this._panel.webview.postMessage({
+                type: 'loadTrajectory',
+                topologyUrl: topologyWebviewUri,
+                topologyFormat,
+                topologyFilename,
+                topologyFileUri: selectedTopologyUri.toString(),
+                coordinatesUrl: coordinatesWebviewUri,
+                coordinatesFormat,
+                coordinatesFilename: trajectoryFilename,
+                fileUri: trajectoryUri.toString()
+            });
+
+            // Update panel title
+            this._panel.title = `Mol* - ${trajectoryFilename}`;
+
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            vscode.window.showErrorMessage(`Failed to load trajectory: ${message}`);
+        }
+    }
+
+    /**
+     * Load a trajectory file with a known topology file (for deserialization)
+     * This bypasses the file picker dialog since we already know the topology file.
+     */
+    private async _loadTrajectoryWithTopology(trajectoryUri: vscode.Uri, topologyUri: vscode.Uri): Promise<void> {
+        try {
+            const trajectoryFilename = path.basename(trajectoryUri.fsPath);
+            const trajectoryExt = path.extname(trajectoryUri.fsPath).toLowerCase();
+            const topologyFilename = path.basename(topologyUri.fsPath);
+            const topologyExt = path.extname(topologyUri.fsPath).toLowerCase();
+
+            // Validate topology file format
+            const topologyFormatMap: { [key: string]: string } = {
+                '.pdb': 'pdb',
+                '.gro': 'gro'
+            };
+
+            const topologyFormat = topologyFormatMap[topologyExt];
+            if (!topologyFormat) {
+                vscode.window.showErrorMessage(`Unsupported topology format: ${topologyExt}`);
+                return;
+            }
+
+            // Determine coordinates format
+            const coordinatesFormatMap: { [key: string]: string } = {
+                '.xtc': 'xtc',
+                '.trr': 'trr'
+            };
+
+            const coordinatesFormat = coordinatesFormatMap[trajectoryExt];
+            if (!coordinatesFormat) {
+                vscode.window.showErrorMessage(`Unsupported trajectory format: ${trajectoryExt}`);
+                return;
+            }
+
+            // Convert file URIs to webview URIs for URL-based loading
+            const topologyWebviewUri = this._panel.webview.asWebviewUri(topologyUri).toString();
+            const coordinatesWebviewUri = this._panel.webview.asWebviewUri(trajectoryUri).toString();
+
+            // Store pending trajectory if webview isn't ready
+            if (!this._isWebviewReady) {
+                this._pendingTrajectory = {
+                    topologyUrl: topologyWebviewUri,
+                    topologyFormat,
+                    topologyFilename,
+                    topologyFileUri: topologyUri.toString(),
+                    coordinatesUrl: coordinatesWebviewUri,
+                    coordinatesFormat,
+                    coordinatesFilename: trajectoryFilename,
+                    fileUri: trajectoryUri.toString()
+                };
+                return;
+            }
+
+            // Send to webview using URL-based loading
+            this._panel.webview.postMessage({
+                type: 'loadTrajectory',
+                topologyUrl: topologyWebviewUri,
+                topologyFormat,
+                topologyFilename,
+                topologyFileUri: topologyUri.toString(),
+                coordinatesUrl: coordinatesWebviewUri,
+                coordinatesFormat,
+                coordinatesFilename: trajectoryFilename,
+                fileUri: trajectoryUri.toString()
+            });
+
+            // Update panel title
+            this._panel.title = `Mol* - ${trajectoryFilename}`;
+
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            vscode.window.showErrorMessage(`Failed to load trajectory: ${message}`);
+        }
+    }
+
+    /**
      * Handle messages from the webview
      */
     private _handleMessage(message: { type: string;[key: string]: unknown }): void {
@@ -194,10 +443,30 @@ export class MolstarViewerPanel {
                     });
                     this._pendingStructure = undefined;
                 }
+
+                // Load pending trajectory if any
+                if (this._pendingTrajectory) {
+                    this._panel.webview.postMessage({
+                        type: 'loadTrajectory',
+                        topologyUrl: this._pendingTrajectory.topologyUrl,
+                        topologyFormat: this._pendingTrajectory.topologyFormat,
+                        topologyFilename: this._pendingTrajectory.topologyFilename,
+                        topologyFileUri: this._pendingTrajectory.topologyFileUri,
+                        coordinatesUrl: this._pendingTrajectory.coordinatesUrl,
+                        coordinatesFormat: this._pendingTrajectory.coordinatesFormat,
+                        coordinatesFilename: this._pendingTrajectory.coordinatesFilename,
+                        fileUri: this._pendingTrajectory.fileUri
+                    });
+                    this._pendingTrajectory = undefined;
+                }
                 break;
 
             case 'structureLoaded':
                 console.log(`Structure loaded: ${message.filename}`);
+                break;
+
+            case 'trajectoryLoaded':
+                console.log(`Trajectory loaded: ${message.filename}`);
                 break;
 
             case 'error':
@@ -276,7 +545,10 @@ export class MolstarViewerPanel {
 export class MolstarViewerSerializer implements vscode.WebviewPanelSerializer {
     constructor(private readonly _extensionUri: vscode.Uri) { }
 
-    async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: { fileUri?: string } | unknown): Promise<void> {
+    async deserializeWebviewPanel(
+        webviewPanel: vscode.WebviewPanel,
+        state: { fileUri?: string; topologyFileUri?: string; isTrajectory?: boolean } | unknown
+    ): Promise<void> {
         // Reconfigure webview options for the restored panel
         webviewPanel.webview.options = {
             enableScripts: true,
@@ -286,8 +558,18 @@ export class MolstarViewerSerializer implements vscode.WebviewPanelSerializer {
             ]
         };
 
-        // Extract fileUri from persisted state
-        const fileUriString = (state as { fileUri?: string })?.fileUri;
-        await MolstarViewerPanel.revive(webviewPanel, this._extensionUri, fileUriString);
+        // Extract state from persisted webview state
+        const typedState = state as { fileUri?: string; topologyFileUri?: string; isTrajectory?: boolean };
+        const fileUriString = typedState?.fileUri;
+        const topologyFileUriString = typedState?.topologyFileUri;
+        const isTrajectory = typedState?.isTrajectory;
+
+        await MolstarViewerPanel.revive(
+            webviewPanel,
+            this._extensionUri,
+            fileUriString,
+            topologyFileUriString,
+            isTrajectory
+        );
     }
 }
