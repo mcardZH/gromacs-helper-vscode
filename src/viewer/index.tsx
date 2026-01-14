@@ -14,6 +14,7 @@ import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/tr
 import { BuiltInCoordinatesFormat } from 'molstar/lib/mol-plugin-state/formats/coordinates';
 import { BuiltInTopologyFormat } from 'molstar/lib/mol-plugin-state/formats/topology';
 import { loadTrajectory as loadTrajectoryFromCore } from './util/core';
+import { CustomViewport } from './components/CustomViewport';
 
 import 'molstar/lib/mol-plugin-ui/skin/light.scss';
 
@@ -62,6 +63,11 @@ async function initViewer(): Promise<PluginUIContext> {
             },
             camera: {
                 // Default camera settings
+            }
+        },
+        components: {
+            viewport: {
+                view: CustomViewport as any  // Replace entire viewport to use custom trajectory controls
             }
         }
     };
@@ -274,8 +280,23 @@ async function main(): Promise<void> {
         // Listen for messages from VS Code
         window.addEventListener('message', handleMessage);
 
+        // Get persisted state and send it to extension for restoration
+        const persistedState = vscode.getState() as {
+            fileUri?: string;
+            filePath?: string;
+            topologyFileUri?: string;
+            topologyFilePath?: string;
+            isTrajectory?: boolean;
+            isStreamingTrajectory?: boolean;
+        } | undefined;
+
+        console.log('[Viewer] Persisted state on load:', persistedState);
+
         // Notify VS Code that we're ready
-        vscode.postMessage({ type: 'ready' });
+        vscode.postMessage({ 
+            type: 'ready',
+            state: persistedState  // Send state back to extension for restoration
+        });
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';

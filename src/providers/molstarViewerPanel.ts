@@ -80,6 +80,8 @@ export class MolstarViewerPanel {
         }
 
         // Create a new panel
+        // NOTE: retainContextWhenHidden is set to false to enable panel serialization
+        // When true, the webview content is retained in memory and serializer is NOT called on restart
         const panel = vscode.window.createWebviewPanel(
             MolstarViewerPanel.viewType,
             fileUri ? `Mol* - ${path.basename(fileUri.fsPath)}` : 'Mol* Viewer',
@@ -106,6 +108,36 @@ export class MolstarViewerPanel {
     /**
      * Revive a panel from serialization
      */
+    /**
+     * Helper function to reconstruct URI from file path, preserving remote URI scheme
+     * 
+     * When extension runs on remote, file paths need to be converted to remote URIs
+     * with the correct scheme (e.g., vscode-remote://ssh-remote+host/path)
+     */
+    private static _reconstructUriFromPath(filePath: string, referenceUri?: vscode.Uri): vscode.Uri {
+        // Try to use workspace folder URI scheme if available (most reliable for remote)
+        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+            const workspaceFolder = vscode.workspace.workspaceFolders[0];
+            const workspaceScheme = workspaceFolder.uri.scheme;
+            const workspaceAuthority = workspaceFolder.uri.authority;
+            
+            // If workspace is remote, use its scheme and authority
+            if (workspaceScheme !== 'file') {
+                // For remote URIs, the path should be absolute
+                // Format: scheme://authority/path
+                return vscode.Uri.parse(`${workspaceScheme}://${workspaceAuthority}${filePath}`);
+            }
+        }
+        
+        // If we have a reference URI with remote scheme, use it
+        if (referenceUri && referenceUri.scheme !== 'file') {
+            return vscode.Uri.parse(`${referenceUri.scheme}://${referenceUri.authority}${filePath}`);
+        }
+        
+        // Fallback to local file URI
+        return vscode.Uri.file(filePath);
+    }
+
     public static async revive(
         panel: vscode.WebviewPanel,
         extensionUri: vscode.Uri,
@@ -118,13 +150,89 @@ export class MolstarViewerPanel {
     ): Promise<void> {
         let fileUri: vscode.Uri | undefined;
         let topologyUri: vscode.Uri | undefined;
-        
+        console.log('[Revive] Reviving panel with:', {
+            fileUriString,
+            topologyFileUriString,
+            filePath,
+            topologyFilePath
+        });
+        // Parse URIs from strings (these preserve the original URI scheme)
+        // Priority: Use saved URI strings first, as they contain the correct scheme
         if (fileUriString) {
             fileUri = vscode.Uri.parse(fileUriString);
+            console.log('[Revive] Parsed fileUri from string:', {
+                fileUriString,
+                parsedUri: fileUri.toString(),
+                scheme: fileUri.scheme,
+                authority: fileUri.authority,
+                path: fileUri.path
+            });
         }
         
         if (topologyFileUriString) {
             topologyUri = vscode.Uri.parse(topologyFileUriString);
+            console.log('[Revive] Parsed topologyUri from string:', {
+                topologyFileUriString,
+                parsedUri: topologyUri.toString(),
+                scheme: topologyUri.scheme,
+                authority: topologyUri.authority,
+                path: topologyUri.path
+            });
+        }
+
+        // Get workspace folder info for URI reconstruction if needed
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        const workspaceScheme = workspaceFolders && workspaceFolders.length > 0 
+            ? workspaceFolders[0].uri.scheme 
+            : 'file';
+        const isRemote = workspaceScheme !== 'file';
+
+        // For streaming trajectories, reconstruct URIs from file paths if needed
+        // This is important for remote connections where file paths need correct URI scheme
+        if (isStreamingTrajectory) {
+            // Check if we need to reconstruct trajectory URI
+            if (!fileUri && filePath) {
+                // No URI string saved, reconstruct from file path using workspace scheme
+                fileUri = MolstarViewerPanel._reconstructUriFromPath(filePath, 
+                    workspaceFolders ? workspaceFolders[0].uri : undefined);
+                console.log('[Revive] Reconstructed trajectory URI from path (no URI string):', {
+                    filePath,
+                    reconstructedUri: fileUri.toString(),
+                    scheme: fileUri.scheme,
+                    isRemote
+                });
+            } else if (fileUri && filePath && fileUri.scheme === 'file' && isRemote) {
+                // Saved URI is local but we're in remote, reconstruct with remote scheme
+                fileUri = MolstarViewerPanel._reconstructUriFromPath(filePath, 
+                    workspaceFolders![0].uri);
+                console.log('[Revive] Reconstructed trajectory URI for remote (was local):', {
+                    originalPath: filePath,
+                    reconstructedUri: fileUri.toString(),
+                    scheme: fileUri.scheme
+                });
+            }
+
+            // Check if we need to reconstruct topology URI
+            if (!topologyUri && topologyFilePath) {
+                // No URI string saved, reconstruct from file path
+                topologyUri = MolstarViewerPanel._reconstructUriFromPath(topologyFilePath, 
+                    fileUri || (workspaceFolders ? workspaceFolders[0].uri : undefined));
+                console.log('[Revive] Reconstructed topology URI from path (no URI string):', {
+                    topologyFilePath,
+                    reconstructedUri: topologyUri.toString(),
+                    scheme: topologyUri.scheme,
+                    isRemote
+                });
+            } else if (topologyUri && topologyFilePath && topologyUri.scheme === 'file' && isRemote) {
+                // Saved URI is local but we're in remote, reconstruct with remote scheme
+                topologyUri = MolstarViewerPanel._reconstructUriFromPath(topologyFilePath, 
+                    workspaceFolders![0].uri);
+                console.log('[Revive] Reconstructed topology URI for remote (was local):', {
+                    originalPath: topologyFilePath,
+                    reconstructedUri: topologyUri.toString(),
+                    scheme: topologyUri.scheme
+                });
+            }
         }
 
         // Update webview options to include file directories for trajectory files
@@ -155,19 +263,24 @@ export class MolstarViewerPanel {
         if (fileUri) {
             MolstarViewerPanel._panels.set(fileUri.toString(), viewerPanel);
 
-            // For streaming trajectories, use file paths for proper restoration
-            if (isStreamingTrajectory && topologyUri && filePath && topologyFilePath) {
-                // Reconstruct URIs from file paths to ensure correct file access
-                const trajectoryUri = filePath ? vscode.Uri.file(filePath) : fileUri;
-                const topologyFileUri = topologyFilePath ? vscode.Uri.file(topologyFilePath) : topologyUri;
-                await viewerPanel._loadStreamingTrajectory(trajectoryUri, topologyFileUri);
+            // For streaming trajectories, use reconstructed URIs for proper restoration
+            if (isStreamingTrajectory && topologyUri) {
+                console.log('[Revive] Loading streaming trajectory with URIs:', {
+                    trajectoryUri: fileUri.toString(),
+                    topologyUri: topologyUri.toString()
+                });
+                await viewerPanel._loadStreamingTrajectory(fileUri, topologyUri);
             } else if (isTrajectory && topologyUri) {
                 // For regular trajectories, use saved topology file
                 await viewerPanel._loadTrajectoryWithTopology(fileUri, topologyUri);
-            } else {
+            } else if (fileUri) {
                 // Reload the file to restore the structure
                 await viewerPanel._loadFile(fileUri);
             }
+        } else {
+            console.log('[Revive] No fileUri provided - creating empty panel');
+            // Panel is created but no file will be loaded
+            // User can manually load a file if needed
         }
     }
 
@@ -610,6 +723,28 @@ export class MolstarViewerPanel {
                 console.log('Mol* viewer webview is ready');
                 this._isWebviewReady = true;
 
+                // Check if webview sent persisted state for restoration
+                if (message.state) {
+                    const webviewState = message.state as {
+                        fileUri?: string;
+                        filePath?: string;
+                        topologyFileUri?: string;
+                        topologyFilePath?: string;
+                        isTrajectory?: boolean;
+                        isStreamingTrajectory?: boolean;
+                    };
+                    console.log('[Ready] Webview sent persisted state:', webviewState);
+                    
+                    // If we have state but no pending loads, this is a restoration scenario
+                    // We need to restore the content based on the state
+                    if (webviewState.fileUri && !this._pendingStructure && !this._pendingTrajectory && !this._pendingStreamingTrajectory) {
+                        console.log('[Ready] Restoring panel from webview state');
+                        // The state restoration should have been handled in deserializeWebviewPanel
+                        // But if it wasn't, we can try to restore here
+                        // Note: This is a fallback - the primary restoration should happen in deserializeWebviewPanel
+                    }
+                }
+
                 // Load pending structure if any
                 if (this._pendingStructure) {
                     this._panel.webview.postMessage({
@@ -790,15 +925,11 @@ export class MolstarViewerSerializer implements vscode.WebviewPanelSerializer {
 
     async deserializeWebviewPanel(
         webviewPanel: vscode.WebviewPanel,
-        state: { 
-            fileUri?: string; 
-            filePath?: string;
-            topologyFileUri?: string; 
-            topologyFilePath?: string;
-            isTrajectory?: boolean;
-            isStreamingTrajectory?: boolean;
-        } | unknown
+        state: unknown
     ): Promise<void> {
+        console.log('[Serializer] deserializeWebviewPanel called');
+        console.log('[Serializer] State parameter:', state);
+        
         // Reconfigure webview options for the restored panel
         webviewPanel.webview.options = {
             enableScripts: true,
@@ -808,31 +939,64 @@ export class MolstarViewerSerializer implements vscode.WebviewPanelSerializer {
             ]
         };
 
-        // Extract state from persisted webview state
-        const typedState = state as { 
-            fileUri?: string; 
+        // The state parameter contains the state saved via webview.setState()
+        // According to VS Code docs, this is the persisted state from the webview
+        const webviewState = state as {
+            fileUri?: string;
             filePath?: string;
-            topologyFileUri?: string; 
+            topologyFileUri?: string;
             topologyFilePath?: string;
             isTrajectory?: boolean;
             isStreamingTrajectory?: boolean;
-        };
-        const fileUriString = typedState?.fileUri;
-        const filePath = typedState?.filePath;
-        const topologyFileUriString = typedState?.topologyFileUri;
-        const topologyFilePath = typedState?.topologyFilePath;
-        const isTrajectory = typedState?.isTrajectory;
-        const isStreamingTrajectory = typedState?.isStreamingTrajectory;
+        } | undefined;
 
-        await MolstarViewerPanel.revive(
-            webviewPanel,
-            this._extensionUri,
-            fileUriString,
-            topologyFileUriString,
-            isTrajectory,
-            isStreamingTrajectory,
-            filePath,
-            topologyFilePath
-        );
+        console.log('[Serializer] Parsed webview state:', webviewState);
+
+        // The state parameter is the primary source of persisted state
+        // It contains the state saved via webview.setState() in the webview content
+        const actualState = webviewState;
+
+        if (actualState) {
+            const fileUriString = actualState.fileUri;
+            const filePath = actualState.filePath;
+            const topologyFileUriString = actualState.topologyFileUri;
+            const topologyFilePath = actualState.topologyFilePath;
+            const isTrajectory = actualState.isTrajectory;
+            const isStreamingTrajectory = actualState.isStreamingTrajectory;
+
+            console.log('[Serializer] Calling revive with state:', {
+                fileUriString,
+                topologyFileUriString,
+                filePath,
+                topologyFilePath,
+                isTrajectory,
+                isStreamingTrajectory
+            });
+
+            await MolstarViewerPanel.revive(
+                webviewPanel,
+                this._extensionUri,
+                fileUriString,
+                topologyFileUriString,
+                isTrajectory,
+                isStreamingTrajectory,
+                filePath,
+                topologyFilePath
+            );
+        } else {
+            console.log('[Serializer] No state available - creating empty panel');
+            // Create panel without state - user will need to reload manually
+            // Use revive with undefined parameters to create an empty panel
+            await MolstarViewerPanel.revive(
+                webviewPanel,
+                this._extensionUri,
+                undefined,
+                undefined,
+                false,
+                false,
+                undefined,
+                undefined
+            );
+        }
     }
 }
