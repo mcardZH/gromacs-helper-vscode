@@ -28,6 +28,18 @@ export class MolstarViewerPanel {
         coordinatesFilename: string;
         fileUri: string;
     } | undefined;
+    private _pendingStreamingTrajectory: {
+        topologyUrl: string;
+        topologyFormat: string;
+        topologyFilename: string;
+        topologyFileUri: string;
+        topologyFilePath: string;
+        coordinatesFilename: string;
+        fileUri: string;
+        filePath: string;
+        frameCount: number;
+        duration: number;
+    } | undefined;
 
     // Streaming trajectory provider (for on-demand frame loading)
     private _streamingProvider: StreamingTrajectoryProvider | undefined;
@@ -99,11 +111,20 @@ export class MolstarViewerPanel {
         extensionUri: vscode.Uri,
         fileUriString?: string,
         topologyFileUriString?: string,
-        isTrajectory?: boolean
+        isTrajectory?: boolean,
+        isStreamingTrajectory?: boolean,
+        filePath?: string,
+        topologyFilePath?: string
     ): Promise<void> {
         let fileUri: vscode.Uri | undefined;
+        let topologyUri: vscode.Uri | undefined;
+        
         if (fileUriString) {
             fileUri = vscode.Uri.parse(fileUriString);
+        }
+        
+        if (topologyFileUriString) {
+            topologyUri = vscode.Uri.parse(topologyFileUriString);
         }
 
         // Update webview options to include file directories for trajectory files
@@ -115,8 +136,7 @@ export class MolstarViewerPanel {
             ];
 
             // Add topology directory if different
-            if (topologyFileUriString) {
-                const topologyUri = vscode.Uri.parse(topologyFileUriString);
+            if (topologyUri) {
                 const topologyDirUri = vscode.Uri.joinPath(topologyUri, '..');
                 // Check if directory is already in the list by comparing URI strings
                 if (!localResourceRoots.some(r => r.toString() === topologyDirUri.toString())) {
@@ -135,9 +155,15 @@ export class MolstarViewerPanel {
         if (fileUri) {
             MolstarViewerPanel._panels.set(fileUri.toString(), viewerPanel);
 
-            // For trajectory files, we need to load with the saved topology file
-            if (isTrajectory && topologyFileUriString) {
-                await viewerPanel._loadTrajectoryWithTopology(fileUri, vscode.Uri.parse(topologyFileUriString));
+            // For streaming trajectories, use file paths for proper restoration
+            if (isStreamingTrajectory && topologyUri && filePath && topologyFilePath) {
+                // Reconstruct URIs from file paths to ensure correct file access
+                const trajectoryUri = filePath ? vscode.Uri.file(filePath) : fileUri;
+                const topologyFileUri = topologyFilePath ? vscode.Uri.file(topologyFilePath) : topologyUri;
+                await viewerPanel._loadStreamingTrajectory(trajectoryUri, topologyFileUri);
+            } else if (isTrajectory && topologyUri) {
+                // For regular trajectories, use saved topology file
+                await viewerPanel._loadTrajectoryWithTopology(fileUri, topologyUri);
             } else {
                 // Reload the file to restore the structure
                 await viewerPanel._loadFile(fileUri);
@@ -531,25 +557,39 @@ export class MolstarViewerPanel {
             // Convert topology file URI to webview URI
             const topologyWebviewUri = this._panel.webview.asWebviewUri(topologyUri).toString();
 
-            // Store or send message to webview
-            if (!this._isWebviewReady) {
-                // If webview not ready, we could store pending streaming trajectory
-                // For now, just wait
-                return;
-            }
-
-            console.log('[StreamingTrajectory] Sending loadStreamingTrajectory message to webview');
-            this._panel.webview.postMessage({
+            // Prepare message data
+            const messageData = {
                 type: 'loadStreamingTrajectory',
                 topologyUrl: topologyWebviewUri,
                 topologyFormat,
                 topologyFilename,
                 topologyFileUri: topologyUri.toString(),
+                topologyFilePath: topologyUri.fsPath,  // Real file system path for restoration
                 coordinatesFilename: trajectoryFilename,
                 fileUri: trajectoryUri.toString(),
+                filePath: trajectoryUri.fsPath,  // Real file system path for restoration
                 frameCount: info.frameCount,
                 duration: info.deltaTime * info.frameCount
+            };
+
+            // Store or send message to webview
+            if (!this._isWebviewReady) {
+                // Store pending streaming trajectory to send when webview is ready
+                console.log('[StreamingTrajectory] Webview not ready, storing pending streaming trajectory');
+                this._pendingStreamingTrajectory = messageData;
+                return;
+            }
+
+            console.log('[StreamingTrajectory] Sending loadStreamingTrajectory message to webview');
+            console.log('[StreamingTrajectory] Message data:', {
+                type: messageData.type,
+                topologyUrl: messageData.topologyUrl,
+                topologyFormat: messageData.topologyFormat,
+                frameCount: messageData.frameCount,
+                duration: messageData.duration
             });
+            this._panel.webview.postMessage(messageData);
+            console.log('[StreamingTrajectory] Message sent to webview');
 
             // Update panel title
             this._panel.title = `Mol* - ${trajectoryFilename} (Streaming)`;
@@ -593,6 +633,13 @@ export class MolstarViewerPanel {
                         fileUri: this._pendingTrajectory.fileUri
                     });
                     this._pendingTrajectory = undefined;
+                }
+
+                // Load pending streaming trajectory if any
+                if (this._pendingStreamingTrajectory) {
+                    console.log('[StreamingTrajectory] Sending pending streaming trajectory to webview');
+                    this._panel.webview.postMessage(this._pendingStreamingTrajectory);
+                    this._pendingStreamingTrajectory = undefined;
                 }
                 break;
 
@@ -743,7 +790,14 @@ export class MolstarViewerSerializer implements vscode.WebviewPanelSerializer {
 
     async deserializeWebviewPanel(
         webviewPanel: vscode.WebviewPanel,
-        state: { fileUri?: string; topologyFileUri?: string; isTrajectory?: boolean } | unknown
+        state: { 
+            fileUri?: string; 
+            filePath?: string;
+            topologyFileUri?: string; 
+            topologyFilePath?: string;
+            isTrajectory?: boolean;
+            isStreamingTrajectory?: boolean;
+        } | unknown
     ): Promise<void> {
         // Reconfigure webview options for the restored panel
         webviewPanel.webview.options = {
@@ -755,17 +809,30 @@ export class MolstarViewerSerializer implements vscode.WebviewPanelSerializer {
         };
 
         // Extract state from persisted webview state
-        const typedState = state as { fileUri?: string; topologyFileUri?: string; isTrajectory?: boolean };
+        const typedState = state as { 
+            fileUri?: string; 
+            filePath?: string;
+            topologyFileUri?: string; 
+            topologyFilePath?: string;
+            isTrajectory?: boolean;
+            isStreamingTrajectory?: boolean;
+        };
         const fileUriString = typedState?.fileUri;
+        const filePath = typedState?.filePath;
         const topologyFileUriString = typedState?.topologyFileUri;
+        const topologyFilePath = typedState?.topologyFilePath;
         const isTrajectory = typedState?.isTrajectory;
+        const isStreamingTrajectory = typedState?.isStreamingTrajectory;
 
         await MolstarViewerPanel.revive(
             webviewPanel,
             this._extensionUri,
             fileUriString,
             topologyFileUriString,
-            isTrajectory
+            isTrajectory,
+            isStreamingTrajectory,
+            filePath,
+            topologyFilePath
         );
     }
 }

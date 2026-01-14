@@ -121,6 +121,9 @@ async function loadStructure(data: string, format: 'pdb' | 'gro' | 'mol' | 'mol2
  */
 function handleMessage(event: MessageEvent): void {
     const message = event.data;
+    
+    // Log all received messages for debugging
+    console.log('[Viewer] Received message from extension:', message.type, message);
 
     switch (message.type) {
         case 'loadStructure': {
@@ -189,20 +192,26 @@ function handleMessage(event: MessageEvent): void {
         case 'loadStreamingTrajectory': {
             console.log('[Viewer] Received loadStreamingTrajectory message:', {
                 topologyFormat: message.topologyFormat,
+                topologyUrl: message.topologyUrl,
                 frameCount: message.frameCount,
                 duration: message.duration
             });
 
             if (!plugin) {
-                vscode.postMessage({ type: 'error', message: 'Plugin not initialized' });
+                const errorMsg = 'Plugin not initialized';
+                console.error('[Viewer]', errorMsg);
+                vscode.postMessage({ type: 'error', message: errorMsg });
                 break;
             }
 
             // Persist state for panel serialization
+            // Include file paths for proper restoration of streaming trajectories
             if (message.fileUri) {
                 vscode.setState({
                     fileUri: message.fileUri,
+                    filePath: message.filePath,  // Real file system path
                     topologyFileUri: message.topologyFileUri,
+                    topologyFilePath: message.topologyFilePath,  // Real file system path
                     isStreamingTrajectory: true
                 });
             }
@@ -213,7 +222,12 @@ function handleMessage(event: MessageEvent): void {
                 console.log('[Viewer] Clearing existing structures...');
                 // Clear existing structures
                 return plugin!.clear().then(() => {
-                    console.log('[Viewer] Calling loadStreamingTrajectory...');
+                    console.log('[Viewer] Calling loadStreamingTrajectory with params:', {
+                        topologyUrl: message.topologyUrl,
+                        topologyFormat: message.topologyFormat,
+                        frameCount: message.frameCount,
+                        duration: message.duration
+                    });
                     return loadStreamingTrajectory(plugin!, {
                         topologyUrl: message.topologyUrl as string,
                         topologyFormat: message.topologyFormat as (BuiltInTopologyFormat | BuiltInTrajectoryFormat),
@@ -223,15 +237,23 @@ function handleMessage(event: MessageEvent): void {
                         vscode: vscode
                     });
                 });
-            }).then(() => {
-                console.log('[Viewer] Streaming trajectory loaded successfully');
+            }).then((result) => {
+                console.log('[Viewer] Streaming trajectory loaded successfully, result:', {
+                    hasModel: !!result.model,
+                    hasTrajectory: !!result.trajectory,
+                    hasPreset: !!result.preset
+                });
                 vscode.postMessage({
                     type: 'streamingTrajectoryLoaded',
                     filename: message.coordinatesFilename
                 });
             }).catch((error: Error) => {
                 console.error('[Viewer] Error loading streaming trajectory:', error);
-                vscode.postMessage({ type: 'error', message: error.message });
+                console.error('[Viewer] Error stack:', error.stack);
+                vscode.postMessage({ 
+                    type: 'error', 
+                    message: `Failed to load streaming trajectory: ${error.message}` 
+                });
             });
             break;
         }

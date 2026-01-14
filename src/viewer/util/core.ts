@@ -93,12 +93,19 @@ export async function loadStreamingTrajectory(
     setGlobalVsCodeApi(params.vscode);
 
     // 2. Load and parse topology file
-    console.log('[loadStreamingTrajectory] Downloading topology file...');
-    const topologyData = await plugin.builders.data.download({
-        url: params.topologyUrl,
-        isBinary: false,
-        label: params.topologyLabel
-    });
+    console.log('[loadStreamingTrajectory] Downloading topology file from:', params.topologyUrl);
+    let topologyData;
+    try {
+        topologyData = await plugin.builders.data.download({
+            url: params.topologyUrl,
+            isBinary: false,
+            label: params.topologyLabel
+        });
+        console.log('[loadStreamingTrajectory] Topology file downloaded successfully');
+    } catch (error) {
+        console.error('[loadStreamingTrajectory] Failed to download topology file:', error);
+        throw new Error(`Failed to download topology file: ${error instanceof Error ? error.message : String(error)}`);
+    }
 
     let model: StateObjectSelector;
 
@@ -129,6 +136,19 @@ export async function loadStreamingTrajectory(
         throw new Error('Failed to load topology model');
     }
     console.log('[loadStreamingTrajectory] Model loaded, atom count:', modelObj.atomicHierarchy.atoms._rowCount);
+    
+    // Check if model has coordinates (GRO files should have coordinates)
+    const hasCoordinates = modelObj.atomicConformation && 
+        modelObj.atomicConformation.x && 
+        modelObj.atomicConformation.x.length > 0;
+    console.log('[loadStreamingTrajectory] Model has coordinates:', hasCoordinates);
+    if (hasCoordinates) {
+        console.log('[loadStreamingTrajectory] First atom coordinates:', {
+            x: modelObj.atomicConformation.x[0],
+            y: modelObj.atomicConformation.y[0],
+            z: modelObj.atomicConformation.z[0]
+        });
+    }
 
     // 4. Create StreamingTrajectory using StateTransformer with dependsOn
     console.log('[loadStreamingTrajectory] Creating streaming trajectory via StateTransformer...');
@@ -144,11 +164,18 @@ export async function loadStreamingTrajectory(
 
     // 5. Apply trajectory hierarchy preset (this creates Model -> Structure -> Representations)
     console.log('[loadStreamingTrajectory] Applying trajectory hierarchy preset...');
-    const preset = await plugin.builders.structure.hierarchy.applyPreset(
-        trajectory,
-        'default'
-    );
+    let preset;
+    try {
+        preset = await plugin.builders.structure.hierarchy.applyPreset(
+            trajectory,
+            'default'
+        );
+        console.log('[loadStreamingTrajectory] Preset applied successfully');
+    } catch (error) {
+        console.error('[loadStreamingTrajectory] Failed to apply preset:', error);
+        throw new Error(`Failed to apply trajectory preset: ${error instanceof Error ? error.message : String(error)}`);
+    }
 
-    console.log('[loadStreamingTrajectory] Complete!');
+    console.log('[loadStreamingTrajectory] Complete! Trajectory should now be visible in the viewer.');
     return { model, trajectory, preset };
 }
