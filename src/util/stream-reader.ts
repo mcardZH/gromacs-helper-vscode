@@ -1,7 +1,9 @@
 /**
  * Base streaming reader for trajectory files
+ * 
+ * Uses vscode.workspace.fs API for remote file support (SSH, etc.)
  */
-import * as fs from 'fs';
+import * as vscode from 'vscode';
 import { LRUCache } from './lru-cache';
 
 /**
@@ -58,16 +60,25 @@ export interface TrajectoryInfo {
 
 /**
  * Base class for streaming trajectory readers
+ * 
+ * Uses vscode.workspace.fs API to read files, which supports remote file systems.
+ * Files are read into memory for random access, as vscode.workspace.fs doesn't support
+ * partial reads or file handles.
  */
 export abstract class StreamingReader {
-    protected filePath: string;
+    protected fileUri: vscode.Uri;
     protected frameIndex: FrameIndex[] = [];
     protected cache: LRUCache<number, FrameData>;
-    protected fileHandle: fs.promises.FileHandle | null = null;
+    protected fileBuffer: Buffer | null = null;
     protected isIndexed: boolean = false;
 
-    constructor(filePath: string, cacheSize: number = 100) {
-        this.filePath = filePath;
+    constructor(fileUri: string | vscode.Uri, cacheSize: number = 100) {
+        // Accept either URI string or vscode.Uri object
+        if (typeof fileUri === 'string') {
+            this.fileUri = vscode.Uri.parse(fileUri);
+        } else {
+            this.fileUri = fileUri;
+        }
         this.cache = new LRUCache(cacheSize);
     }
 
@@ -83,13 +94,20 @@ export abstract class StreamingReader {
 
     /**
      * Initialize the reader and build frame index
+     * 
+     * Reads the entire file into memory using vscode.workspace.fs API.
+     * This is necessary because vscode.workspace.fs doesn't support partial reads.
      */
     async initialize(): Promise<void> {
         if (this.isIndexed) {
             return;
         }
 
-        this.fileHandle = await fs.promises.open(this.filePath, 'r');
+        // Read entire file into memory using vscode.workspace.fs API
+        // This supports remote file systems (SSH, etc.) without downloading
+        const fileData = await vscode.workspace.fs.readFile(this.fileUri);
+        this.fileBuffer = Buffer.from(fileData);
+        
         await this.buildIndex();
         this.isIndexed = true;
     }
@@ -184,26 +202,31 @@ export abstract class StreamingReader {
     }
 
     /**
-     * Read bytes from file at specified offset
+     * Read bytes from file buffer at specified offset
+     * 
+     * Since we've loaded the entire file into memory, we can do random access
+     * reads directly from the buffer.
      */
     protected async readBytes(offset: number, length: number): Promise<Buffer> {
-        if (!this.fileHandle) {
-            throw new Error('File not open');
+        if (!this.fileBuffer) {
+            throw new Error('File not loaded. Call initialize() first.');
         }
 
-        const buffer = Buffer.allocUnsafe(length);
-        await this.fileHandle.read(buffer, 0, length, offset);
-        return buffer;
+        if (offset + length > this.fileBuffer.length) {
+            throw new Error(`Read beyond end of file: offset=${offset}, length=${length}, fileSize=${this.fileBuffer.length}`);
+        }
+
+        // Return a slice of the buffer (this creates a new Buffer view, not a copy)
+        return this.fileBuffer.subarray(offset, offset + length);
     }
 
     /**
-     * Close the file handle and clear cache
+     * Close the reader and clear cache
+     * 
+     * Releases the file buffer from memory.
      */
     async close(): Promise<void> {
-        if (this.fileHandle) {
-            await this.fileHandle.close();
-            this.fileHandle = null;
-        }
+        this.fileBuffer = null;
         this.cache.clear();
         this.isIndexed = false;
         this.frameIndex = [];

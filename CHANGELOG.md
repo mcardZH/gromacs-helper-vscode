@@ -22,6 +22,21 @@
 
 - 优化 Webpack 构建配置，添加监视模式以提升开发体验
 
+### 修复
+
+- 修复 SSH 远程连接时轨迹文件被完整下载到本地的问题
+  - 将所有文件读取操作从 Node.js `fs.promises` API 迁移到 `vscode.workspace.fs` API
+  - 重构流式轨迹读取器，使用 `vscode.workspace.fs` 支持远程文件系统
+  - 确保在 SSH 连接下，轨迹文件在远程服务器上读取，不会触发完整文件下载
+- 修复远程连接时文件选择对话框显示本地文件系统的问题
+  - 使用 `vscode.Uri.joinPath()` 替代 `vscode.Uri.file()` 来获取父目录 URI
+  - 确保文件选择对话框保持远程 URI scheme（如 `vscode-remote://ssh-remote+...`）
+  - 修复 `localResourceRoots` 配置，支持远程文件系统
+- 修复扩展在远程 SSH 连接时仍然下载轨迹文件的问题
+  - 将 `extensionKind` 从 `["workspace", "ui"]` 改为 `["workspace"]`
+  - 强制扩展在远程服务器上运行，确保文件读取操作在远程执行
+  - Webview 仍然在本地运行，通过 postMessage 与远程扩展主机通信，只传输需要的帧数据
+
 ## [0.3.4] - 2025-12-24
 
 ### 新增

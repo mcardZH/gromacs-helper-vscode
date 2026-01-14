@@ -35,8 +35,7 @@
     "vscode": "^1.60.0"
   },
   "extensionKind": [
-    "workspace",
-    "ui"
+    "workspace"
   ],
   "categories": [
     "Other",

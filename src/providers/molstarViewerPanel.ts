@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
 import { StreamingTrajectoryProvider } from '../util/stream_provider';
 
 /**
@@ -61,9 +60,10 @@ export class MolstarViewerPanel {
             vscode.Uri.joinPath(extensionUri, 'media')
         ];
 
-        // Add file's parent directory to allow webview access to local files
+        // Add file's parent directory to allow webview access to files
+        // Use vscode.Uri.joinPath to preserve URI scheme for remote files
         if (fileUri) {
-            const fileDir = vscode.Uri.file(path.dirname(fileUri.fsPath));
+            const fileDir = vscode.Uri.joinPath(fileUri, '..');
             localResourceRoots.push(fileDir);
         }
 
@@ -111,15 +111,16 @@ export class MolstarViewerPanel {
             const localResourceRoots: vscode.Uri[] = [
                 vscode.Uri.joinPath(extensionUri, 'dist', 'viewer'),
                 vscode.Uri.joinPath(extensionUri, 'media'),
-                vscode.Uri.file(path.dirname(fileUri.fsPath))
+                vscode.Uri.joinPath(fileUri, '..')  // Use joinPath to preserve URI scheme
             ];
 
             // Add topology directory if different
             if (topologyFileUriString) {
                 const topologyUri = vscode.Uri.parse(topologyFileUriString);
-                const topologyDir = path.dirname(topologyUri.fsPath);
-                if (!localResourceRoots.some(r => r.fsPath === topologyDir)) {
-                    localResourceRoots.push(vscode.Uri.file(topologyDir));
+                const topologyDirUri = vscode.Uri.joinPath(topologyUri, '..');
+                // Check if directory is already in the list by comparing URI strings
+                if (!localResourceRoots.some(r => r.toString() === topologyDirUri.toString())) {
+                    localResourceRoots.push(topologyDirUri);
                 }
             }
 
@@ -206,7 +207,9 @@ export class MolstarViewerPanel {
                 return;
             }
 
-            const data = await fs.promises.readFile(fileUri.fsPath, 'utf-8');
+            // Use vscode.workspace.fs API for remote file support
+            const fileData = await vscode.workspace.fs.readFile(fileUri);
+            const data = Buffer.from(fileData).toString('utf-8');
 
             // Determine format from extension
             const formatMap: { [key: string]: string } = {
@@ -256,19 +259,21 @@ export class MolstarViewerPanel {
         try {
             const trajectoryFilename = path.basename(trajectoryUri.fsPath);
             const trajectoryExt = path.extname(trajectoryUri.fsPath).toLowerCase();
-            const trajectoryDir = path.dirname(trajectoryUri.fsPath);
+            // Use vscode.Uri.joinPath to get parent directory URI, preserving the URI scheme (works for remote)
+            const trajectoryDirUri = vscode.Uri.joinPath(trajectoryUri, '..');
 
-            // Check file size
-            const stats = await fs.promises.stat(trajectoryUri.fsPath);
+            // Check file size using vscode.workspace.fs API
+            const stats = await vscode.workspace.fs.stat(trajectoryUri);
             const fileSizeMB = stats.size / (1024 * 1024);
             const useStreaming = fileSizeMB > 50;
 
             // Ask user to select a topology file
+            // Use trajectoryDirUri to preserve remote URI scheme (e.g., vscode-remote://ssh-remote+...)
             const topologyUri = await vscode.window.showOpenDialog({
                 canSelectFiles: true,
                 canSelectFolders: false,
                 canSelectMany: false,
-                defaultUri: vscode.Uri.file(trajectoryDir),
+                defaultUri: trajectoryDirUri,
                 filters: {
                     'Topology Files': ['gro', 'pdb'],
                     'All Files': ['*']
@@ -331,12 +336,12 @@ export class MolstarViewerPanel {
 
             // Need to add topology directory to webview options if different from trajectory directory
             const topologyDir = path.dirname(selectedTopologyUri.fsPath);
-            if (topologyDir !== trajectoryDir) {
-                // Update webview options to include topology directory
-                // NOTE: webview.options is readonly after creation, so we need to ensure
-                // the user selects files from accessible directories
-                // For now, we'll read the topology file directly as it's text-based
-            }
+            // if (topologyDir !== trajectoryDir) {
+            //     // Update webview options to include topology directory
+            //     // NOTE: webview.options is readonly after creation, so we need to ensure
+            //     // the user selects files from accessible directories
+            //     // For now, we'll read the topology file directly as it's text-based
+            // }
 
             // Convert file URIs to webview URIs for URL-based loading
             const topologyWebviewUri = this._panel.webview.asWebviewUri(selectedTopologyUri).toString();
@@ -390,8 +395,8 @@ export class MolstarViewerPanel {
             const topologyFilename = path.basename(topologyUri.fsPath);
             const topologyExt = path.extname(topologyUri.fsPath).toLowerCase();
 
-            // Check file size
-            const stats = await fs.promises.stat(trajectoryUri.fsPath);
+            // Check file size using vscode.workspace.fs API
+            const stats = await vscode.workspace.fs.stat(trajectoryUri);
             const fileSizeMB = stats.size / (1024 * 1024);
             const useStreaming = fileSizeMB > 50;
 
@@ -505,11 +510,11 @@ export class MolstarViewerPanel {
                 return;
             }
 
-            // Initialize streaming provider
+            // Initialize streaming provider with URIs (not file paths)
             console.log('[StreamingTrajectory] Initializing StreamingTrajectoryProvider...');
             this._streamingProvider = new StreamingTrajectoryProvider(
-                topologyUri.fsPath,
-                trajectoryUri.fsPath
+                topologyUri.toString(),
+                trajectoryUri.toString()
             );
 
             await this._streamingProvider.initialize();

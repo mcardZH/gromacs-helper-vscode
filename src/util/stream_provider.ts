@@ -1,5 +1,6 @@
 // 流式轨迹提供者
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { TrrStreamReader } from './trr/stream-reader';
 import { XtcStreamReader } from './xtc/stream-reader';
 import { StreamingReader, TrajectoryInfo, FrameData } from './stream-reader';
@@ -11,12 +12,28 @@ export class StreamingTrajectoryProvider {
     private reader: StreamingReader | null = null;
     private fileType: 'trr' | 'xtc' | null = null;
 
-    constructor(topologyFileUri: string, coordinatesFileUri: string) {
-        this.topologyFileUri = topologyFileUri;
-        this.coordinatesFileUri = coordinatesFileUri;
+    /**
+     * Constructor for StreamingTrajectoryProvider
+     * 
+     * @param topologyFileUri - URI string or vscode.Uri for topology file (e.g., .gro, .pdb)
+     * @param coordinatesFileUri - URI string or vscode.Uri for trajectory file (e.g., .xtc, .trr)
+     */
+    constructor(topologyFileUri: string | vscode.Uri, coordinatesFileUri: string | vscode.Uri) {
+        // Convert to string if vscode.Uri is provided
+        this.topologyFileUri = typeof topologyFileUri === 'string' 
+            ? topologyFileUri 
+            : topologyFileUri.toString();
+        this.coordinatesFileUri = typeof coordinatesFileUri === 'string'
+            ? coordinatesFileUri
+            : coordinatesFileUri.toString();
 
         // Determine file type from extension
-        const ext = path.extname(coordinatesFileUri).toLowerCase();
+        // Parse URI to get path for extension detection
+        const coordinatesUri = typeof coordinatesFileUri === 'string'
+            ? vscode.Uri.parse(coordinatesFileUri)
+            : coordinatesFileUri;
+        const ext = path.extname(coordinatesUri.fsPath || coordinatesUri.path).toLowerCase();
+        
         if (ext === '.trr') {
             this.fileType = 'trr';
         } else if (ext === '.xtc') {
@@ -35,6 +52,7 @@ export class StreamingTrajectoryProvider {
         }
 
         // Create appropriate reader based on file type
+        // Pass URI string to reader (it will parse it internally)
         if (this.fileType === 'trr') {
             this.reader = new TrrStreamReader(this.coordinatesFileUri);
         } else if (this.fileType === 'xtc') {

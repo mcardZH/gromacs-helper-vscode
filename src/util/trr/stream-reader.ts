@@ -16,8 +16,8 @@ export class TrrStreamReader extends StreamingReader {
     protected async buildIndex(): Promise<void> {
         this.frameIndex = [];
         let offset = 0;
-        const stats = await this.fileHandle!.stat();
-        const fileSize = stats.size;
+        // File size is now the buffer length
+        const fileSize = this.fileBuffer!.length;
 
         while (offset < fileSize) {
             try {
