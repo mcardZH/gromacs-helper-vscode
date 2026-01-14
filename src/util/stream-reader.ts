@@ -1,9 +1,12 @@
 /**
  * Base streaming reader for trajectory files
  * 
- * Uses vscode.workspace.fs API for remote file support (SSH, etc.)
+ * Uses Node.js fs.promises API for efficient file reading with offset support.
+ * When extension runs on remote (extensionKind: workspace), fs.promises directly
+ * accesses the remote file system without downloading files.
  */
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import { LRUCache } from './lru-cache';
 
 /**
@@ -61,16 +64,19 @@ export interface TrajectoryInfo {
 /**
  * Base class for streaming trajectory readers
  * 
- * Uses vscode.workspace.fs API to read files, which supports remote file systems.
- * Files are read into memory for random access, as vscode.workspace.fs doesn't support
- * partial reads or file handles.
+ * Uses Node.js fs.promises API for efficient file reading with offset support.
+ * When extension runs on remote (extensionKind: workspace), the file handle
+ * directly accesses the remote file system, so files are read on the remote
+ * server without being downloaded to the local machine.
  */
 export abstract class StreamingReader {
     protected fileUri: vscode.Uri;
+    protected filePath: string;  // File system path (works correctly when extension runs on remote)
     protected frameIndex: FrameIndex[] = [];
     protected cache: LRUCache<number, FrameData>;
-    protected fileBuffer: Buffer | null = null;
+    protected fileHandle: fs.promises.FileHandle | null = null;
     protected isIndexed: boolean = false;
+    protected fileSize: number = 0;
 
     constructor(fileUri: string | vscode.Uri, cacheSize: number = 100) {
         // Accept either URI string or vscode.Uri object
@@ -79,6 +85,13 @@ export abstract class StreamingReader {
         } else {
             this.fileUri = fileUri;
         }
+        
+        // Get file system path
+        // When extension runs on remote (extensionKind: workspace), fsPath
+        // returns the remote file system path, and fs.promises will access
+        // the file directly on the remote server without downloading
+        this.filePath = this.fileUri.fsPath;
+        
         this.cache = new LRUCache(cacheSize);
     }
 
@@ -95,19 +108,27 @@ export abstract class StreamingReader {
     /**
      * Initialize the reader and build frame index
      * 
-     * Reads the entire file into memory using vscode.workspace.fs API.
-     * This is necessary because vscode.workspace.fs doesn't support partial reads.
+     * Opens a file handle using Node.js fs.promises API for efficient offset-based reading.
+     * When extension runs on remote, the file handle accesses the remote file system directly,
+     * so files are read on the remote server without being downloaded to local.
      */
     async initialize(): Promise<void> {
         if (this.isIndexed) {
             return;
         }
 
-        // Read entire file into memory using vscode.workspace.fs API
-        // This supports remote file systems (SSH, etc.) without downloading
-        const fileData = await vscode.workspace.fs.readFile(this.fileUri);
-        this.fileBuffer = Buffer.from(fileData);
+        // Open file handle using Node.js fs.promises API
+        // When extension runs on remote (extensionKind: workspace), this accesses
+        // the remote file system directly, so no file download occurs
+        this.fileHandle = await fs.promises.open(this.filePath, 'r');
         
+        // Get file size
+        const stats = await this.fileHandle.stat();
+        this.fileSize = stats.size;
+        
+        console.log(`[StreamingReader] Opened file handle for ${(this.fileSize / 1024 / 1024 / 1024).toFixed(2)} GB file`);
+        
+        // Build frame index (this will use readBytes which reads from file handle)
         await this.buildIndex();
         this.isIndexed = true;
     }
@@ -202,31 +223,43 @@ export abstract class StreamingReader {
     }
 
     /**
-     * Read bytes from file buffer at specified offset
+     * Read bytes from file at specified offset
      * 
-     * Since we've loaded the entire file into memory, we can do random access
-     * reads directly from the buffer.
+     * Uses Node.js fs.promises FileHandle.read() for efficient offset-based reading.
+     * This allows reading specific byte ranges without loading the entire file into memory.
+     * When extension runs on remote, the read operation happens on the remote server.
      */
     protected async readBytes(offset: number, length: number): Promise<Buffer> {
-        if (!this.fileBuffer) {
-            throw new Error('File not loaded. Call initialize() first.');
+        if (!this.fileHandle) {
+            throw new Error('File handle not open. Call initialize() first.');
         }
 
-        if (offset + length > this.fileBuffer.length) {
-            throw new Error(`Read beyond end of file: offset=${offset}, length=${length}, fileSize=${this.fileBuffer.length}`);
+        if (offset + length > this.fileSize) {
+            throw new Error(`Read beyond end of file: offset=${offset}, length=${length}, fileSize=${this.fileSize}`);
         }
 
-        // Return a slice of the buffer (this creates a new Buffer view, not a copy)
-        return this.fileBuffer.subarray(offset, offset + length);
+        // Allocate buffer and read from file at specified offset
+        const buffer = Buffer.allocUnsafe(length);
+        const result = await this.fileHandle.read(buffer, 0, length, offset);
+        
+        if (result.bytesRead !== length) {
+            // Partial read - return only what was read
+            return buffer.subarray(0, result.bytesRead);
+        }
+        
+        return buffer;
     }
 
     /**
      * Close the reader and clear cache
      * 
-     * Releases the file buffer from memory.
+     * Closes the file handle and releases resources.
      */
     async close(): Promise<void> {
-        this.fileBuffer = null;
+        if (this.fileHandle) {
+            await this.fileHandle.close();
+            this.fileHandle = null;
+        }
         this.cache.clear();
         this.isIndexed = false;
         this.frameIndex = [];

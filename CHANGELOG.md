@@ -36,6 +36,12 @@
   - 将 `extensionKind` 从 `["workspace", "ui"]` 改为 `["workspace"]`
   - 强制扩展在远程服务器上运行，确保文件读取操作在远程执行
   - Webview 仍然在本地运行，通过 postMessage 与远程扩展主机通信，只传输需要的帧数据
+- 修复大文件读取问题，使用 Node.js 原生 fs API 支持偏移量读取
+  - 使用 `fs.promises.open()` 和 `FileHandle.read()` 进行高效的偏移量读取
+  - 当扩展在远程运行（extensionKind: workspace）时，文件句柄直接访问远程文件系统
+  - 支持按需读取特定字节范围，无需将整个文件加载到内存
+  - 支持处理任意大小的文件（不受 2GB Buffer 限制）
+  - 文件读取操作在远程服务器上执行，不会下载到本地
 
 ## [0.3.4] - 2025-12-24
 
