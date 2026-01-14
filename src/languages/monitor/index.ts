@@ -97,12 +97,28 @@ export class GromacsMonitorSupport implements vscode.Disposable {
 
         // 如果是远程监控，收集 SSH 信息
         if (type.value === 'remote') {
+            // 单独输入用户名，便于与主机名分离配置
+            const sshUser = await vscode.window.showInputBox({
+                prompt: 'Enter SSH username',
+                placeHolder: 'e.g., gmxuser',
+                validateInput: (value) => {
+                    if (!value.trim()) {
+                        return 'Username cannot be empty';
+                    }
+                    return null;
+                }
+            });
+
+            if (!sshUser) {
+                return;
+            }
+
             const sshHost = await vscode.window.showInputBox({
                 prompt: 'Enter SSH host',
-                placeHolder: 'user@hostname or user@ip',
+                placeHolder: 'hostname or ip',
                 validateInput: (value) => {
-                    if (!value.trim() || !value.includes('@')) {
-                        return 'Please enter a valid SSH host (format: user@hostname)';
+                    if (!value.trim()) {
+                        return 'Host cannot be empty';
                     }
                     return null;
                 }
@@ -112,6 +128,7 @@ export class GromacsMonitorSupport implements vscode.Disposable {
                 return;
             }
 
+            target.sshUser = sshUser.trim();
             target.sshHost = sshHost.trim();
 
             // 可选：SSH 端口
@@ -133,10 +150,18 @@ export class GromacsMonitorSupport implements vscode.Disposable {
             // 可选：SSH 密钥
             const useSshKey = await vscode.window.showQuickPick(
                 [
-                    { label: 'Default SSH key', value: false },
-                    { label: 'Specify custom SSH key', value: true }
+                    {
+                        label: 'Use default SSH configuration',
+                        description: 'Use your existing SSH config / agent / password login',
+                        value: false
+                    },
+                    {
+                        label: 'Specify custom SSH key',
+                        description: 'Use a specific private key file for authentication',
+                        value: true
+                    }
                 ],
-                { placeHolder: 'SSH authentication method' }
+                { placeHolder: 'SSH authentication method (password or key)' }
             );
 
             if (useSshKey?.value) {

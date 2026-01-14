@@ -14,6 +14,13 @@ export interface IMonitorTarget {
     name: string;
     type: 'local' | 'remote';
     independent: boolean;
+    /**
+     * SSH 用户名（可选）。
+     *
+     * - 如果提供，则实际连接目标为 `${sshUser}@${sshHost}`
+     * - 如果不提供，则 `sshHost` 可以直接写成 `user@hostname` 以保持向后兼容
+     */
+    sshUser?: string;
     sshHost?: string;
     sshPort?: number;
     sshKey?: string;
@@ -457,13 +464,14 @@ export class RemoteMonitor extends BaseMonitor {
      */
     private buildScpArgs(localPath: string, remotePath: string): string[] {
         const args = ['scp'];
+        const remoteHost = this.getSshDestination();
 
         if (this.target.sshPort && this.target.sshPort !== 22) {
             args.push('-P', this.target.sshPort.toString());
         }
 
         if (this.target.sshKey) {
-            args.push('-i', this.target.sshKey);
+            args.push('-i', this.expandHomePath(this.target.sshKey));
         }
 
         args.push(
@@ -472,7 +480,7 @@ export class RemoteMonitor extends BaseMonitor {
             '-o', 'LogLevel=ERROR',
             '-o', 'ConnectTimeout=10',
             localPath,
-            `${this.target.sshHost}:${remotePath}`
+            `${remoteHost}:${remotePath}`
         );
 
         return args;
@@ -493,13 +501,14 @@ export class RemoteMonitor extends BaseMonitor {
      */
     private buildSshArgs(command: string): string[] {
         const args = ['ssh'];
+        const remoteHost = this.getSshDestination();
 
         if (this.target.sshPort && this.target.sshPort !== 22) {
             args.push('-p', this.target.sshPort.toString());
         }
 
         if (this.target.sshKey) {
-            args.push('-i', this.target.sshKey);
+            args.push('-i', this.expandHomePath(this.target.sshKey));
         }
 
         args.push(
@@ -508,11 +517,62 @@ export class RemoteMonitor extends BaseMonitor {
             '-o', 'LogLevel=ERROR',
             '-o', 'ConnectTimeout=10',
             '-o', 'ServerAliveInterval=5',
-            this.target.sshHost!,
+            remoteHost,
             command
         );
 
         return args;
+    }
+
+    /**
+     * 组合 SSH 目标主机字符串
+     *
+     * - 优先使用显式的 sshUser + sshHost
+     * - 如果未设置 sshUser，则保持向后兼容，直接使用 sshHost（可为 `user@host`）
+     */
+    private getSshDestination(): string {
+        if (!this.target.sshHost) {
+            throw new Error('SSH host is not configured');
+        }
+
+        if (this.target.sshUser && !this.target.sshHost.includes('@')) {
+            return `${this.target.sshUser}@${this.target.sshHost}`;
+        }
+
+        // 向后兼容：sshHost 已经是 user@hostname
+        return this.target.sshHost;
+    }
+
+    /**
+     * 展开以 ~ 开头的路径到用户主目录
+     *
+     * 主要用于 sshKey 配置中允许写成 "~/.ssh/id_rsa" 的形式。
+     */
+    private expandHomePath(p: string): string {
+        if (!p.startsWith('~')) {
+            return p;
+        }
+
+        const home =
+            process.env.HOME ||
+            process.env.USERPROFILE ||
+            (process.env.HOMEDRIVE && process.env.HOMEPATH
+                ? `${process.env.HOMEDRIVE}${process.env.HOMEPATH}`
+                : undefined);
+
+        if (!home) {
+            return p;
+        }
+
+        if (p === '~') {
+            return home;
+        }
+
+        if (p.startsWith('~/')) {
+            return path.join(home, p.substring(2));
+        }
+
+        return p;
     }
 }
 
