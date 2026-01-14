@@ -39,6 +39,22 @@ export class CustomTrajectoryControls extends PluginUIComponent<{}, State> {
         this.update();
     }
 
+    componentWillUnmount() {
+        // 清理定时器，避免组件卸载后仍然触发更新
+        if (this.sliderCommitTimer !== void 0) {
+            window.clearTimeout(this.sliderCommitTimer);
+            this.sliderCommitTimer = void 0;
+        }
+    }
+
+    /** 
+     * 用于防抖提交滑块位置：
+     * - 用户拖动时立即更新本地 UI 状态（currentFrame）
+     * - 但真正的 Mol* 状态提交用定时器合并，减少跨进程/远程调用频率
+     */
+    private sliderCommitTimer: number | undefined;
+    private pendingSliderFrame: number | undefined;
+
     private update = () => {
         const state = this.plugin.state.data;
         const models = state.selectQ(q => q.ofTransformer(StateTransforms.Model.ModelFromTrajectory));
@@ -110,9 +126,35 @@ export class CustomTrajectoryControls extends PluginUIComponent<{}, State> {
 
     private onSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = parseInt(e.target.value, 10);
-        if (!isNaN(value)) {
-            this.setFrame(value);
+        if (isNaN(value)) return;
+
+        // 1. 立即更新本地 UI 状态，让滑块「跟手」
+        this.setState({
+            currentFrame: value,
+            inputValue: String(value + 1),
+        });
+
+        // 2. 记录待提交的帧索引
+        this.pendingSliderFrame = value;
+
+        // 3. 启动/重置防抖定时器，合并高频拖动事件
+        if (this.sliderCommitTimer !== void 0) {
+            window.clearTimeout(this.sliderCommitTimer);
         }
+
+        // 在远程场景下 80~120ms 体验较好，这里取 100ms
+        this.sliderCommitTimer = window.setTimeout(() => {
+            this.flushSliderCommit();
+        }, 100);
+    };
+
+    private flushSliderCommit = async () => {
+        const target = this.pendingSliderFrame;
+        this.sliderCommitTimer = void 0;
+        this.pendingSliderFrame = void 0;
+
+        if (typeof target !== 'number') return;
+        await this.setFrame(target);
     };
 
     private onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
