@@ -10,6 +10,43 @@ import * as fs from 'fs';
 import { LRUCache } from './lru-cache';
 
 /**
+ * Simple semaphore for limiting concurrent async operations
+ */
+class Semaphore {
+    private acquired: number = 0;
+    private readonly maxConcurrent: number;
+    private readonly waiters: Array<() => void> = [];
+
+    constructor(maxConcurrent: number) {
+        this.maxConcurrent = maxConcurrent;
+    }
+
+    async acquire(): Promise<void> {
+        if (this.acquired < this.maxConcurrent) {
+            this.acquired++;
+            return;
+        }
+        return new Promise<void>((resolve) => {
+            this.waiters.push(() => {
+                this.acquired++;
+                resolve();
+            });
+        });
+    }
+
+    release(): void {
+        if (this.waiters.length > 0) {
+            const next = this.waiters.shift();
+            if (next) {
+                next();
+            }
+        } else {
+            this.acquired--;
+        }
+    }
+}
+
+/**
  * Frame index entry containing metadata for efficient seeking
  */
 export interface FrameIndex {
@@ -77,22 +114,27 @@ export abstract class StreamingReader {
     protected fileHandle: fs.promises.FileHandle | null = null;
     protected isIndexed: boolean = false;
     protected fileSize: number = 0;
+    private prefetchQueue: Map<number, Promise<void>> = new Map();
+    private prefetchSemaphore: Semaphore;
+    private readonly prefetchDepth: number;
 
-    constructor(fileUri: string | vscode.Uri, cacheSize: number = 100) {
+    constructor(fileUri: string | vscode.Uri, cacheSize: number = 256, prefetchDepth: number = 2, maxConcurrentReads: number = 2) {
         // Accept either URI string or vscode.Uri object
         if (typeof fileUri === 'string') {
             this.fileUri = vscode.Uri.parse(fileUri);
         } else {
             this.fileUri = fileUri;
         }
-        
+
         // Get file system path
         // When extension runs on remote (extensionKind: workspace), fsPath
         // returns the remote file system path, and fs.promises will access
         // the file directly on the remote server without downloading
         this.filePath = this.fileUri.fsPath;
-        
+
         this.cache = new LRUCache(cacheSize);
+        this.prefetchSemaphore = new Semaphore(maxConcurrentReads);
+        this.prefetchDepth = prefetchDepth;
     }
 
     /**
@@ -197,6 +239,9 @@ export abstract class StreamingReader {
         // Cache the result
         this.cache.set(frameNumber, frameData);
 
+        // Schedule prefetch for subsequent frames (only on cache miss, not on hit)
+        this._schedulePrefetch(frameNumber, this.prefetchDepth);
+
         return frameData;
     }
 
@@ -248,6 +293,47 @@ export abstract class StreamingReader {
         }
         
         return buffer;
+    }
+
+    /**
+     * Schedule prefetch for upcoming frames in the background
+     */
+    private _schedulePrefetch(currentFrame: number, depth: number): void {
+        if (depth <= 0) {
+            return;
+        }
+        for (let i = currentFrame + 1; i <= currentFrame + depth; i++) {
+            // Skip if out of range
+            if (i < 0 || i >= this.frameIndex.length) {
+                continue;
+            }
+            // Skip if already cached
+            if (this.cache.has(i)) {
+                continue;
+            }
+            // Skip if already in prefetch queue
+            if (this.prefetchQueue.has(i)) {
+                continue;
+            }
+            // Queue background read through semaphore
+            const promise = (async () => {
+                try {
+                    await this.prefetchSemaphore.acquire();
+                    try {
+                        // getFrame will cache the result; we don't await the return value
+                        await this.getFrame(i);
+                    } finally {
+                        this.prefetchSemaphore.release();
+                    }
+                } catch {
+                    // Swallow all prefetch errors — must never propagate
+                    console.debug(`[StreamingReader] Prefetch error for frame ${i}`);
+                } finally {
+                    this.prefetchQueue.delete(i);
+                }
+            })();
+            this.prefetchQueue.set(i, promise);
+        }
     }
 
     /**

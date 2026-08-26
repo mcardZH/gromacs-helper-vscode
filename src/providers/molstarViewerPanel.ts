@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { StreamingTrajectoryProvider } from '../util/stream_provider';
+import { FrameData } from '../util/stream-reader';
 
 /**
  * Mol* Viewer Panel Manager
@@ -43,6 +44,9 @@ export class MolstarViewerPanel {
 
     // Streaming trajectory provider (for on-demand frame loading)
     private _streamingProvider: StreamingTrajectoryProvider | undefined;
+
+    // In-flight frame requests for coalescing duplicate requests
+    private _inFlightFrames: Map<number, Promise<FrameData>> = new Map();
 
     // Trajectory file extensions
     private static readonly _trajectoryExtensions = ['.xtc', '.trr'];
@@ -314,6 +318,9 @@ export class MolstarViewerPanel {
         if (this._resourceUri) {
             MolstarViewerPanel._panels.delete(this._resourceUri.toString());
         }
+
+        // Clear in-flight frame requests
+        this._inFlightFrames.clear();
 
         this._panel.dispose();
 
@@ -818,9 +825,17 @@ export class MolstarViewerPanel {
                 throw new Error('Streaming provider not initialized');
             }
 
+            // Coalesce duplicate frame requests using in-flight map
+            let inFlight = this._inFlightFrames.get(frameIndex);
+            if (!inFlight) {
+                inFlight = this._streamingProvider.getFrame(frameIndex);
+                this._inFlightFrames.set(frameIndex, inFlight);
+                inFlight.finally(() => this._inFlightFrames.delete(frameIndex));
+            }
+
             // Get frame data from streaming provider
             const startTime = Date.now();
-            const frameData = await this._streamingProvider.getFrame(frameIndex);
+            const frameData = await inFlight;
             const elapsed = Date.now() - startTime;
 
             console.log(`[FrameRequest] Frame ${frameIndex} fetched in ${elapsed}ms, atoms: ${frameData.count}`);

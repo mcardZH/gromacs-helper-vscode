@@ -145,7 +145,7 @@ Follows SemVer. Use [build.sh](build.sh) or [build.bat](build.bat) for interacti
 
 **Testing new features**:
 - Add tests to [src/test/](src/test/)
-- Use fixtures in [src/test/fixtures/](src/test/fixtures/)
+- Use fixtures in [test-fixtures/](../../test-fixtures/)
 - Run with `npm test` or "Extension Tests" launch config
 
 ## Dependencies & Tools

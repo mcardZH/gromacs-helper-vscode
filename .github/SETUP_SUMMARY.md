@@ -72,7 +72,7 @@ scripts/
 
 #### 方法二：使用发布脚本
 ```bash
-./scripts/release.sh
+./scripts/shell/release.sh
 ```
 
 #### 方法三：使用 GitHub CLI
@@ -91,7 +91,7 @@ git push origin main
 
 ### 本地测试
 ```bash
-./scripts/test-actions.sh
+./scripts/shell/test-actions.sh
 ```
 
 ## 🎯 版本管理策略

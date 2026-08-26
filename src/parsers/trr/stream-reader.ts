@@ -4,7 +4,7 @@
  * Based on the TRR format specification:
  * https://github.com/gromacs/gromacs/blob/master/src/gromacs/fileio/trrio.cpp
  */
-import { StreamingReader, FrameIndex, FrameData } from '../stream-reader';
+import { StreamingReader, FrameIndex, FrameData } from '../../util/stream-reader';
 
 /**
  * TRR-specific streaming reader

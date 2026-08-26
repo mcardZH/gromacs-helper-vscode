@@ -5,7 +5,7 @@
  * https://github.com/gromacs/gromacs/blob/master/src/gromacs/fileio/xtcio.cpp
  * https://github.com/gromacs/gromacs/blob/master/src/gromacs/fileio/libxdrf.cpp
  */
-import { StreamingReader, FrameIndex, FrameData } from '../stream-reader';
+import { StreamingReader, FrameIndex, FrameData } from '../../util/stream-reader';
 
 // Magic integers table for XTC compression
 const MagicInts = new Uint32Array([

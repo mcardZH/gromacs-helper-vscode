@@ -50,8 +50,8 @@ await provider.close();
 ### 直接使用流式读取器
 
 ```typescript
-import { TrrStreamReader } from './util/trr/stream-reader';
-import { XtcStreamReader } from './util/xtc/stream-reader';
+import { TrrStreamReader } from '../parsers/trr/stream-reader';
+import { XtcStreamReader } from '../parsers/xtc/stream-reader';
 
 // TRR 文件
 const trrReader = new TrrStreamReader('/path/to/trajectory.trr', 100); // 缓存 100 帧

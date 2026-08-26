@@ -436,8 +436,9 @@ export class RemoteMonitor extends BaseMonitor {
             const scriptPath = this.target.scriptPath || '~/.vscode/gromacs_monitor.sh';
 
             // 获取本地脚本路径
-            // In webpack build, __dirname is the dist folder, and we copy scripts to dist/scripts
-            const localScript = path.join(__dirname, 'scripts', 'gromacs_monitor.sh');
+            // In webpack build, __dirname is the dist folder, and we copy scripts/ recursively
+            // so the shell helpers land at dist/scripts/shell/.
+            const localScript = path.join(__dirname, 'scripts', 'shell', 'gromacs_monitor.sh');
 
             if (!fs.existsSync(localScript)) {
                 this.deploymentError = 'Local script not found';

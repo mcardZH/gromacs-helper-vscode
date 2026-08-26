@@ -1224,6 +1224,27 @@
             ]
           }
         },
+        "gromacsHelper.trajectoryPlayback.cacheSize": {
+          "type": "number",
+          "default": 256,
+          "minimum": 50,
+          "maximum": 2000,
+          "description": "扩展主机端 LRU 缓存的帧数。更大的值减少磁盘读取但增加内存占用（默认 256，每帧约 atomCount × 12 bytes）"
+        },
+        "gromacsHelper.trajectoryPlayback.prefetchDepth": {
+          "type": "number",
+          "default": 2,
+          "minimum": 0,
+          "maximum": 10,
+          "description": "读取当前帧时后台预取后续多少帧。SSH 远程建议 1-2，本地可设 3-5；设为 0 关闭预取（默认 2）"
+        },
+        "gromacsHelper.trajectoryPlayback.maxConcurrentReads": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 8,
+          "description": "扩展主机端最大并发帧读取数（默认 2）"
+        },
         "gromacsHelper.commands.groups": {
           "type": "array",
           "default": [

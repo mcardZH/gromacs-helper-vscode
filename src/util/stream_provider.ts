@@ -1,8 +1,8 @@
 // 流式轨迹提供者
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { TrrStreamReader } from './trr/stream-reader';
-import { XtcStreamReader } from './xtc/stream-reader';
+import { TrrStreamReader } from '../parsers/trr/stream-reader';
+import { XtcStreamReader } from '../parsers/xtc/stream-reader';
 import { StreamingReader, TrajectoryInfo, FrameData } from './stream-reader';
 
 export class StreamingTrajectoryProvider {
@@ -11,21 +11,27 @@ export class StreamingTrajectoryProvider {
     private coordinatesFileUri: string;
     private reader: StreamingReader | null = null;
     private fileType: 'trr' | 'xtc' | null = null;
+    private readonly prefetchDepth?: number;
+    private readonly maxConcurrentReads?: number;
 
     /**
      * Constructor for StreamingTrajectoryProvider
-     * 
+     *
      * @param topologyFileUri - URI string or vscode.Uri for topology file (e.g., .gro, .pdb)
      * @param coordinatesFileUri - URI string or vscode.Uri for trajectory file (e.g., .xtc, .trr)
+     * @param prefetchDepth - Number of frames to prefetch ahead (default: 2)
+     * @param maxConcurrentReads - Maximum concurrent frame reads (default: 2)
      */
-    constructor(topologyFileUri: string | vscode.Uri, coordinatesFileUri: string | vscode.Uri) {
+    constructor(topologyFileUri: string | vscode.Uri, coordinatesFileUri: string | vscode.Uri, prefetchDepth?: number, maxConcurrentReads?: number) {
         // Convert to string if vscode.Uri is provided
-        this.topologyFileUri = typeof topologyFileUri === 'string' 
-            ? topologyFileUri 
+        this.topologyFileUri = typeof topologyFileUri === 'string'
+            ? topologyFileUri
             : topologyFileUri.toString();
         this.coordinatesFileUri = typeof coordinatesFileUri === 'string'
             ? coordinatesFileUri
             : coordinatesFileUri.toString();
+        this.prefetchDepth = prefetchDepth;
+        this.maxConcurrentReads = maxConcurrentReads;
 
         // Determine file type from extension
         // Parse URI to get path for extension detection
@@ -51,12 +57,19 @@ export class StreamingTrajectoryProvider {
             return;
         }
 
+        // Read configuration from gromacsHelper.trajectoryPlayback.*
+        const config = vscode.workspace.getConfiguration('gromacsHelper');
+        const configPlayback = config.get<{ cacheSize?: number; prefetchDepth?: number; maxConcurrentReads?: number }>('trajectoryPlayback', {});
+        const cacheSize = configPlayback.cacheSize ?? 256;
+        const prefetchDepth = this.prefetchDepth ?? configPlayback.prefetchDepth ?? 2;
+        const maxConcurrentReads = this.maxConcurrentReads ?? configPlayback.maxConcurrentReads ?? 2;
+
         // Create appropriate reader based on file type
         // Pass URI string to reader (it will parse it internally)
         if (this.fileType === 'trr') {
-            this.reader = new TrrStreamReader(this.coordinatesFileUri);
+            this.reader = new TrrStreamReader(this.coordinatesFileUri, cacheSize, prefetchDepth, maxConcurrentReads);
         } else if (this.fileType === 'xtc') {
-            this.reader = new XtcStreamReader(this.coordinatesFileUri);
+            this.reader = new XtcStreamReader(this.coordinatesFileUri, cacheSize, prefetchDepth, maxConcurrentReads);
         } else {
             throw new Error('File type not set');
         }

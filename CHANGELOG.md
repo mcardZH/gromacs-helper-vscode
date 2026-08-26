@@ -23,6 +23,14 @@
 - 改进远程监控配置向导的 SSH 认证文案说明，明确支持使用密码或密钥登录（依赖用户现有 SSH 配置）
 - 修复远程监控 SSH 私钥路径未自动展开 `~` 的问题，现在支持在 `sshKey` 中使用 `~/.ssh/id_rsa` 等形式
 
+### 优化
+
+- 显著减少大型轨迹文件播放时的跳帧
+  - 扩展主机端 LRU 缓存默认从 100 帧增加到 256 帧
+  - 新增预取管道：读取当前帧时后台并发读取后续 2 帧（prefetchDepth），摊销磁盘 I/O 延迟
+  - 新增同帧请求合并：Mol* 在前一回包未到时再次请求同一帧只触发一次读盘+解压
+  - 新增 gromacsHelper.trajectoryPlayback.* 配置项（cacheSize / prefetchDepth / maxConcurrentReads），用户可根据本地 vs SSH 远程场景调优
+
 ## [0.4.0] - 2025-12-25
 
 ### 新增
