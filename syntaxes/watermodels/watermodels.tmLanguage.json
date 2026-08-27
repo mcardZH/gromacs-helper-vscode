@@ -1,0 +1,45 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GROMACS Water Models",
+  "scopeName": "source.watermodels",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#water-model-entry"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.semicolon.watermodels",
+          "match": ";.*$"
+        },
+        {
+          "name": "comment.line.hash.watermodels",
+          "match": "#.*$"
+        }
+      ]
+    },
+    "water-model-entry": {
+      "patterns": [
+        {
+          "match": "^([a-z0-9_-]+)\\s+([A-Z0-9][A-Za-z0-9_-]*)\\s+(.+)$",
+          "captures": {
+            "1": {
+              "name": "entity.name.type.water-model-file.watermodels"
+            },
+            "2": {
+              "name": "entity.name.function.water-model-display.watermodels"
+            },
+            "3": {
+              "name": "comment.line.description.watermodels"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

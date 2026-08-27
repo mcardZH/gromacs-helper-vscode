@@ -24,6 +24,7 @@ import { MolstarViewerPanel, MolstarViewerSerializer } from './providers/molstar
 import { GromacsPreviewPanel } from './providers/gromacsPreviewPanel';
 import { GromacsBinaryEditorProvider } from './providers/gromacsBinaryEditorProvider';
 import { detectFormat } from './parsers/gromacsFileTypes';
+import { ForceFieldLanguageSupport } from './languages/forcefield';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "gromacs-helper-vscode" is now active!');
@@ -78,6 +79,11 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(PackmolPreviewProvider.viewType, packmolPreviewProvider),
 		packmolPreviewProvider // 确保在扩展停用时清理资源
 	);
+
+	// Initialize Force Field language support
+	console.log('[Extension] 初始化力场文件支持...');
+	const forceFieldSupport = new ForceFieldLanguageSupport();
+	forceFieldSupport.activate(context);
 
 	// Register Packmol preview command
 	const packmolPreviewCommand = vscode.commands.registerCommand('gromacs-helper.previewPackmol', async (uri?: vscode.Uri) => {

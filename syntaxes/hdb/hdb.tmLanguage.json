@@ -1,0 +1,68 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GROMACS Hydrogen Database",
+  "scopeName": "source.hdb",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#residue-header"
+    },
+    {
+      "include": "#hydrogen-entry"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.semicolon.hdb",
+          "match": ";.*$"
+        }
+      ]
+    },
+    "residue-header": {
+      "patterns": [
+        {
+          "match": "^([A-Z][A-Z0-9]+)\\s+(\\d+)",
+          "captures": {
+            "1": {
+              "name": "entity.name.type.residue.hdb"
+            },
+            "2": {
+              "name": "constant.numeric.entry-count.hdb"
+            }
+          }
+        }
+      ]
+    },
+    "hydrogen-entry": {
+      "patterns": [
+        {
+          "match": "^(\\d+)\\s+(\\d+)\\s+([A-Za-z][A-Za-z0-9']*)\\s+([A-Za-z][A-Za-z0-9']*)\\s+([A-Za-z][A-Za-z0-9']*)\\s+([A-Za-z][A-Za-z0-9']*)",
+          "captures": {
+            "1": {
+              "name": "constant.numeric.hydrogen-count.hdb"
+            },
+            "2": {
+              "name": "constant.numeric.geometry-type.hdb"
+            },
+            "3": {
+              "name": "variable.other.hydrogen-name.hdb"
+            },
+            "4": {
+              "name": "variable.other.reference-atom.hdb"
+            },
+            "5": {
+              "name": "variable.other.reference-atom.hdb"
+            },
+            "6": {
+              "name": "variable.other.reference-atom.hdb"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

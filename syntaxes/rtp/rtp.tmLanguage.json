@@ -1,0 +1,162 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GROMACS Residue Topology",
+  "scopeName": "source.rtp",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#section-header"
+    },
+    {
+      "include": "#residue-name"
+    },
+    {
+      "include": "#atoms-section"
+    },
+    {
+      "include": "#bonds-section"
+    },
+    {
+      "include": "#impropers-section"
+    },
+    {
+      "include": "#cmap-section"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.semicolon.rtp",
+          "match": ";.*$"
+        },
+        {
+          "name": "comment.line.asterisk.rtp",
+          "match": "^\\s*\\*.*$"
+        }
+      ]
+    },
+    "section-header": {
+      "patterns": [
+        {
+          "match": "^\\s*\\[\\s*(bondedtypes|atoms|bonds|angles|dihedrals|impropers|cmap)\\s*\\]",
+          "captures": {
+            "0": {
+              "name": "entity.name.section.rtp"
+            },
+            "1": {
+              "name": "keyword.control.section.rtp"
+            }
+          }
+        }
+      ]
+    },
+    "residue-name": {
+      "patterns": [
+        {
+          "match": "^\\s*\\[\\s*([A-Z][A-Z0-9]+)\\s*\\]",
+          "captures": {
+            "0": {
+              "name": "entity.name.section.residue.rtp"
+            },
+            "1": {
+              "name": "entity.name.type.residue.rtp"
+            }
+          }
+        }
+      ]
+    },
+    "atoms-section": {
+      "patterns": [
+        {
+          "match": "^\\s*([A-Za-z][A-Za-z0-9']*?)\\s+([A-Za-z][A-Za-z0-9_]*)\\s+([-+]?\\d+\\.\\d+)\\s+(\\d+)",
+          "captures": {
+            "1": {
+              "name": "variable.other.atom-name.rtp"
+            },
+            "2": {
+              "name": "entity.name.type.atomtype.rtp"
+            },
+            "3": {
+              "name": "constant.numeric.charge.rtp"
+            },
+            "4": {
+              "name": "constant.numeric.chargegroup.rtp"
+            }
+          }
+        }
+      ]
+    },
+    "bonds-section": {
+      "patterns": [
+        {
+          "match": "([+-])([A-Za-z][A-Za-z0-9']*)",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.residue-offset.rtp"
+            },
+            "2": {
+              "name": "variable.other.atom-name.cross-residue.rtp"
+            }
+          }
+        },
+        {
+          "match": "\\b([A-Za-z][A-Za-z0-9']*)\\b",
+          "captures": {
+            "1": {
+              "name": "variable.other.atom-name.rtp"
+            }
+          }
+        }
+      ]
+    },
+    "impropers-section": {
+      "patterns": [
+        {
+          "match": "([+-])([A-Za-z][A-Za-z0-9']*)",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.residue-offset.rtp"
+            },
+            "2": {
+              "name": "variable.other.atom-name.cross-residue.rtp"
+            }
+          }
+        },
+        {
+          "match": "\\b([A-Za-z][A-Za-z0-9']*)\\b",
+          "captures": {
+            "1": {
+              "name": "variable.other.atom-name.rtp"
+            }
+          }
+        }
+      ]
+    },
+    "cmap-section": {
+      "patterns": [
+        {
+          "match": "([+-])([A-Za-z][A-Za-z0-9']*)",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.residue-offset.rtp"
+            },
+            "2": {
+              "name": "variable.other.atom-name.cross-residue.rtp"
+            }
+          }
+        },
+        {
+          "match": "\\b([A-Za-z][A-Za-z0-9']*)\\b",
+          "captures": {
+            "1": {
+              "name": "variable.other.atom-name.rtp"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

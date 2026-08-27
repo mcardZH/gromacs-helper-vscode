@@ -2,9 +2,120 @@
 
 本文档记录了GROMACS Helper for VS Code扩展的所有重要更改。
 
+## [0.6.0] - 2025-01-10
+
+### 新增
+
+- **GROMACS 力场文件完整智能支持** — 为所有力场文件类型提供 IDE 级别的编辑体验
+  - **ITP 力场参数文件支持**:
+    - 为 `ffbonded.itp`、`ffnonbonded.itp`、`ffnabonded.itp`、`ffnanonbonded.itp` 添加专门的语言支持
+    - 新增语法高亮配置文件（`itp-forcefield.tmLanguage.json`）
+    - 自动跳过预处理指令（`#ifdef`、`#else`、`#endif`）的诊断，避免误报
+    - 原子类型智能补全和悬浮提示
+    - 未定义原子类型的实时诊断
+  
+  - **TDB 文件增强**:
+    - 在 `[ replace ]` 段提供原子类型补全（第三列）
+    - 在 `[ add ]` 段提供原子类型补全（缩进行的第一列）
+    - 智能识别缩进行：区分几何定义行和原子类型定义行
+    - 未定义原子类型的诊断和错误提示
+  
+  - **HDB 文件增强**:
+    - 残基名称智能补全（基于 RTP 文件）
+    - 氢原子条目数量验证（声明数量与实际数量对比）
+    - 几何类型检查（1-8 范围验证）
+    - 氢原子数检查（1-4 范围验证）
+  
+  - **TOP/ITP 拓扑文件完整支持** — 全新功能
+    - **智能力场查找系统**:
+      - 从 `#include "xxx.ff/forcefield.itp"` 自动识别引用的力场
+      - 相对路径查找（相对于 TOP/ITP 文件所在目录）
+      - 系统 GROMACS 目录查找（通过 `gmx -version` 获取 Data prefix）
+      - ITP 文件自动查找同目录的 `topol.top` 或 `forcefield.itp`
+      - 向上递归查找包含 `forcefield.itp` 的目录（最多 5 层）
+    
+    - **原子序号悬浮提示**:
+      - 在 `[ bonds ]`、`[ angles ]`、`[ dihedrals ]`、`[ pairs ]` 等段中
+      - 悬停在原子序号上，显示原子详细信息
+      - 显示内容：残基名称、残基编号、原子名称、原子类型、电荷、质量
+      - 自动从 `[ atoms ]` 段查找对应原子信息
+    
+    - **原子类型补全和诊断**:
+      - 在 `[ atoms ]` 段第二列提供原子类型补全
+      - 检查未定义的原子类型并标记错误
+      - 容错处理：GROMACS 未安装时自动屏蔽语法检查，避免大量误报
+      - 区分"GROMACS 未安装"和"引用的力场不存在"两种情况
+    
+    - **段标记悬浮提示**:
+      - 为所有常见段标记提供格式说明
+      - `[ atoms ]`：显示列定义和参数说明
+      - `[ bonds ]`、`[ angles ]`、`[ dihedrals ]`：显示函数类型和参数格式
+      - `[ moleculetype ]`、`[ system ]`、`[ molecules ]`：显示用途和格式
+
+### 优化
+
+- **力场索引系统**:
+  - 新增 `TopologyParser` 用于解析 TOP/ITP 文件结构
+  - 增强 `ForceFieldIndexManager` 支持从 TOP/ITP 文件查找力场
+  - 通过执行 `gmx -version` 获取系统 GROMACS 数据目录，自动适配不同安装路径
+  - 索引缓存机制，避免重复解析力场文件
+  - 文件监听和索引失效机制，文件修改后自动刷新索引
+
+- **错误处理和容错**:
+  - GROMACS 未安装时优雅降级，保留补全和悬浮提示功能
+  - 预处理指令自动跳过，避免诊断器误报
+  - 更清晰的控制台日志输出，便于调试和反馈
+
+- **性能优化**:
+  - 懒加载机制：只在需要时构建力场索引
+  - 异步文件操作，避免阻塞 UI
+  - 智能缓存策略，减少重复计算
+
+### 修复
+
+- 修复 TDB 文件中带缩进的第一行被误判为原子类型行的问题
+- 修复 HDB 文件氢原子条目数量统计不准确的问题
+
+### 技术架构
+
+- **新增 Providers**:
+  - `TopologyCompletionProvider` - TOP/ITP 补全提供器
+  - `TopologyHoverProvider` - TOP/ITP 悬浮提示提供器
+  - `TopologyDiagnosticProvider` - TOP/ITP 诊断提供器
+  - `TdbCompletionProvider` - TDB 补全提供器
+  - `TdbDiagnosticProvider` - TDB 诊断提供器
+  - `HdbCompletionProvider` - HDB 补全提供器
+  - `HdbDiagnosticProvider` - HDB 诊断提供器
+
+- **新增解析器**:
+  - `TopologyParser` - 解析 TOP/ITP 文件结构和段
+  - 支持识别所有标准段类型（atoms、bonds、angles、dihedrals 等）
+  - 提取 `#include` 指令用于力场查找
+
+- **增强核心模块**:
+  - `ForceFieldIndexManager` 支持系统 GROMACS 目录查找
+  - 新增 `isGromacsInstalled()` 方法检测 GROMACS 是否安装
+  - 新增 `getGmxDataPrefix()` 方法获取 GROMACS 数据目录
+
 ## [0.5.0] - 2026-08-27
 
 ### 新增
+
+- **GROMACS 力场文件支持** — 完整的语言支持和智能辅助功能
+  - **语法高亮**: `.rtp`（残基拓扑）、`.atp`（原子类型）、`.tdb`（terminus修饰）、`.hdb`（氢数据库）
+  - **智能补全**: 在 `.rtp` 文件中自动补全原子类型（来自 `atomtypes.atp`）和原子名称
+  - **悬浮文档**: 
+    - 原子类型：显示质量、Lennard-Jones 参数和描述信息
+    - 残基：显示原子数、键数、总电荷，支持跳转到定义位置
+    - RTP 段标记：悬停在 `[ atoms ]`、`[ bonds ]` 等关键字上显示格式说明
+    - TDB 关键字：悬停在 `[ replace ]`、`[ add ]`、`[ delete ]` 上显示详细的格式和用法说明
+  - **文档大纲**: 
+    - `.rtp` 文件：在侧边栏显示所有残基及其内部结构（atoms、bonds、impropers、cmap）
+    - `.atp` 文件：显示所有原子类型列表，便于快速导航
+  - **实时诊断**: 自动检测未定义的原子类型、缺失的原子引用、电荷不平衡等问题
+  - **力场索引**: 自动解析力场目录，构建原子类型和残基定义的索引缓存
+  - **跨残基引用**: 支持 `+N`、`-C` 等跨残基原子引用的补全和验证
+  - 详细的控制台日志输出，便于调试和反馈
 
 - **GROMACS 二进制文件自动预览** — 双击 `.xtc` / `.trr` / `.edr` / `.tpr` 文件直接在编辑器标签页中打开预览
   - 注册为 VS Code 自定义编辑器（`CustomReadonlyEditorProvider`），自动处理二进制文件的打开操作

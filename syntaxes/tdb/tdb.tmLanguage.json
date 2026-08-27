@@ -1,0 +1,145 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GROMACS Terminus Database",
+  "scopeName": "source.tdb",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#section-header"
+    },
+    {
+      "include": "#terminus-name"
+    },
+    {
+      "include": "#replace-operation"
+    },
+    {
+      "include": "#add-operation"
+    },
+    {
+      "include": "#delete-operation"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.semicolon.tdb",
+          "match": ";.*$"
+        }
+      ]
+    },
+    "section-header": {
+      "patterns": [
+        {
+          "match": "^\\s*\\[\\s*(replace|add|delete|bonds|impropers|cmap|Replace|Add|Delete|Bonds|Impropers|Cmap)\\s*\\]",
+          "captures": {
+            "0": {
+              "name": "entity.name.section.tdb"
+            },
+            "1": {
+              "name": "keyword.control.operation.tdb"
+            }
+          }
+        }
+      ]
+    },
+    "terminus-name": {
+      "patterns": [
+        {
+          "match": "^\\s*\\[\\s*([A-Z][A-Z0-9-]+)\\s*\\]",
+          "captures": {
+            "0": {
+              "name": "entity.name.section.terminus.tdb"
+            },
+            "1": {
+              "name": "entity.name.type.terminus.tdb"
+            }
+          }
+        }
+      ]
+    },
+    "replace-operation": {
+      "patterns": [
+        {
+          "match": "^\\s*([A-Za-z][A-Za-z0-9']*)\\s+([A-Za-z][A-Za-z0-9']*)\\s+([A-Za-z][A-Za-z0-9_]*)\\s+(\\d+\\.\\d+)\\s+([-+]?\\d+\\.\\d+)",
+          "captures": {
+            "1": {
+              "name": "variable.other.atom-old.tdb"
+            },
+            "2": {
+              "name": "variable.other.atom-new.tdb"
+            },
+            "3": {
+              "name": "entity.name.type.atomtype.tdb"
+            },
+            "4": {
+              "name": "constant.numeric.mass.tdb"
+            },
+            "5": {
+              "name": "constant.numeric.charge.tdb"
+            }
+          }
+        }
+      ]
+    },
+    "add-operation": {
+      "patterns": [
+        {
+          "match": "^\\s*(\\d+)\\s+(\\d+)\\s+([A-Za-z][A-Za-z0-9']*)\\s+([A-Za-z][A-Za-z0-9']*)\\s+([A-Za-z][A-Za-z0-9']*)\\s+([A-Za-z][A-Za-z0-9']*)",
+          "captures": {
+            "1": {
+              "name": "constant.numeric.hydrogen-count.tdb"
+            },
+            "2": {
+              "name": "constant.numeric.geometry-type.tdb"
+            },
+            "3": {
+              "name": "variable.other.atom-name.tdb"
+            },
+            "4": {
+              "name": "variable.other.reference-atom.tdb"
+            },
+            "5": {
+              "name": "variable.other.reference-atom.tdb"
+            },
+            "6": {
+              "name": "variable.other.reference-atom.tdb"
+            }
+          }
+        },
+        {
+          "match": "^\\s+([A-Za-z][A-Za-z0-9_]*)\\s+(\\d+\\.\\d+)\\s+([-+]?\\d+\\.\\d+)\\s+([-]?\\d+)",
+          "captures": {
+            "1": {
+              "name": "entity.name.type.atomtype.tdb"
+            },
+            "2": {
+              "name": "constant.numeric.mass.tdb"
+            },
+            "3": {
+              "name": "constant.numeric.charge.tdb"
+            },
+            "4": {
+              "name": "constant.numeric.chargegroup.tdb"
+            }
+          }
+        }
+      ]
+    },
+    "delete-operation": {
+      "patterns": [
+        {
+          "match": "^\\s*([A-Za-z][A-Za-z0-9']*)",
+          "captures": {
+            "1": {
+              "name": "variable.other.atom-name.deleted.tdb"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

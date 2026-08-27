@@ -1,0 +1,87 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GROMACS ITP Force Field",
+  "scopeName": "source.itp.forcefield",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#preprocessor"
+    },
+    {
+      "include": "#section-headers"
+    },
+    {
+      "include": "#atom-types"
+    },
+    {
+      "include": "#numbers"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.semicolon.itp",
+          "match": ";.*$"
+        }
+      ]
+    },
+    "preprocessor": {
+      "patterns": [
+        {
+          "name": "keyword.control.directive.conditional.itp",
+          "match": "^\\s*#\\s*(ifdef|ifndef|if|else|elif|endif)\\b"
+        },
+        {
+          "name": "keyword.control.directive.include.itp",
+          "match": "^\\s*#\\s*include\\b"
+        },
+        {
+          "name": "keyword.control.directive.define.itp",
+          "match": "^\\s*#\\s*(define|undef)\\b"
+        }
+      ]
+    },
+    "section-headers": {
+      "patterns": [
+        {
+          "name": "entity.name.section.itp",
+          "match": "\\[\\s*(atomtypes|bondtypes|angletypes|dihedraltypes|pairtypes|nonbond_params|impropers)\\s*\\]"
+        }
+      ]
+    },
+    "atom-types": {
+      "patterns": [
+        {
+          "comment": "原子类型（每行开头的标识符）",
+          "name": "entity.name.type.atom-type.itp",
+          "match": "^\\s*([A-Z][A-Za-z0-9_*+-]*)(?=\\s)",
+          "captures": {
+            "1": {
+              "name": "entity.name.type.atom-type.itp"
+            }
+          }
+        },
+        {
+          "comment": "行中的原子类型（第二列及之后）",
+          "name": "entity.name.type.atom-type.itp",
+          "match": "(?<=\\s)([A-Z][A-Za-z0-9_*+-]*)(?=\\s|$)"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.itp",
+          "match": "\\b[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.itp",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    }
+  }
+}
