@@ -209,6 +209,18 @@ See [Custom Snippets Guide](CUSTOM_SNIPPETS_GUIDE.md) for detailed usage instruc
 - **Quick Conversions**: Common reference tables and one-click conversion buttons
 - **Modern Interface**: WebView panel that adapts to your VS Code theme
 
+### 🔍 Binary File Preview
+- **Automatic Preview**: Double-click `.xtc`, `.trr`, `.edr`, or `.tpr` files to instantly see file metadata and structure
+- **No Extra Steps**: Files open directly in the editor — no right-click menu needed
+- **Metadata Display**: View frame count, atom count, precision, time steps, energy terms, and binary format details
+- **Large File Support**: Efficiently parses multi-GB trajectory and energy files using head+tail probes
+- **Fallback Available**: Use "Reopen With → Text Editor" if you need to view raw bytes
+
+**Usage:**
+1. Simply double-click any `.xtc`, `.trr`, `.edr`, or `.tpr` file in the Explorer
+2. The preview opens automatically in an editor tab
+3. For trajectory files (`.xtc`/`.trr`), you can still use "Open with Mol* Viewer" from the right-click menu for 3D visualization
+
 ### 🎬 Mol* Trajectory Viewer
 - **3D Molecular Visualization**: Preview XTC and TRR trajectory files directly in VS Code using the Mol* library
 - **Streaming Trajectory Loading**: Efficiently load extra-large trajectory files with on-demand frame loading

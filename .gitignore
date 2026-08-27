@@ -3,3 +3,9 @@ dist
 node_modules
 .vscode-test/
 *.vsix
+# Prevent accidental commits of compiled JS in src/
+src/**/*.js
+src/**/*.js.map
+# But allow .js config files at root
+!*.config.js
+!.*.js

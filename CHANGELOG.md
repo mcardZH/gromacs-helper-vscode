@@ -2,6 +2,50 @@
 
 本文档记录了GROMACS Helper for VS Code扩展的所有重要更改。
 
+## [0.5.0] - 2026-08-27
+
+### 新增
+
+- **GROMACS 二进制文件自动预览** — 双击 `.xtc` / `.trr` / `.edr` / `.tpr` 文件直接在编辑器标签页中打开预览
+  - 注册为 VS Code 自定义编辑器（`CustomReadonlyEditorProvider`），自动处理二进制文件的打开操作
+  - 每个文件在独立的编辑器标签页中预览，支持标准的 VS Code 编辑器操作（关闭、拆分、移动等）
+  - 保留「Open with Mol* Viewer」右键菜单用于 3D 轨迹可视化（需要 topology 文件）
+
+- **XTC / TRR 轨迹文件预览** — 显示轨迹文件的关键信息
+  - 帧数、原子数、模拟时长、时间步长、起止时间
+  - 精度信息、是否包含速度/力数据
+  - Binary Metadata：magic number、编码方式、字节序、文件版本
+  - 使用高效的 head + tail 探针解析，避免读取整个文件（574MB XTC 文件从 145s 降至 35ms）
+
+- **EDR 能量文件预览** — 显示能量项统计和趋势图
+  - 能量项列表，每项显示 min/max/mean/std 统计值
+  - 内嵌 Chart.js sparkline 趋势图，直观显示能量变化
+  - 点击能量项名称，弹出完整时间序列图表（支持缩放、悬停查看数值）
+  - 搜索过滤功能，快速定位感兴趣的能量项
+  - 「复制为 CSV」按钮，导出完整数据用于后续分析
+
+- **TPR 参数文件预览** — 显示模拟运行参数
+  - 基本信息：原子数、积分器、步数、时间步长、总模拟时长
+  - 折叠式参数分区：Simulation / Force Field / Cutoff / Coulomb / Van der Waals / PME / Temperature Coupling / Pressure Coupling / Constraints / Output Control
+  - Binary Metadata：GROMACS 版本、文件版本、精度
+  - 对于现代 TPR 文件（GROMACS 2025.x, fileVersion >= 137），使用 `gmx dump -s` 命令解析参数
+  - 如果 `gmx` 命令不存在，会明确提示并引导用户安装 GROMACS
+
+### 优化
+
+- 轨迹文件解析性能优化
+  - 使用 head + tail 探针策略，只读取文件头部和尾部获取汇总信息
+  - XTC 574MB：145s → 35ms（4100× 加速）
+  - TRR 3.7GB：146s → 57ms（2500× 加速）
+  - 完全跳过中间帧的遍历，大幅提升大文件预览速度
+
+### 修复
+
+- TPR 文件解析兼容性修复
+  - 现代 TPR 文件（GROMACS 2025.x, fileVersion >= 137）通过 `gmx dump` 命令解析，保证准确性
+  - 旧版本 TPR（< 137）使用内置解析器
+  - 自动隐藏值为 0 的拓扑统计信息（避免显示无效数据）
+
 ## [0.4.1] - 2026-01-14
 
 ### 新增

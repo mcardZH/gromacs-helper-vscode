@@ -21,6 +21,9 @@ import { ColorManager } from './providers/colorManager';
 import { GromacsMonitorSupport } from './languages/monitor';
 import { CommandsViewProvider } from './providers/commandsViewProvider';
 import { MolstarViewerPanel, MolstarViewerSerializer } from './providers/molstarViewerPanel';
+import { GromacsPreviewPanel } from './providers/gromacsPreviewPanel';
+import { GromacsBinaryEditorProvider } from './providers/gromacsBinaryEditorProvider';
+import { detectFormat } from './parsers/gromacsFileTypes';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "gromacs-helper-vscode" is now active!');
@@ -204,6 +207,28 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewPanelSerializer(
 			MolstarViewerPanel.viewType,
 			new MolstarViewerSerializer(context.extensionUri)
+		)
+	);
+
+	// Register GROMACS binary file custom editor (.xtc / .trr / .edr / .tpr).
+	// VS Code opens these files in our preview panel by default (double-click).
+	// Users can still "Reopen With → Text Editor" to see raw bytes.
+	context.subscriptions.push(
+		vscode.window.registerCustomEditorProvider(
+			GromacsPreviewPanel.viewType,  // 'gromacs-helper.binaryPreview'
+			new GromacsBinaryEditorProvider(context.extensionUri),
+			{
+				webviewOptions: { retainContextWhenHidden: true },
+				supportsMultipleEditorsPerDocument: false,
+			},
+		),
+		vscode.window.registerWebviewPanelSerializer(
+			GromacsPreviewPanel.viewType,
+			{
+				async deserializeWebviewPanel(panel: vscode.WebviewPanel) {
+					GromacsPreviewPanel.revive(panel, context.extensionUri);
+				},
+			}
 		)
 	);
 
