@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-07-26T04:14:34.213Z",
+  "runtime": {
+    "node": "v24.14.0",
+    "platform": "darwin",
+    "architecture": "arm64"
+  },
+  "results": [
+    {
+      "id": "extension-bundle",
+      "feature": "activation",
+      "operation": "bundle-read-proxy",
+      "status": "measured",
+      "fixturePath": "dist/extension.js",
+      "notes": "Measures extension bundle I/O only; extension-host activation is added when the host benchmark is available.",
+      "metrics": {
+        "payloadBytes": 569800,
+        "repetitions": 25,
+        "meanWallTimeMs": 0.1392,
+        "p50WallTimeMs": 0.1289,
+        "p95WallTimeMs": 0.1686,
+        "heapDeltaBytes": 45008
+      }
+    },
+    {
+      "id": "mdp-diagnostics-input",
+      "feature": "diagnostics",
+      "operation": "fixture-read-proxy",
+      "status": "measured",
+      "fixturePath": "src/test/fixtures/test.mdp",
+      "notes": "Measures the fixture input path; provider execution is covered by the extension-host test suite.",
+      "metrics": {
+        "payloadBytes": 504,
+        "repetitions": 100,
+        "meanWallTimeMs": 0.0561,
+        "p50WallTimeMs": 0.0503,
+        "p95WallTimeMs": 0.0893,
+        "heapDeltaBytes": 14200
+      }
+    },
+    {
+      "id": "packmol-preview-input",
+      "feature": "packmol-preview",
+      "operation": "fixture-read-proxy",
+      "status": "measured",
+      "fixturePath": "src/test/fixtures/test.packmol",
+      "notes": "Uses a Packmol input that references the bundled PDB fixture.",
+      "metrics": {
+        "payloadBytes": 200,
+        "repetitions": 100,
+        "meanWallTimeMs": 0.0505,
+        "p50WallTimeMs": 0.047,
+        "p95WallTimeMs": 0.0594,
+        "heapDeltaBytes": 5720
+      }
+    },
+    {
+      "id": "packmol-preview-structure",
+      "feature": "packmol-preview",
+      "operation": "fixture-read-proxy",
+      "status": "measured",
+      "fixturePath": "src/test/fixtures/test.pdb",
+      "notes": "Measures the structure payload read used by the Packmol fixture.",
+      "metrics": {
+        "payloadBytes": 3860,
+        "repetitions": 100,
+        "meanWallTimeMs": 0.0511,
+        "p50WallTimeMs": 0.0473,
+        "p95WallTimeMs": 0.0637,
+        "heapDeltaBytes": 1216
+      }
+    },
+    {
+      "id": "trajectory-xtc-large",
+      "feature": "trajectory",
+      "operation": "stream-fixture-read",
+      "status": "not-configured",
+      "requiredEnvironmentVariable": "GROMACS_HELPER_BENCHMARK_XTC",
+      "notes": "Provide an approved large XTC fixture path; it is intentionally not committed to the extension repository."
+    },
+    {
+      "id": "trajectory-trr-large",
+      "feature": "trajectory",
+      "operation": "stream-fixture-read",
+      "status": "not-configured",
+      "requiredEnvironmentVariable": "GROMACS_HELPER_BENCHMARK_TRR",
+      "notes": "Provide an approved large TRR fixture path; it is intentionally not committed to the extension repository."
+    },
+    {
+      "id": "monitor-log-tail",
+      "feature": "monitoring",
+      "operation": "log-fixture-read",
+      "status": "not-configured",
+      "requiredEnvironmentVariable": "GROMACS_HELPER_BENCHMARK_MONITOR_LOG",
+      "notes": "Provide a sanitized representative GROMACS log fixture before setting monitor regression thresholds."
+    }
+  ]
+}

@@ -6,88 +6,85 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/mcardzh/gromacs-helper-vscode/build-and-release.yml?branch=master&style=flat-square&label=build)](https://github.com/mcardzh/gromacs-helper-vscode/actions)
 [![License](https://img.shields.io/github/license/mcardzh/gromacs-helper-vscode.svg?style=flat-square)](https://github.com/mcardzh/gromacs-helper-vscode/blob/main/LICENSE)
 
-A comprehensive VS Code extension providing full support for GROMACS molecular dynamics simulation files. Supports `.mdp`, `.top`, `.itp`, `.gro`, `.ndx`, `.pdb`, `.pka` and other GROMACS file formats with syntax highlighting, intelligent completion, parameter hints, error checking and more.
+A comprehensive VS Code extension providing full support for GROMACS molecular dynamics simulation files. Supports `.mdp`, `.top`, `.itp`, `.gro`, `.ndx`, `.pdb`, `.pka`, `.rtp`, `.atp`, `.tdb`, `.hdb`, and binary formats `.xtc`, `.trr`, `.edr`, `.tpr` with syntax highlighting, semantic coloring, intelligent completion, parameter hover hints, smart force field lookup, binary file previews, Mol* 3D trajectory visualization with playback controls, real-time GROMACS process monitoring, and much more.
 
 > [中文文档](README_ZH.md) | [English Documentation](README.md)
 
+---
+
 ## ✨ Key Features
 
-### 🎨 Syntax Highlighting
-- **MDP Files** (`.mdp`) - Molecular Dynamics Parameter files with semantic coloring for different parameters
-- **TOP Files** (`.top`, `.itp`) - Topology structure files  
-- **STRUCTURE Files** (`.gro`, `.pdb`) - Structure coordinate files with semantic coloring for different residues
-- **NDX Files** (`.ndx`) - Index group files
-- **PKA Files** (`.pka`) - PROPKA pKa prediction result files with comprehensive analysis support
-- **Packmol Files** (`.packmol`, `.inp`) - Packmol input files with syntax highlighting and structure preview
-- **Trajectory Files** (`.xtc`, `.trr`) - GROMACS trajectory files with Mol* 3D viewer and streaming support
+### 🎨 Syntax Highlighting & Semantic Coloring
+- **MDP Files** (`.mdp`) - Molecular Dynamics Parameter files with semantic coloring across different parameter categories
+- **TOP / ITP Topology Files** (`.top`, `.itp`) - Topology structure and include files with section keyword highlighting, atom and bonding syntax coloring
+- **Force Field Parameter & Database Files** - Full support for `.rtp` (residue topology), `.atp` (atom types), `.tdb` (terminus database), `.hdb` (hydrogen database), and `ffbonded.itp` / `ffnonbonded.itp` force field parameter files
+- **STRUCTURE Files** (`.gro`, `.pdb`) - Structure coordinate files with distinct residue semantic coloring (acidic, basic, polar, nonpolar, aromatic, ions, water, etc.)
+- **NDX Files** (`.ndx`) - Index group files with distinct group numbering and section folding
+- **PKA Files** (`.pka`) - PROPKA pKa prediction result files with residue, predicted pKa, and interaction data highlighting
+- **Packmol Files** (`.packmol`, `.inp`) - Packmol input files with syntax highlighting and structure command coloring
+- **XVG Data Files** (`.xvg`) - GROMACS plotting and analysis data files with comment and keyword highlighting
 
-### 💡 Intelligent Completion
-- Auto-completion for MDP parameters, including all GROMACS 2025.2 supported parameters
-- Quick template insertion (energy minimization, NVT, NPT, MD, etc.)
-- Smart parameter value suggestions
+### 🔍 GROMACS Binary File Preview
+- **Double-Click Preview**: Open `.xtc`, `.trr`, `.edr`, and `.tpr` files directly in VS Code editor tabs without external tools
+- **XTC / TRR Trajectory Info**: Instant inspection of frame count, atom count, simulation length, time steps, start/end timestamps, precision, and binary metadata. Powered by a high-performance head + tail probe algorithm (574MB XTC parsed in 35ms; 3.7GB TRR parsed in 57ms)
+- **EDR Energy Analysis**: Energy term statistics (min / max / mean / std), embedded Chart.js sparkline trend graphs, expandable full-featured time-series charts with hover values, search filtering, and one-click CSV export
+- **TPR Parameter Summary**: Structured simulation parameter overview (integrator, steps, dt, duration), collapsible parameter categories (Simulation, Force Field, Cutoff, PME, Temperature & Pressure Coupling, etc.), modern TPR files parsed accurately via `gmx dump`
 
-### 📖 Hover Documentation
-- Detailed MDP parameter descriptions
-- Parameter types, units, valid value ranges
-- Default values and usage recommendations
+### 🎬 Mol* 3D Trajectory Viewer & Playback Control
+- **Professional 3D Molecular Rendering**: Embedded Mol* viewer renders XTC / TRR trajectories alongside GRO / PDB topology files directly inside VS Code
+- **Streaming Trajectory Loading**: Efficiently load multi-GB trajectory files on demand with frame indexing, minimal memory footprint, and native SSH remote streaming support
+- **Interactive Trajectory Progress Bar**: Custom Viewport playback controller featuring draggable timeline slider, precision frame number input, step buttons, and live frame indicators
+- **Multi-Panel & State Persistence**: Open multiple viewers simultaneously, each maintaining state across VS Code restarts
 
-### 🔍 Symbol Navigation
-- Document outline view
-- Quick jump to specific parameters
-- Code folding support
+### 🧬 TOP/ITP & Force Field Intelligent Support
+- **Smart Force Field Resolution**: Automatically discovers referenced force fields from `#include "xxx.ff/forcefield.itp"` across workspace relative paths and system GROMACS directories (located via `gmx -version`)
+- **Atom Index Hover Cards**: Hover over any atom index in `[ bonds ]`, `[ angles ]`, `[ dihedrals ]`, or `[ pairs ]` to view residue name, atom name, atom type, partial charge, and mass
+- **Atom Type Completion & Diagnostics**: Intelligent atom type autocompletion in `[ atoms ]` column 2, real-time diagnostics for undefined atom types, and graceful fallback when GROMACS is not installed
+- **TDB / HDB Enhancements**: Atom type completion in TDB `[ replace ]` and `[ add ]` sections; residue name completion, hydrogen entry count validation, and geometry type range checking (1-8) in HDB files
 
-### 🧮 Unit Converter
-- **Professional Unit Conversion Calculator** - Designed specifically for molecular dynamics simulations
-  - Length units: nm, Å, pm, m, cm, mm
-  - Time units: fs, ps, ns, μs, ms, s
-  - Temperature units: K, °C (including temperature offset conversion)
-  - Energy units: J, kJ/mol, kJ/kg, J/g, eV, cal, kcal/mol
-  - Area units: nm², Å², m², cm²
-  - Electric potential units: V, mV, kV
-  - Common conversion reference tables and quick conversion buttons
-  - Modern WebView interface with VS Code theme support
-  - Access via Command Palette: "GROMACS Helper: Open Unit Converter"
-
-### 📝 Code Snippets
-- Common MDP configuration templates
-- One-click generation of standard simulation workflow configurations
-- **🆕 Custom Snippet Management** - Create, edit, and manage personalized MDP snippets
-  - Add custom snippets with intelligent placeholders
-  - Edit snippet content, prefix, and descriptions
-  - Quick insertion from sidebar view or auto-completion
-  - Built-in snippet manager with visual interface
+### 🔍 GROMACS Process Monitor
+- **Status Bar Live Monitoring**: Real-time simulation status directly on the VS Code status bar
+- **Local & Remote SSH Monitoring**: Automatically monitors local `gmx` processes and remote SSH cluster jobs (with automatic lightweight monitor script deployment)
+- **Smart Progress Parsing**: Displays remaining mdrun countdown time, current simulation time (ns/μs), step count, and completion percentage
+- **Multi-Target Rotation & Dedicated Modes**: Rotate between multiple targets (pauses on mouse hover) or pin critical jobs to dedicated status bar items
 
 ### 🎯 GROMACS Commands View
-- **Visual Command Management** - Manage and execute GROMACS commands from the sidebar
-  - 📂 **Grouped Organization**: Commands organized by category (Structure Preparation, Simulation, Analysis, etc.)
-  - 🔍 **Smart Placeholders**:
-    - `{pdb|gro}` - Auto-search and select .pdb or .gro files in workspace
-    - `{output.gro}` - Prompt for output filename
-    - `{basename}` - Prompt for base name (without extension)
-  - 📁 **Relative Paths**: File selection automatically uses relative paths to avoid path errors
-  - 💻 **Terminal Execution**: Commands automatically sent to dedicated "GROMACS" terminal
-  - ✏️ **Custom Commands**: Add, edit, delete custom commands and command groups
-  - 🚀 **Quick Execution**: Click commands or use inline buttons for fast execution
-  - 📋 **Built-in Templates**: Pre-configured common commands (pdb2gmx, editconf, solvate, grompp, mdrun, energy, rms, etc.)
+- **Sidebar Command Management**: Organized by workflow stages (Structure Preparation, Simulation, Analysis, etc.)
+- **Smart Placeholders**: `{pdb|gro}` searches workspace structure files for selection; `{output.gro}` and `{basename}` prompt for quick user input
+- **Dedicated Terminal Execution**: One-click execution into a dedicated "GROMACS" terminal using safe relative paths
 
-### 🎯 Error Checking
-- Parameter syntax validation for MDP files
-- Value range checking with enhanced validation
-- Format error notifications
-- PDB file key marker analysis
+### 📊 XVG Interactive Chart Preview
+- **Sidebar Plots**: Click the chart icon (📊) in the editor title bar to preview interactive XVG line charts
+- **Multi-Series & Interactivity**: Zoom, pan, hover over data points, display multiple series with distinct colors, and view real-time statistical summaries
+
+### 📦 Packmol Modeling & 3D Preview
+- **Real-Time 3D Preview**: Visualize molecular arrangements and spatial distributions in a side panel
+- **Smart Formatting & Autocompletion**: Auto-align coordinates and autocomplete Packmol keywords and constraints
+
+### 🧮 MD Professional Unit Converter
+- **Tailored for MD Simulations**: Instant two-way conversion for length (nm, Å, pm...), time (fs, ps, ns...), temperature (K, °C), energy (kJ/mol, kcal/mol, eV...), area, and electric potential
+
+---
 
 ## 🚀 Supported File Formats
 
-| File Type | Extensions | Description | Feature Support |
-|-----------|------------|-------------|----------------|
-| MDP | `.mdp` | Molecular Dynamics Parameter files | Syntax highlighting, intelligent completion, hover hints, error checking, semantic coloring |
-| Topology | `.top`, `.itp` | Topology structure files | Syntax highlighting, symbol navigation, code folding |
-| Structure | `.gro`, `.pdb` | Structure coordinate files | Syntax highlighting, symbol navigation, semantic coloring for residues |
-| Index | `.ndx` | Index group files | Syntax highlighting, symbol navigation, code folding |
-| XVG Data | `.xvg` | GROMACS plotting data files | Syntax highlighting, interactive chart preview, data analysis |
-| PKA Results | `.pka` | PROPKA pKa prediction files | Syntax highlighting, hover hints, symbol navigation, code folding |
-| Packmol | `.packmol`, `.inp` | Packmol input files | Syntax highlighting, structure preview, formatting, completion |
-| Trajectory | `.xtc`, `.trr` | GROMACS trajectory files | Mol* 3D viewer, streaming loading, multi-frame playback |
+| File Type | Extensions / Pattern | Description | Feature Support |
+|-----------|----------------------|-------------|----------------|
+| **MDP** | `.mdp` | Molecular Dynamics Parameter files | Syntax highlighting, semantic coloring, intelligent completion, hover docs, error validation, formatting, snippets |
+| **Topology** | `.top`, `.itp` | Topology structure files | Syntax highlighting, symbol outline, code folding, smart force field lookup, atom index hover, atom type completion & diagnostics |
+| **Force Field Parameters** | `ffbonded.itp`, `ffnonbonded.itp`, etc. | Force field bonded/nonbonded params | Syntax highlighting, atom type hover & completion, preprocessor directive filtering |
+| **RTP** | `.rtp` | Residue Topology Database | Syntax highlighting, residue outline, atom type completion, residue hover hints (atom count, bonds, charge) |
+| **ATP** | `.atp` | Atom Type Database | Syntax highlighting, atom type outline, mass & parameter hover hints |
+| **TDB** | `.tdb` | Terminus Database | Syntax highlighting, keyword hover, atom type completion, undefined type diagnostics |
+| **HDB** | `.hdb` | Hydrogen Database | Syntax highlighting, residue completion, hydrogen count & geometry validation |
+| **Structure** | `.gro`, `.pdb` | Structure coordinate files | Syntax highlighting, residue semantic coloring, symbol outline, PDB REMARK missing residue & Ramachandran analysis |
+| **Index** | `.ndx` | Index group files | Syntax highlighting, symbol outline, index group folding |
+| **XVG Data** | `.xvg` | Plotting & analysis data | Syntax highlighting, sidebar interactive chart preview, multi-series plots, statistics |
+| **PKA Results** | `.pka` | PROPKA pKa prediction files | Syntax highlighting, hover hints, symbol outline, code folding |
+| **Packmol** | `.packmol`, `.inp` | Packmol input files | Syntax highlighting, 3D interactive preview, auto-formatting, autocompletion |
+| **Trajectory** | `.xtc`, `.trr` | Trajectory binary files | Instant metadata preview, Mol* 3D trajectory rendering, streaming loading, interactive progress bar |
+| **Energy** | `.edr` | Energy binary files | Energy term statistics (min/max/mean/std), sparkline graphs, time-series chart viewer, CSV export |
+| **Run Input** | `.tpr` | Run input binary files | Structured simulation parameter view, collapsible parameter sections, version & precision metadata |
 
 ## 📦 Installation
 
@@ -98,150 +95,155 @@ A comprehensive VS Code extension providing full support for GROMACS molecular d
 
 Or install directly from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mcardzh.gromacs-helper-vscode).
 
-## 🎮 Usage
+## 🎮 Features & Illustrated Usage Guide
 
-### MDP File Editing
-1. Create or open an `.mdp` file
-2. Type parameter names and the extension will automatically provide completion suggestions
-3. Hover over parameters to see detailed descriptions
-4. Use code snippets to quickly insert templates
+### 1. MDP File Editing & Intelligent Assistance
 
-**Example:**
-```mdp
-; Energy minimization parameters
-integrator = steep
-emtol = 1000.0
-emstep = 0.01
-nsteps = 50000
+- **Syntax Highlighting & Semantic Coloring**: MDP parameters are categorized and colored according to their simulation purpose.
+- **Intelligent Autocompletion**: Auto-complete parameter names and recommended values supporting GROMACS 2025.x.
+- **Hover Documentation & Live Validation**: Hover over parameters to view valid ranges, units, and descriptions; invalid values are flagged immediately.
+- **Snippets & Auto-Formatting**: Expand standard simulation setups (`em`, `nvt`, `npt`, `md`) with one keypress and format parameters with clean indentation.
 
-; Output control
-nstxout = 0
-nstvout = 0
-nstenergy = 100
-nstlog = 100
-```
+| MDP Syntax Highlighting & Semantic Coloring | MDP Hover Hints & Error Diagnostics |
+|:---:|:---:|
+| ![MDP Syntax Highlighting](imgs/5.png) | ![MDP Hover & Error Diagnostics](imgs/6.png) |
 
-### Using Code Snippets
-- Type `em` + Tab - Insert energy minimization template
-- Type `nvt` + Tab - Insert NVT equilibration template
-- Type `md` + Tab - Insert production MD template
+| MDP Intelligent Completion | MDP Simulation Snippets | MDP Auto-Formatting & Alignment |
+|:---:|:---:|:---:|
+| ![MDP Completion](imgs/7.gif) | ![MDP Snippets](imgs/8.gif) | ![MDP Formatting](imgs/9.gif) |
 
-### 🆕 Custom MDP Snippets
-- **Manage Snippets**: Press `Ctrl+Shift+P` and search "Manage MDP Snippets"
-- **Create Custom Templates**: Add your own MDP configuration templates with placeholders
-- **Quick Access**: View and insert snippets from the "MDP Snippets" panel in Explorer
-- **Smart Editing**: Use VS Code snippet syntax with `${1:default}` and `${1|option1,option2|}`
+---
 
-**Creating a Custom Snippet:**
-1. Open Command Palette (`Ctrl+Shift+P`)
-2. Search for "Manage MDP Snippets"
-3. Select "Add New Snippet"
-4. Fill in name, prefix, and description
-5. Edit content in the MDP editor with syntax highlighting
-6. Save and use with auto-completion
+### 2. TOP / ITP Topology & Force Field Full Support
 
-See [Custom Snippets Guide](CUSTOM_SNIPPETS_GUIDE.md) for detailed usage instructions.
+- **Smart Force Field Resolution**: Discovers force field libraries referenced in `#include` directives across workspace folders and system GROMACS paths.
+- **Atom Index Hover Cards**: Hover over any atom ID in `[ bonds ]`, `[ angles ]`, `[ dihedrals ]`, etc., to inspect residue names, atom names, types, charges, and masses.
+- **Document Outline**: Navigate through `defaults`, `moleculetype`, `atoms`, and other sections in the Explorer outline.
+- **Force Field Parameter Support**: Full language support for `.rtp`, `.atp`, `.tdb`, `.hdb`, and `ffbonded.itp` / `ffnonbonded.itp`.
 
-### TOP/ITP File Support
-- Automatically recognize molecule types, atom types, bonding parameters, etc.
-- Provide document outline and symbol navigation
-- Support code folding
+| TOP/ITP Syntax Highlighting | TOP/ITP Symbol Outline | TOP/ITP Atom Hover & Completion |
+|:---:|:---:|:---:|
+| ![TOP Syntax Highlighting](imgs/10.png) | ![TOP Outline](imgs/11.png) | ![TOP Atom Hover](imgs/12.gif) |
 
-### GRO File Support
-- Structured display of atomic coordinates
-- Symbol navigation for quick positioning
-- Syntax highlighting to distinguish different fields
+---
 
-### NDX File Support
-- Index group syntax highlighting
-- Code folding support
-- Group name hover hints
+### 3. GRO / PDB Structure Files & Analysis
 
-### XVG File Preview
-- **Interactive Chart Visualization**: Click the chart icon (📊) in the title bar or right-click on an XVG file and select "Preview XVG Chart"
-- **Real-time Data Analysis**: View statistical information including data points count, value ranges, and averages
-- **Multi-series Support**: Automatically detect and display multiple data series with different colors
-- **Responsive Charts**: Zoom, pan, and hover over data points for detailed values
-- **GROMACS Metadata Support**: Automatically parse title, axis labels, and legend information from XVG files
+- **GRO Semantic Coloring**: Clear visual distinction for residue names, atom names, atom indices, and 3D coordinates.
+- **PDB REMARK Deep Analysis**: Identifies and explains `REMARK 465` (missing residues), `REMARK 500` (Ramachandran outliers), and other structural metadata.
+- **Secondary Structure Navigation**: Jump to specific Sheets, Strands, Chains, Residues, and HETATM records in the outline view.
 
-**Supported XVG Features:**
-- Energy plots (potential, kinetic, total energy)
-- Temperature and pressure data
-- RMSD and distance measurements
-- Custom analysis output from GROMACS tools
+| GRO Coordinate Semantic Coloring | PDB REMARK Structural Analysis | PDB Secondary Structure Outline |
+|:---:|:---:|:---:|
+| ![GRO Semantic Coloring](imgs/13.png) | ![PDB REMARK Analysis](imgs/14.png) | ![PDB Symbol Outline](imgs/15.png) |
 
-**Usage:**
-1. Open any `.xvg` file in VS Code
-2. Click the chart icon (📊) in the editor title bar
-3. View the interactive plot in a side panel
-4. Hover over data points to see exact values
+---
 
-### Packmol File Support
-- **Structure Input File Editing**: Full support for Packmol input files with syntax highlighting
-- **Interactive Structure Preview**: Click the preview icon to visualize molecular arrangements
-- **Intelligent Code Completion**: Auto-completion for Packmol keywords and parameters
-- **Automatic Formatting**: Format Packmol files with proper indentation and structure
-- **Error Detection**: Real-time validation of Packmol syntax and parameters
+### 4. NDX Index Group Support
 
-**Features:**
-- Syntax highlighting for keywords, structures, and constraints
-- Document outline for quick navigation between sections
-- Code folding for better organization of complex input files
-- Hover hints for parameter explanations
+- Highlight index groups and enable section folding.
+- Fast navigation to index groups (`System`, `Protein`, `Backbone`, `SOL`, `CL`, etc.) via the outline view.
 
-### PKA File Support
-- **PROPKA Results Analysis**: Complete support for PROPKA pKa prediction output files
-- **Intelligent Parsing**: Automatic recognition of different sections (header, residue table, summary, energy analysis)
-- **Smart Hover Information**: Detailed explanations for residue types, pKa values, interaction contributions
-- **Symbol Navigation**: Quick jump to specific residues, analysis sections, and key findings
-- **Code Folding**: Organize complex pKa files by folding sections (header, references, residue entries, summary)
+| NDX Index Group Highlighting | NDX Symbol Outline |
+|:---:|:---:|
+| ![NDX Highlighting](imgs/16.png) | ![NDX Outline](imgs/17.png) |
 
-**Features:**
-- Syntax highlighting for residue names, pKa values, interaction data, and section headers
-- Document outline for quick navigation between analysis sections
-- Hover hints explaining residue properties, pKa significance, and interaction types
-- Code folding for better organization of complex PROPKA output files
+---
 
-### Unit Converter Tool
-- **Access**: Press `Ctrl+Shift+P` and search "GROMACS Helper: Open Unit Converter"
-- **Professional Calculator**: Designed specifically for molecular dynamics simulations
-- **Multiple Unit Categories**: Length, time, temperature, energy, area, and electric potential
-- **Quick Conversions**: Common reference tables and one-click conversion buttons
-- **Modern Interface**: WebView panel that adapts to your VS Code theme
+### 5. XVG Data File Interactive Plot Preview
 
-### 🔍 Binary File Preview
-- **Automatic Preview**: Double-click `.xtc`, `.trr`, `.edr`, or `.tpr` files to instantly see file metadata and structure
-- **No Extra Steps**: Files open directly in the editor — no right-click menu needed
-- **Metadata Display**: View frame count, atom count, precision, time steps, energy terms, and binary format details
-- **Large File Support**: Efficiently parses multi-GB trajectory and energy files using head+tail probes
-- **Fallback Available**: Use "Reopen With → Text Editor" if you need to view raw bytes
+- Click the chart icon (📊) in the editor title bar or select "Preview XVG Chart" from the context menu.
+- Interactive side panel with zoom, pan, hover tooltips, multi-series support, and statistical calculations (min, max, mean).
 
-**Usage:**
-1. Simply double-click any `.xtc`, `.trr`, `.edr`, or `.tpr` file in the Explorer
-2. The preview opens automatically in an editor tab
-3. For trajectory files (`.xtc`/`.trr`), you can still use "Open with Mol* Viewer" from the right-click menu for 3D visualization
+| XVG Syntax Highlighting | XVG Interactive Side Panel Chart Preview |
+|:---:|:---:|
+| ![XVG Highlighting](imgs/18.png) | ![XVG Chart Preview](imgs/19.gif) |
 
-### 🎬 Mol* Trajectory Viewer
-- **3D Molecular Visualization**: Preview XTC and TRR trajectory files directly in VS Code using the Mol* library
-- **Streaming Trajectory Loading**: Efficiently load extra-large trajectory files with on-demand frame loading
-  - Significantly reduced memory usage by loading frames as needed
-  - Support for streaming remote trajectory files
-  - Automatic frame indexing for fast frame navigation
-  - Suitable for GB-level long-term simulation trajectories
-- **Multi-Panel Support**: Open multiple Mol* viewers simultaneously, each managed independently by file path
-- **State Persistence**: Viewer state is preserved across VS Code restarts
+---
 
-**Usage:**
-1. Right-click on an `.xtc` or `.trr` file in the Explorer
-2. Select "Open with Mol* Viewer"
-3. Select or confirm the topology file (`.gro` or `.pdb`)
-4. Use the playback controls to navigate through trajectory frames
+### 6. Packmol Modeling & 3D Structure Preview
+
+- Syntax highlighting, keyword autocompletion, and formatting for `.packmol` and `.inp` files.
+- Click the 3D preview button to visualize the packed molecular system in real time.
+
+| Packmol Input Highlighting | Packmol Completion & Formatting | Packmol 3D Structure Preview |
+|:---:|:---:|:---:|
+| ![Packmol Highlighting](imgs/20.png) | ![Packmol Completion](imgs/21.gif) | ![Packmol 3D Preview](imgs/22.gif) |
+
+---
+
+### 7. GROMACS Process Monitor
+
+- **Live Status Bar Monitoring**: Out-of-the-box local GROMACS process tracking.
+- **Remote SSH Monitoring**: Connect to remote HPC clusters to track simulation time, step counts, and remaining time countdowns.
+- **Detailed Hover Card**: Hover over the status bar item to view working directories, log file paths, and execution commands.
+
+| Process Monitor Detailed Hover Card | Status Bar Job Indicator |
+|:---:|:---:|
+| ![Monitor Hover Card](imgs/1.png) | ![Status Bar Indicator](imgs/2.png) |
+
+---
+
+### 8. GROMACS Binary File Preview & Mol* 3D Trajectory Viewer
+
+- **Binary File Preview**: Double-click `.xtc`, `.trr`, `.edr`, or `.tpr` files to inspect binary structure and parameter metadata.
+- **Mol* 3D Trajectory Viewer**: Right-click `.xtc` or `.trr` and choose "Open with Mol* Viewer", pairing with a `.gro` / `.pdb` topology.
+- **Streaming Trajectory Loading**: Automatically recommends streaming mode for large trajectory files to prevent memory spikes.
+- **Interactive Timeline Controls**: Scrub through trajectory frames using the custom viewport slider, enter specific frame numbers, or use step buttons.
+
+| Large Trajectory Streaming Prompt | Mol* 3D Viewer & Playback Controls |
+|:---:|:---:|
+| ![Streaming Prompt](imgs/3.png) | ![Mol* 3D Viewer](imgs/4.png) |
+
+---
+
+### 9. GROMACS Commands View & Unit Converter
+
+- **GROMACS Commands View**: Open the "GROMACS Commands" container in the Activity Bar to trigger common simulation workflows with smart workspace file resolution.
+- **Unit Converter**: Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and search for **"GROMACS Helper: Open Unit Converter"** for quick MD unit transformations.
+
+---
 
 ## ⚙️ Configuration Options
 
-The extension currently uses default configurations. More customization options will be added in future versions.
+Configure the extension behavior in your `settings.json`:
 
-## 🔧 Development and Contributing
+### GROMACS Process Monitor Configuration
+```json
+{
+  "gromacsHelper.monitor.enabled": true,
+  "gromacsHelper.monitor.refreshInterval": 5000,
+  "gromacsHelper.monitor.rotateInterval": 10000,
+  "gromacsHelper.monitor.targets": [
+    {
+      "id": "local-default",
+      "name": "Local",
+      "type": "local",
+      "independent": false
+    },
+    {
+      "id": "remote-cluster",
+      "name": "HPC-Server",
+      "type": "remote",
+      "sshHost": "user@hpc.example.com",
+      "independent": true
+    }
+  ]
+}
+```
+
+### Trajectory Playback Performance Options
+```json
+{
+  "gromacsHelper.trajectoryPlayback.cacheSize": 256,
+  "gromacsHelper.trajectoryPlayback.prefetchDepth": 2,
+  "gromacsHelper.trajectoryPlayback.maxConcurrentReads": 4
+}
+```
+
+---
+
+## 🔧 Development & Contributing
 
 ### Local Development
 ```bash
@@ -252,247 +254,81 @@ cd gromacs-helper-vscode
 # Install dependencies
 npm install
 
-# Compile project
+# Compile extension
 npm run compile
 
 # Start watch mode
 npm run watch
 ```
 
-### Building Extension Package
+### Package Extension (.vsix)
 ```bash
 npm run package
 ```
 
-## 📋 System Requirements
-
-- Visual Studio Code version 1.101.0 or higher
-- No other special dependencies
-
-## 🐛 Known Issues
-
-- Parsing performance for large TOP files needs optimization
-- Limited support for complex nested #include directives
-
-If you encounter issues, please report them in [GitHub Issues](https://github.com/mcardzh/gromacs-helper-vscode/issues).
+---
 
 ## 🗂️ Changelog
+
+### [0.6.1] - 2026-08-27
+
+#### 🔒 Security & Maintenance
+- **Fixed Dependency Vulnerability (CVE-2026-29063)**: Upgraded `immutable` dependency to `5.1.9` to remediate prototype pollution vulnerability
+- **Documentation & Visuals**: Updated bilingual README with complete illustrated guides and integrated 22 feature screenshots and animation GIFs
+
+### [0.6.0] - 2026-08-27
+
+#### ✨ Added
+- **Full Force Field Language Support** — IDE-grade editing experience for all GROMACS force field files
+  - **ITP Force Field Parameter Files**: Dedicated language support for `ffbonded.itp`, `ffnonbonded.itp`, `ffnabonded.itp`, `ffnanonbonded.itp`, syntax highlighting, atom type autocompletion, hover hints, and preprocessor directive filtering
+  - **TDB Enhancements**: Atom type completion in `[ replace ]` and `[ add ]` sections, indented line recognition, and undefined atom type diagnostics
+  - **HDB Enhancements**: Residue name completion, hydrogen entry count validation, geometry type (1-8), and hydrogen count (1-4) range checks
+  - **TOP/ITP Full Support**:
+    - **Smart Force Field Resolution**: Automatic `#include` path detection across workspace relative paths and system GROMACS installations (`gmx -version`)
+    - **Atom Index Hover Cards**: Hover over atom IDs in `[ bonds ]`, `[ angles ]`, `[ dihedrals ]`, `[ pairs ]` to see residue, atom name, type, charge, and mass
+    - **Atom Type Completion & Diagnostics**: Completion in `[ atoms ]` column 2, real-time undefined atom type detection with graceful fallback
+    - **Section Header Hover**: Formatted explanations for `[ atoms ]`, `[ bonds ]`, `[ moleculetype ]`, and other standard directives
+
+### [0.5.0] - 2026-08-27
+
+#### ✨ Added
+- **GROMACS Force Field Support**: Syntax highlighting, completion, hover documentation, symbol outline, and diagnostics for `.rtp`, `.atp`, `.tdb`, and `.hdb`
+- **GROMACS Binary File Preview**: Double-click `.xtc`, `.trr`, `.edr`, or `.tpr` files to inspect metadata in editor tabs
+  - **XTC / TRR Trajectory Preview**: Frame count, atom count, duration, dt, timestamps, precision, and binary headers
+  - **EDR Energy Analysis**: Energy term statistics, Chart.js sparkline graphs, interactive time-series viewer, CSV export
+  - **TPR Parameter Preview**: Structured simulation parameters, modern TPR parsed via `gmx dump`
+- **Performance Optimization**: Head + tail probe parser accelerates 574MB XTC parsing from 145s to 35ms (4100x speedup)
+
+### [0.4.1] - 2026-01-14
+
+#### ✨ Added & Fixed
+- **Trajectory Progress Bar Control**: Custom timeline slider, frame number input, step buttons, and current frame indicators
+- **Playback Optimization**: Enhanced LRU cache, prefetch pipeline, and remote playback debouncing
 
 ### [0.4.0] - 2025-12-25
 
 #### ✨ Added
-- 🎬 **Mol* Trajectory Viewer** - New molecular trajectory visualization system
-  - Support for previewing XTC and TRR trajectory files directly in VS Code
-  - Integrated Mol* molecular visualization library for professional 3D rendering
-  - Support for loading topology files (GRO, PDB) with trajectory files
-  - **Streaming Trajectory Loader** - Efficiently load extra-large trajectory files
-    - On-demand frame data loading to significantly reduce memory usage
-    - Support for streaming remote trajectory files
-    - Automatic frame indexing for fast frame navigation
-    - Suitable for GB-level long-term simulation trajectories
-  - Support for multiple Mol* viewers open simultaneously, independently managed by file path
-  - Viewer state persistence, automatically restored after restart
-
-#### 🔧 Improved
-- Optimized Webpack build configuration with watch mode for better development experience
+- 🎬 **Mol* Trajectory Viewer**: 3D molecular visualization and streaming loading for extra-large trajectory files
 
 ### [0.3.4] - 2025-12-24
 
 #### ✨ Added
-- 🎯 **GROMACS Commands View** - New command management and execution system
-  - Added "GROMACS Commands" view container in Activity Bar
-  - Support for grouped command management (Structure Preparation, Simulation, Analysis, etc.)
-  - Smart placeholder system (`{pdb|gro}`, `{output.gro}`, `{basename}`)
-  - File selection automatically uses relative paths
-  - Commands automatically sent to dedicated "GROMACS" terminal
-  - Support for adding, editing, deleting custom commands and command groups
-  - Built-in common GROMACS command templates
-
-### [0.3.3] - 2025-12-24
-
-#### 🚀 Features & Fixes
-- **Optimized TOP Parsing**: Significantly improved performance for large topology files (O(N) single-pass algorithm).
-- **Fixed SSH Monitor**: Corrected the deployment path for the remote monitoring script.
-
-### [0.3.2] - 2025-12-24
-
-#### 🔧 Improvements
-- Improved MDP formatting with smarter alignment and indentation.
-- Added translations for MDP parameter hints.
+- 🎯 **GROMACS Commands View**: Sidebar command runner with smart placeholders and dedicated terminal execution
 
 ### [0.3.0] - 2025-12-23
 
 #### ✨ Added
-- 🎉 **Smart Welcome and Update Notification System**
-  - Automatic welcome notification on first install with links to language-specific README documentation
-  - Automatic update notification on version updates with changelog access
-  - Adaptive language support: automatically selects Chinese or English documentation based on VS Code locale
-  - Smart deduplication: notifications only show once per version
-  - Configurable disable option: "Don't show again" button available
-  - Configuration setting: `gromacsHelper.disableWelcomeNotifications` for manual control
-- 🔍 **GROMACS Process Monitor** - Real-time monitoring of GROMACS execution status in VS Code status bar
-  - Local process monitoring: automatically detects local `gmx` processes (pgrep + lsof)
-  - Remote SSH monitoring: connects to remote servers via SSH with automatic script deployment
-  - Intelligent log parsing: automatically analyzes mdrun logs to extract remaining time, simulation time, current step, etc.
-  - Multi-target management: unified configuration for local and remote monitoring targets with custom names
-  - Merged display mode: multiple targets auto-rotate with configurable intervals (pauses on mouse hover)
-  - Independent display mode: create dedicated status bar items for important targets
-  - Error handling: displays error icon with detailed error messages on connection or parsing failures
-  - Click interaction: local monitoring allows clicking status bar to open working directory
-  - Flexible configuration: customizable refresh intervals, rotation intervals, SSH port/key settings, etc.
-  - 10-second timeout control: prevents SSH connection blocking with automatic timeout handling
-  - 🆕 **Default Local Monitoring Enabled**: works out-of-the-box, automatically monitors local GROMACS processes
-  - 🆕 **Interactive Configuration Wizard**: quickly add and manage monitoring targets via Command Palette
-    - "GROMACS Helper: Add GROMACS Monitor Target" - interactive wizard for adding new monitors
-    - "GROMACS Helper: Manage GROMACS Monitor Targets" - manage existing monitoring targets
+- 🔍 **GROMACS Process Monitor**: Real-time local and remote SSH simulation tracking on the status bar
 
-### [0.2.3] - 2025-08-11
-
-#### ✨ Added
-- **PROPKA pKa Results File Support** - Complete support for PROPKA program output files
-  - Support for `.pka` file extension and filename pattern matching
-  - Comprehensive syntax highlighting including residue types, pKa values, interaction data, section headers
-  - Intelligent hover hints: residue information, parameter explanations, numerical value meanings
-  - Document symbol navigation: quick jump to specific residues, summary sections, energy analysis
-  - Code folding support: collapsible file header, references, residue tables, summary, energy and charge analysis sections
-  - Code snippet templates: provides PROPKA header, residue entries, summary entries and other common templates
-  - Full language support integration into the main extension system
-
-#### 🔧 Improved
-- Enhanced extension support for bioinformatics file formats
-- Optimized language support system extensibility
-
-### [0.2.0] - 2025-06-24
-
-#### ✨ Added
-- **Packmol File Support** - Complete support for Packmol input files
-  - Syntax highlighting for keywords, structures, and constraints
-  - Interactive structure preview with 3D visualization
-  - Intelligent code completion for Packmol parameters
-  - Automatic formatting and error detection
-- **Enhanced Semantic Coloring** - Improved visual distinction for different elements
-  - MDP parameters now have individual semantic coloring
-  - GRO and PDB files support residue-specific coloring
-  - Better visual organization for complex files
-- **Advanced Error Checking** - Enhanced validation and diagnostics
-  - Comprehensive MDP parameter syntax validation
-  - Cross-parameter relationship validation
-  - PDB file key marker analysis and validation
-- 🧮 **Professional Unit Converter** - Specialized tool for molecular dynamics simulations
-  - Support for length units: nm, Å, pm, m, cm, mm
-  - Support for time units: fs, ps, ns, μs, ms, s
-  - Support for temperature units: K, °C (including temperature offset conversion)
-  - Support for energy units: J, kJ/mol, kJ/kg, J/g, eV, cal, kcal/mol
-  - Support for area units: nm², Å², m², cm²
-  - Support for electric potential units: V, mV, kV
-  - Common conversion reference tables and quick conversion buttons
-  - Modern WebView interface with VS Code theme support
-  - Access via Command Palette: "GROMACS Helper: Open Unit Converter"
-
-#### 🐛 Fixed
-- Various bug fixes and stability improvements
-
-### [0.1.2] - 2025-06-24
-
-#### 🐛 Fixed
-- Allow setting marker size to 0 when previewing XVG files
-
-### [0.1.1] - 2025-06-24
-
-#### 🐛 Fixed
-- Fixed various incorrectly named links in the project
-
-#### ✨ Added
-- **Custom MDP Snippet Management** - Complete user-defined snippet functionality
-  - Create custom MDP snippets with intelligent placeholder syntax (`${1:default}` and `${1|option1,option2|}`)
-  - Full snippet editing capabilities: modify name, prefix, description, and content
-  - Visual snippet management interface with add, delete, edit, and preview functions
-  - "MDP Snippets" sidebar panel for easy access and quick insertion
-  - Integration with auto-completion system with custom snippets prioritized
-  - Command palette support via "Manage MDP Snippets" command
-  - Context menu support: right-click in MDP files to manage snippets directly
-
-#### 🔧 Improved
-- Enhanced MDP auto-completion with custom snippet prioritization
-- Optimized snippet storage using VS Code global storage for cross-workspace availability
-- Improved code snippet user experience and discoverability
-
-### [0.0.5] - 2025-06-22
-
-#### ✨ Added
-- **XVG File Visualization Preview** - Interactive chart preview for GROMACS data files
-  - Support for clicking chart icon to preview XVG data as line charts in sidebar
-  - Automatic parsing of XVG file metadata (title, axis labels, legends, etc.)
-  - Multi-data series support with different colors
-  - Real-time data statistics display (data points count, value ranges, averages, etc.)
-  - Support for chart zooming, panning, and hover to display specific values
-- Added XVG file syntax highlighting support
-- Added XVG file hover hint functionality
-- Added XVG file code snippet templates
-- Provided syntax highlighting support for `.pdb` files
-
-#### 🔧 Changed
-- Modified some file names for more standardized naming
-- Optimized project structure for enhanced maintainability
-
-### [0.0.4] - 2025-06-22
-
-#### ✨ Added
-- Added GitHub Actions workflow support for custom release notes
-- Support for automatically reading version change information from CHANGELOG.md
-
-#### 🔧 Improved
-- Optimized build and release process
-
-### [0.0.2] - 2025-06-22
-
-#### ✨ Added
-- Complete MDP file syntax highlighting support
-- TOP file syntax highlighting and symbol navigation
-- GRO file format support and hover hints
-- NDX file syntax highlighting and folding functionality
-- Intelligent code completion and parameter hints
-- Code snippet support
-
-#### 🔧 Improved
-- Optimized syntax highlighting rules
-- Improved hover hint information
-- Enhanced symbol navigation functionality
-
-#### 🐛 Fixed
-- Fixed syntax parsing errors in certain situations
-- Improved file format detection
-
-### [0.0.1] - 2025-06-22
-
-#### ✨ Added
-- Initial version release
-- Basic GROMACS file support
-- MDP parameter syntax highlighting
-- Basic code completion functionality
-
-## 📚 Related Resources
-
-- [GROMACS Official Documentation](https://manual.gromacs.org/)
-- [GROMACS MDP Options Reference](https://manual.gromacs.org/current/user-guide/mdp-options.html)
-- [Molecular Dynamics Simulation Tutorials](https://tutorials.gromacs.org/)
-
-## 🤝 Contributing
-
-Bug reports, feature requests, and code contributions are welcome!
+---
 
 ## 📄 License
 
-This project is open sourced under the GPLv2 license
+This project is open-sourced under the [GPLv2](LICENSE) license.
 
-## 👨‍💻 Author
+---
 
-- Project Maintainer: [mcardzh](https://github.com/mcardzh)
-
-## 🙏 Acknowledgments
-
-- Thanks to the GROMACS development team for providing excellent molecular dynamics simulation software
-- Thanks to the VS Code team for providing a powerful editor platform
+**Enjoy your GROMACS development experience!** 🧬⚗️
 
 ## 📞 Support
 
@@ -501,7 +337,3 @@ If this extension helps you, please give us a ⭐️!
 Questions or suggestions? Please contact us through:
 - [GitHub Issues](https://github.com/mcardzh/gromacs-helper-vscode/issues)
 - [Email](mailto:mcardzh@gmail.com)
-
----
-
-**Enjoy your GROMACS development experience!** 🧬⚗️
